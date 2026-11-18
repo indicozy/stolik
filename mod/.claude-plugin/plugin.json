@@ -1,0 +1,1 @@
+{ "name": "tg-bridge-dialogs", "version": "0.1.0", "description": "Forwards mod dialogs ($.ui.ask) to Telegram through the tg-bridge router while the owner is away" }

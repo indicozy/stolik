@@ -1,0 +1,103 @@
+---
+import Icon from '../Icon.astro';
+
+interface Props {
+  bare?: boolean;
+  glow?: boolean;
+  listMode?: boolean;
+  label?: string;
+  theme?: 'light' | 'dark';
+  class?: string;
+}
+
+const { bare = false, glow = false, listMode = false, label, theme, class: className } = Astro.props;
+---
+<div
+  class:list={['tgm-phone', className, { 'is-bare': bare, 'is-glow': glow, 'is-list': listMode }]}
+  data-theme={theme}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+>
+  <div class="tgm-screen">
+    <slot name="header" />
+    <div class="tgm-scroll"><slot /></div>
+    <div class="tgm-composer" aria-hidden="true">
+      <span class="tgm-field">Message</span>
+      <span class="tgm-mic"><Icon name="mic" size={18} /></span>
+    </div>
+  </div>
+  {!bare && <span class="tgm-speaker" aria-hidden="true"></span>}
+</div>
+<style>
+  .tgm-phone {
+    position: relative;
+    width: min(100%, 320px);
+    aspect-ratio: 9 / 18.5;
+    margin-inline: auto;
+    padding: 30px 10px 10px;
+    background: var(--device);
+    border-radius: var(--radius-device);
+    box-shadow: var(--shadow-4);
+  }
+  .tgm-phone.is-glow { box-shadow: var(--shadow-4), var(--glow-lamp); }
+  .tgm-phone.is-bare { background: none; padding: 0; box-shadow: none; aspect-ratio: auto; width: 100%; }
+  .tgm-phone.is-bare .tgm-screen { border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .tgm-screen {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    background: var(--tg-bg);
+    border-radius: 34px;
+  }
+  .tgm-scroll {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    padding: var(--sp-3);
+    overflow: hidden;
+  }
+  .tgm-phone.is-list .tgm-scroll { justify-content: flex-start; padding: 0; gap: 0; }
+  .tgm-composer {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    height: 48px;
+    flex: none;
+    padding-inline: var(--sp-2);
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+  .tgm-field {
+    flex: 1;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    padding-inline: var(--sp-3);
+    border-radius: var(--radius-pill);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .tgm-mic {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+  }
+  .tgm-speaker {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 72px;
+    height: 20px;
+    margin-left: -36px;
+    border-radius: var(--radius-pill);
+    background: var(--device);
+  }
+</style>

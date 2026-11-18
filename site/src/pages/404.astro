@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { url } from '../lib/url';
+---
+<BaseLayout title="404" fullTitle="404 · stolik" noindex>
+  <SiteHeader />
+  <main id="main" class="nf">
+    <div class="td-container nf-inner">
+      <h1 class="td-display">404. Nothing on this desk.</h1>
+      <p class="td-lede">The blob looked under it too. Try the <a href={url()}>homepage</a> or the <a href={url('docs/install/')}>install guide</a>.</p>
+    </div>
+  </main>
+  <SiteFooter />
+</BaseLayout>
+<style>
+  .nf { padding-block: var(--sp-24) var(--section-y); }
+  .nf-inner { display: grid; gap: var(--sp-5); justify-items: start; }
+  .nf-inner .td-display { max-width: 16ch; }
+  .nf-inner .td-lede { max-width: var(--w-prose); }
+</style>

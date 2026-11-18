@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# tg-bridge-ctl: local control of the tg-bridge router (unlock/lock/status). Thin wrapper around dist/ctl.js.
+set -uo pipefail
+self="$(readlink -f "$0")"
+repo="$(cd "$(dirname "$self")/.." && pwd -P)"
+exec node "$repo/dist/ctl.js" "$@"

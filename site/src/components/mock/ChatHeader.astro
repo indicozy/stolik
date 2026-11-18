@@ -1,0 +1,70 @@
+---
+import Icon from '../Icon.astro';
+
+interface Props {
+  title: string;
+  subtitle: string;
+  kind?: 'count' | 'online' | 'typing' | 'topic';
+  avatar?: string;
+  tone?: 1 | 2 | 3 | 4 | 5;
+}
+
+const { title, subtitle, kind = 'count', avatar = '', tone = 1 } = Astro.props;
+---
+<header class="tgm-chathead">
+  <span class="tgm-chevron"><Icon name="chevron-left" size={20} /></span>
+  <span class:list={['tgm-avatar', { 'is-topic': kind === 'topic' }]} style={`--av: var(--av-${tone})`}>{avatar}</span>
+  <span class="tgm-chathead-text">
+    <span class="tgm-chathead-title">{title}</span>
+    <span class:list={['tgm-chathead-sub', `is-${kind}`]}>
+      {kind === 'online' && <span class="tgm-online-dot" aria-hidden="true"></span>}
+      {subtitle}
+    </span>
+  </span>
+  <span class="tgm-more"><Icon name="more-vertical" size={20} /></span>
+</header>
+<style>
+  .tgm-chathead {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    height: 56px;
+    flex: none;
+    padding-inline: var(--sp-3);
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .tgm-chevron, .tgm-more { display: grid; place-items: center; color: var(--text-muted); }
+  .tgm-chevron { color: var(--accent-text); }
+  .tgm-avatar {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--av);
+    color: var(--on-accent);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .tgm-avatar.is-topic { border-radius: var(--radius-md); font-family: var(--font-mono); }
+  .tgm-chathead-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .tgm-chathead-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tgm-chathead-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .tgm-chathead-sub.is-typing { color: var(--accent-text); }
+  .tgm-online-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+</style>

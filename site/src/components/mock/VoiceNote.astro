@@ -1,0 +1,86 @@
+---
+import Icon from '../Icon.astro';
+
+interface Props {
+  duration?: string;
+  state?: 'idle' | 'playing' | 'transcribed' | 'transcribing';
+  transcript?: string;
+  played?: number;
+}
+
+const { duration = '0:12', state = 'transcribed', transcript, played = 0 } = Astro.props;
+// Deterministic bar heights between 4 and 24px.
+const bars = Array.from({ length: 28 }, (_, i) =>
+  4 + Math.round(20 * Math.abs(Math.sin(i * 0.9 + 0.7)) * (0.5 + 0.5 * Math.abs(Math.cos(i * 0.37)))),
+);
+---
+<li class:list={['tgm-bubble', 'is-out', 'tgm-voice', `is-${state}`]}>
+  <span class="tgm-voice-row">
+    <span class="tgm-play" aria-hidden="true">
+      <Icon name={state === 'playing' ? 'pause' : 'play'} size={18} />
+    </span>
+    <span class:list={['tgm-wave', { 'is-playing': state === 'playing' }]} aria-hidden="true">
+      {bars.map((h, i) => (
+        <i class:list={[{ 'is-played': i < played }]} style={`--h: ${h}px; --d: ${i * 40}ms`}></i>
+      ))}
+    </span>
+    <span class="tgm-dur">{duration}</span>
+  </span>
+  {state === 'transcribing' && (
+    <span class="tgm-transcript tgm-transcript-wait"><span class="tgm-dots" role="img" aria-label="transcribing"><i></i><i></i><i></i></span></span>
+  )}
+  {state !== 'idle' && state !== 'transcribing' && transcript && (
+    <span class="tgm-transcript"><Icon name="mic" size={14} /><span>{transcript}</span></span>
+  )}
+  <span class="tgm-meta"><span>14:03</span><Icon name="check-check" size={14} /></span>
+</li>
+<style>
+  .tgm-voice { min-width: 220px; }
+  .tgm-voice-row { display: flex; align-items: center; gap: var(--sp-2); }
+  .tgm-play {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .tgm-wave { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; height: 24px; }
+  .tgm-wave i {
+    display: block;
+    width: 3px;
+    height: var(--h);
+    border-radius: 2px;
+    background: var(--tg-out-meta);
+    opacity: 0.5;
+  }
+  .tgm-wave i.is-played { background: var(--text); opacity: 1; }
+  .tgm-dur { font-family: var(--font-mono); font-size: 12.5px; color: var(--tg-out-meta); font-variant-numeric: tabular-nums; }
+  .tgm-transcript {
+    display: flex;
+    gap: 6px;
+    margin-top: var(--sp-2);
+    padding-top: var(--sp-2);
+    border-top: 1px solid color-mix(in srgb, var(--tg-out-meta) 25%, transparent);
+    font-size: 13.5px;
+    color: var(--text);
+  }
+  .tgm-transcript :global(svg) { margin-top: 2px; color: var(--tg-out-meta); }
+  .tgm-meta {
+    float: right;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin: 6px 0 0 var(--sp-3);
+    font-size: 11.5px;
+    color: var(--tg-out-meta);
+  }
+  .tgm-dots { display: inline-flex; gap: 4px; }
+  .tgm-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--tg-out-meta); }
+  @media (prefers-reduced-motion: no-preference) {
+    .tgm-wave.is-playing i { animation: td-bar 900ms ease-in-out infinite alternate; animation-delay: var(--d); }
+    @keyframes td-bar { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }
+  }
+</style>

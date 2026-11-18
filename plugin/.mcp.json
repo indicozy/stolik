@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "tg-bridge": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/../bin/tg-plugin-node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/../dist/channel.js"],
+      "env": { "MCP_PROTOCOL_NEGOTIATION": "legacy" }
+    }
+  }
+}

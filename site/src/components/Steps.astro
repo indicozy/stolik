@@ -1,0 +1,27 @@
+<ol class="td-steps">
+  <slot />
+</ol>
+<style>
+  .td-steps { display: grid; gap: var(--sp-4); counter-reset: step; }
+  .td-steps :global(li) {
+    counter-increment: step;
+    position: relative;
+    padding: var(--sp-4) 0 0 3rem;
+    border-top: 1px solid var(--line);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+    color: var(--text-muted);
+  }
+  .td-steps :global(li::before) {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    top: var(--sp-4);
+    left: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    color: var(--accent-2-text);
+  }
+  .td-steps :global(strong) { color: var(--text); font-weight: 600; }
+  .td-steps :global(code) { font-family: var(--font-mono); font-size: 0.92em; color: var(--text); }
+</style>

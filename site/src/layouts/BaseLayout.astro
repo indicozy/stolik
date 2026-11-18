@@ -1,0 +1,66 @@
+---
+import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource-variable/instrument-sans';
+import '@fontsource-variable/jetbrains-mono';
+import bricolageWoff from '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2?url';
+import instrumentWoff from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/mock.css';
+import { url } from '../lib/url';
+
+interface Props {
+  title: string;
+  fullTitle?: string;
+  description?: string;
+  ogDescription?: string;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  fullTitle,
+  description = 'Your desk, in your pocket.',
+  ogDescription = description,
+  noindex = false,
+} = Astro.props;
+const docTitle = fullTitle ?? `${title} · stolik`;
+const ogImage = new URL(url('mascot/stolik-mascot-512.webp'), Astro.site).href;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{docTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={ogDescription} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:alt" content="stolik mascot: a blue blob carrying an amber terminal" />
+    <meta name="twitter:card" content="summary" />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="icon" href={url('mascot/favicon-32.png')} sizes="32x32" type="image/png" />
+    <link rel="icon" href={url('mascot/favicon-64.png')} sizes="64x64" type="image/png" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href={bricolageWoff} />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href={instrumentWoff} />
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        let stored = null;
+        try { stored = localStorage.getItem('starlight-theme'); } catch {}
+        const system = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        root.dataset.theme = stored === 'light' || stored === 'dark' ? stored : system;
+        if (matchMedia('(prefers-reduced-motion: no-preference)').matches) root.classList.add('td-motion');
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="td-skip" href="#main">Skip to content</a>
+    <slot />
+    <script>
+      import '../scripts/site';
+    </script>
+  </body>
+</html>

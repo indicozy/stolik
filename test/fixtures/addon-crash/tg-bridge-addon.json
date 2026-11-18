@@ -1,0 +1,9 @@
+{
+  "name": "addon-crash",
+  "version": "0.1.0",
+  "protocol": 2,
+  "command": ["node", "index.mjs"],
+  "provides": [{ "point": "prefix", "words": ["boom"] }],
+  "access": [],
+  "requires": []
+}

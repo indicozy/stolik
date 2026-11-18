@@ -1,0 +1,73 @@
+---
+interface Props {
+  title: string;
+  body: string;
+  wide?: boolean;
+  href?: string;
+  i?: number;
+}
+
+const { title, body, wide = false, href, i = 0 } = Astro.props;
+---
+<article class:list={['td-card', 'td-rise', { 'is-wide': wide }]} style={`--i: ${i}`}>
+  <div class="td-card-text">
+    <h3 class:list={[wide ? 'td-h2' : 'td-h3']}>
+      {href ? <a class="td-card-link" href={href}>{title}</a> : title}
+    </h3>
+    <p class:list={['td-card-body', wide ? 'td-body' : 'td-small']}>{body}</p>
+  </div>
+  <div class="td-card-mock">
+    <slot name="mock" />
+  </div>
+</article>
+<style>
+  .td-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-5);
+    transition: border-color var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out);
+  }
+  @media (min-width: 40em) { .td-card { padding: var(--sp-6); } }
+  .td-card-body { margin-top: var(--sp-2); color: var(--text-muted); }
+  .td-card-link { color: inherit; text-decoration: none; }
+  .td-card-link::after { content: ''; position: absolute; inset: 0; }
+  .td-card-mock {
+    position: relative;
+    margin-top: var(--sp-5);
+    flex: 1;
+    min-height: 230px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    padding: var(--sp-3);
+    background: var(--tg-bg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .td-card-mock::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 32px;
+    background: linear-gradient(to bottom, var(--tg-bg), transparent);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .td-card:hover, .td-card:focus-within { border-color: var(--line-strong); box-shadow: var(--shadow-3); }
+  @media (prefers-reduced-motion: no-preference) {
+    .td-card:hover, .td-card:focus-within { transform: translateY(-2px); }
+  }
+  @media (min-width: 64em) {
+    .td-card.is-wide { flex-direction: row; gap: var(--sp-12); padding: var(--sp-10); }
+    .td-card.is-wide .td-card-text { flex: 0 0 32%; }
+    .td-card.is-wide .td-card-mock { margin-top: 0; }
+  }
+  .td-card-text { min-width: 0; }
+  .td-body { font-size: var(--fs-body); line-height: var(--lh-body); }
+</style>

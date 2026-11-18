@@ -1,0 +1,300 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import Section from '../components/Section.astro';
+import Button from '../components/Button.astro';
+import Badge from '../components/Badge.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import FeatureCard from '../components/FeatureCard.astro';
+import Faq from '../components/Faq.astro';
+import FaqItem from '../components/FaqItem.astro';
+import Callout from '../components/Callout.astro';
+import Steps from '../components/Steps.astro';
+import FactList from '../components/FactList.astro';
+import howImg from '../assets/how-stolik-works.png';
+import Phone from '../components/mock/Phone.astro';
+import ChatHeader from '../components/mock/ChatHeader.astro';
+import TopicRow from '../components/mock/TopicRow.astro';
+import Bubble from '../components/mock/Bubble.astro';
+import Keyboard from '../components/mock/Keyboard.astro';
+import Key from '../components/mock/Key.astro';
+import VoiceNote from '../components/mock/VoiceNote.astro';
+import ServiceLine from '../components/mock/ServiceLine.astro';
+import Mascot from '../components/Mascot.astro';
+import { url } from '../lib/url';
+
+const architecture = `your phone ── Telegram ──▶ router (your PC, user service)
+                             ├─ Claude Code session · orbit-api   (tmux)
+                             ├─ Claude Code session · paper-kite  (your terminal)
+                             └─ addons: voice · notes · modes · digest`;
+---
+<BaseLayout
+  title="Your desk, in your pocket."
+  fullTitle="stolik: Claude Code, from your phone"
+  description="stolik connects the Claude Code sessions on your own machine to Telegram. One topic per project, approvals and voice notes on your phone. Free, Apache-2.0."
+  ogDescription="A two-way bridge between Telegram and the Claude Code sessions on your own machine. Free and open source."
+>
+  <SiteHeader />
+  <main id="main">
+    <section class="td-hero" aria-labelledby="hero-title">
+      <div class="td-container td-hero-grid">
+        <div class="td-hero-copy">
+          <div class="td-rise" style="--i: 0">
+            <Badge tone="preview" dot>Developer preview</Badge>
+          </div>
+          <h1 id="hero-title" class="td-display td-rise" style="--i: 1">Your desk, in your pocket.</h1>
+          <p class="td-lede td-rise" style="--i: 2">
+            stolik connects the Claude Code sessions on your own machine to a private Telegram group. One topic per
+            project: read answers, allow or deny tool calls, and start or resume sessions from your phone.
+          </p>
+          <div class="td-hero-install td-rise" style="--i: 3">
+            <CodeBlock variant="inline" code="npx stolik setup" prompt="$" />
+          </div>
+          <p class="td-micro td-muted td-rise" style="--i: 3">Linux · Node 22.13+ · tmux · Claude Code. Free and Apache-2.0 licensed.</p>
+          <div class="td-hero-ctas td-rise" style="--i: 4">
+            <Button variant="primary" size="lg" href="#quickstart">Get started</Button>
+            <Button variant="secondary" size="lg" href={url('docs/install/')}>Read the docs</Button>
+          </div>
+        </div>
+        <div class="td-hero-visual td-rise" style="--i: 2">
+          <div class="td-hero-device">
+            <Phone glow listMode label="Telegram mock: three project topics, and a request to run npm test in orbit-api with Allow and Deny buttons">
+              <ChatHeader slot="header" title="stolik" subtitle="3 topics" kind="count" avatar=">_" tone={1} />
+              <ul class="tgm-list">
+                <TopicRow name="orbit-api" time="14:02" preview="Run npm test?" tag="oa" tone={2} state="needs-approval" pill="allow?" />
+                <TopicRow name="paper-kite" time="14:01" preview="Layout tests pass. 214 green." tag="pk" tone={3} state="unread" count={2} />
+                <TopicRow name="tide-cli" time="13:58" preview="Session resumed" tag="tc" tone={5} state="muted" />
+              </ul>
+              <ul class="tgm-chat">
+                <ServiceLine>Today</ServiceLine>
+                <Bubble side="in" sender="orbit-api" kind="code" time="14:02">Bash: npm test</Bubble>
+                <Keyboard>
+                  <Key variant="approve" state="chosen" decorative>Allow</Key>
+                  <Key variant="deny" state="sibling" decorative>Deny</Key>
+                </Keyboard>
+                <Bubble side="in" sender="orbit-api" time="14:04">All 214 tests pass. Want me to open the PR?</Bubble>
+                <Bubble side="out" time="14:05">yes, ship it</Bubble>
+              </ul>
+            </Phone>
+            <div class="td-hero-mascot">
+              <Mascot bob sizes="140px" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <Section id="quickstart" index="01" eyebrow="quickstart" title={'From zero to "hi from the bus" in five minutes.'} lede="One command asks for your bot token and prints the rest. You need a Telegram bot from @BotFather first.">
+      <div class="qs">
+        <div><Badge tone="preview" dot>Developer preview</Badge></div>
+        <Callout title="Requirements">
+          <ul>
+            <li>Linux with Node 22.13 or newer, tmux and Claude Code. The macOS and WSL2 paths exist, but nobody tested them yet.</li>
+            <li>Claude Code signed in with claude.ai or a Console API key. Channels do not work on Bedrock, Google Cloud or Microsoft Foundry.</li>
+            <li>On a Team or Enterprise plan, an org Owner must turn Channels on first. Without that, the flag does not help.</li>
+          </ul>
+        </Callout>
+        <CodeBlock label="terminal" code={'npx stolik setup\ntg-claude   # claude, plus the dev-channels flag'} />
+        <Steps>
+          <li><strong>Run setup.</strong> It asks for the bot token (hidden) and your Telegram user id, writes the config, and offers the optional voice models.</li>
+          <li><strong>Make the group.</strong> Create a private group, turn Topics on, add your bot as admin, send <code>/bind</code>. The bot answers only you.</li>
+          <li><strong>Start the router and add the plugin.</strong> <code>stolik service install --start</code>, then two <code>/plugin</code> lines inside Claude Code. Setup prints both.</li>
+          <li><strong>Start a session.</strong> Run <code>tg-claude</code> in a project. A topic with the folder's name appears. Say hi from the phone.</li>
+        </Steps>
+        <p class="td-small td-muted">
+          <code>tg-claude</code> is <code>claude</code> plus <code>--dangerously-load-development-channels</code>. stolik is not on Anthropic's channel list, and it needs the flag until that changes. <a href={url('docs/why-the-flag/')}>Why the flag?</a>
+        </p>
+        <p class="td-small"><a href={url('docs/install/')}>Full install guide →</a></p>
+      </div>
+    </Section>
+
+    <Section id="features" index="02" eyebrow="features" title="Approve npm test from the bus stop." lede="Six things you can do without walking back to the desk.">
+      <div class="td-features">
+        <FeatureCard title="One topic per project" body="A private group with a topic for each project folder. Every answer names its session, so two sessions in one folder never blur." i={0}>
+          <Fragment slot="mock">
+            <div role="img" aria-label="Topic list with three projects">
+              <ul class="tgm-list">
+                <TopicRow name="orbit-api" time="14:02" preview="All 214 tests pass." tag="oa" tone={2} state="unread" count={2} />
+                <TopicRow name="paper-kite" time="14:01" preview="Layout tests pass." tag="pk" tone={3} state="active" />
+                <TopicRow name="tide-cli" time="13:58" preview="Session resumed" tag="tc" tone={5} state="muted" />
+              </ul>
+            </div>
+          </Fragment>
+        </FeatureCard>
+        <FeatureCard title="Allow or deny, from anywhere" body="While you're away, permission prompts, questions and plan approvals land in the topic with buttons. Ignore one and it waits at your terminal." i={1}>
+          <Fragment slot="mock">
+            <div role="img" aria-label="Request to run a command, with Allow and Deny buttons">
+              <ol class="tgm-chat">
+                <Bubble side="in" kind="code">Bash: rm -rf node_modules</Bubble>
+                <Keyboard>
+                  <Key variant="approve" decorative>Allow</Key>
+                  <Key variant="deny" state="chosen" decorative>Deny</Key>
+                </Keyboard>
+              </ol>
+            </div>
+          </Fragment>
+        </FeatureCard>
+        <FeatureCard title="Talk instead of typing" body="Send a voice note. Whisper transcribes it on your own machine and the session reads it as text. Optional addon." i={2}>
+          <Fragment slot="mock">
+            <div role="img" aria-label="Voice note with its transcript">
+              <ol class="tgm-chat">
+                <VoiceNote state="transcribed" transcript="Rerun the migration, then show me the diff." duration="0:07" played={28} />
+              </ol>
+            </div>
+          </Fragment>
+        </FeatureCard>
+        <FeatureCard title="Resume what you closed" body="/resume lists ended sessions. Pick one and it reopens in tmux on your PC with its history, back in its topic." i={3}>
+          <Fragment slot="mock">
+            <div role="img" aria-label="Resume picker with two ended sessions">
+              <ol class="tgm-chat">
+                <Bubble side="out">/resume</Bubble>
+                <Bubble side="in">Ended sessions</Bubble>
+                <Keyboard><Key>tide-cli · 2h ago</Key></Keyboard>
+                <Keyboard><Key>lantern-web · yesterday</Key></Keyboard>
+                <ServiceLine>Session resumed</ServiceLine>
+              </ol>
+            </div>
+          </Fragment>
+        </FeatureCard>
+        <FeatureCard title="Quick, read, web" body="Ask without opening a session. quick: answers with no tools, read: looks at your files read-only, web: searches. Each answer shows its cost." i={4}>
+          <Fragment slot="mock">
+            <div role="img" aria-label="A quick question and its answer with a cost line">
+              <ol class="tgm-chat">
+                <Bubble side="out">quick: what does SIGTERM 143 mean?</Bubble>
+                <Bubble side="in">128 + 15. The process got SIGTERM and exited.</Bubble>
+                <li class="td-micro td-muted">$0.002 · 3 s</li>
+              </ol>
+            </div>
+          </Fragment>
+        </FeatureCard>
+        <FeatureCard title="Quiet at your desk" body="stolik sees when you're at the keyboard and stays silent. Lock the screen or walk off and answers follow you. /silent mutes one topic." i={5}>
+          <Fragment slot="mock">
+            <div role="img" aria-label="Away notice, then a topic muted for two hours">
+              <ol class="tgm-chat">
+                <ServiceLine>You are away: pings on</ServiceLine>
+                <Bubble side="in">Done. 3 files changed.</Bubble>
+                <Bubble side="out">/silent 2h</Bubble>
+                <Bubble side="in">🔕 Muted until 16:05.</Bubble>
+              </ol>
+            </div>
+          </Fragment>
+        </FeatureCard>
+      </div>
+    </Section>
+
+    <Section id="how-it-works" index="03" eyebrow="how it works" title="Three parts, all on your machine." lede="stolik has no server and no account, and it opens no port. The router asks Telegram for new messages, so nothing calls in.">
+      <img src={howImg.src} width={howImg.width} height={howImg.height} alt="How stolik works" style="width:100%;height:auto;border-radius:12px;margin-bottom:var(--sp-8)" loading="lazy" />
+      <div class="hw">
+        <CodeBlock label="architecture" prompt="" code={architecture} />
+        <Steps>
+          <li><strong>A router.</strong> One Node process in your login session. It talks to Telegram's bot API and keeps sessions and topics in a local SQLite file. It checks every message and tap against your user id.</li>
+          <li><strong>A Claude Code plugin.</strong> A channel and a few hooks. Each session you start with <code>tg-claude</code> registers with the router and gets its folder's topic.</li>
+          <li><strong>tmux, for sessions started from the phone.</strong> <code>new orbit-api: fix the flaky test</code> opens Claude Code in a tmux session on your PC. It is an ordinary session, so you can attach to it later at the desk.</li>
+        </Steps>
+      </div>
+    </Section>
+
+    <Section id="addons" index="04" eyebrow="addons" title="The core is small. Addons do the rest.">
+      <div class="td-addons">
+        <FeatureCard wide title="Voice, notes, modes and digest." body="Voice, notes, quick questions and the digest are addons: separate programs that get only the access their manifest declares. All of them are off until you say so. Write your own in any language that can read and write JSON lines." i={0}>
+          <Fragment slot="mock">
+            <Phone bare label="The /addons list in the General topic, with buttons to enable addons">
+              <ChatHeader slot="header" title="General" subtitle="topic" kind="topic" avatar="G" tone={4} />
+              <ul class="tgm-chat">
+                <Bubble side="out">/addons</Bubble>
+                <Bubble side="in" sender="stolik">voice · off · hears voice notes<br />notes · on · reads note: messages<br />modes · on · quick, read, web<br />digest · off · reads the chat log</Bubble>
+                <Keyboard>
+                  <Key>Enable voice</Key>
+                  <Key variant="approve">Enable all</Key>
+                </Keyboard>
+              </ul>
+            </Phone>
+          </Fragment>
+        </FeatureCard>
+      </div>
+      <p class="td-small td-addons-link"><a href={url('docs/addons/')}>How addons work →</a></p>
+    </Section>
+
+    <Section id="local-first" index="05" eyebrow="local-first" title="What runs where." lede="stolik is a program on your PC and a bot that you own." width="narrow">
+      <FactList>
+        <div>
+          <dt>No stolik server.</dt>
+          <dd>There is no stolik cloud, account or telemetry. The router runs on your machine and talks to Telegram's bot API with your own bot token.</dd>
+        </div>
+        <div>
+          <dt>Only you.</dt>
+          <dd>The router checks every message and every button tap against your Telegram user id. It ignores anyone else who finds the bot.</dd>
+        </div>
+        <div>
+          <dt>Telegram sees the chat.</dt>
+          <dd>What you send and what the session answers pass through Telegram, like any bot chat. They are not end-to-end encrypted. Don't have the agent post secrets.</dd>
+        </div>
+        <div>
+          <dt>Speech stays local.</dt>
+          <dd>A Whisper model on your machine transcribes voice notes. There is no hosted fallback.</dd>
+        </div>
+        <div>
+          <dt>Plain files.</dt>
+          <dd>State is one SQLite file. The chat log is JSONL, plus a readable Markdown file per day. The bot token sits in a file only your user can read.</dd>
+        </div>
+      </FactList>
+      <p class="td-small td-muted td-facts-note">Addons are not sandboxed. They run as you, so install only ones you have read. Claude Code talks to Anthropic as it always does, and stolik does not change that.</p>
+    </Section>
+
+    <Section id="faq" index="06" eyebrow="faq" title="Fair questions." width="narrow">
+      <Faq>
+        <FaqItem question="Is stolik free?">Yes. It is open source under the Apache-2.0 licence and there is no paid tier or account. You pay for what you already pay for: your Claude plan. The quick, read and web modes use your Claude usage like any other run, and each answer shows what it cost.</FaqItem>
+        <FaqItem question="Does my code leave my machine?">stolik has no server, and the router runs on your PC. Two things do travel. The messages in your Telegram group (what you write and what the session answers) pass through Telegram. Claude Code talks to Anthropic exactly as it does without stolik. A model on your machine transcribes voice notes.</FaqItem>
+        <FaqItem question="Why the flag?">Claude Code loads a channel plugin only if it is on Anthropic's list, and stolik is not on that list. It needs the flag until that changes. So sessions start with <code>--dangerously-load-development-channels</code>, which <code>tg-claude</code> adds for you. The flag loads one plugin, stolik's, and nothing else. <a href={url('docs/why-the-flag/')}>The long answer</a>.</FaqItem>
+        <FaqItem question="Does stolik press Enter for me?">Yes, in one place. Claude Code shows a warning screen every time a session starts with the flag. For sessions that stolik starts from Telegram, the router presses Enter on that screen through tmux, because nobody is at the keyboard. Sessions you start yourself show the warning and wait for you.</FaqItem>
+        <FaqItem question="Who can talk to my bot?">Only you. Setup stores your Telegram user id, and the router checks every message and button tap against it, in the group and in the bot's private chat. <code>/lock</code> goes further: the bot ignores everything until you unlock it at the desk.</FaqItem>
+        <FaqItem question="Which platforms work?">Linux, with a systemd user session. The macOS code exists, but nobody ran it on a Mac yet. WSL2 has install notes and no test run. stolik does not support native Windows.</FaqItem>
+        <FaqItem question="Do I need a GPU?">No. Topics, approvals, resume, notes and the modes need no local models. Voice notes and the digest use an optional local model worker, which runs on the CPU if there is no CUDA. It needs uv, a C++ compiler and CMake to build.</FaqItem>
+        <FaqItem question="Does it work with other agents or chat apps?">Today it works with Claude Code and Telegram only.</FaqItem>
+      </Faq>
+    </Section>
+
+    <Section id="cta" index="07" eyebrow="install" title="Leave the desk. Keep the session." lede="Free, Apache-2.0 licensed, and it runs on the machine you already have." align="center">
+      <div class="cta">
+        <CodeBlock variant="inline" code="npx stolik setup" prompt="$" />
+        <div class="cta-buttons">
+          <Button variant="primary" size="lg" href={url('docs/install/')}>Read the install guide</Button>
+          <Button variant="secondary" size="lg" href="https://github.com/indicozy/stolik" iconEnd="arrow-up-right">View on GitHub</Button>
+        </div>
+      </div>
+    </Section>
+  </main>
+  <SiteFooter />
+</BaseLayout>
+<style>
+  .td-hero { padding-block: var(--sp-12) var(--section-y); }
+  .td-hero-grid { display: grid; gap: var(--sp-12); align-items: center; }
+  .td-hero-copy { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-5); min-width: 0; }
+  .td-hero-copy .td-display { max-width: 14ch; }
+  .td-hero-copy .td-lede { max-width: var(--w-prose); }
+  .td-hero-install { width: 100%; max-width: 34rem; }
+  .td-hero-ctas { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+  .td-hero-visual { min-width: 0; position: relative; }
+  /* Phone column: mascot sits above the phone on mobile, left of its lower edge from 641px up. */
+  .td-hero-device { position: relative; width: min(100%, 320px); margin-inline: auto; display: flex; flex-direction: column; }
+  .td-hero-mascot { order: -1; align-self: center; width: 112px; margin-bottom: var(--sp-4); }
+  @media (min-width: 40.0625em) {
+    .td-hero-device { display: block; }
+    .td-hero-mascot { position: absolute; z-index: 2; right: calc(100% - 8px); bottom: var(--sp-10); width: 140px; margin: 0; }
+  }
+  @media (min-width: 64em) {
+    .td-hero-grid { grid-template-columns: 1.1fr 0.9fr; }
+    .td-hero-device { margin-inline: auto 0; }
+  }
+  .tgm-list { display: flex; flex-direction: column; }
+  .tgm-chat { display: flex; flex-direction: column; gap: 4px; }
+  .qs { display: grid; gap: var(--sp-6); max-width: 40rem; }
+  .qs code, .hw code, .td-facts-note, .td-addons-link, .cta code { font-family: var(--font-mono); }
+  .qs code, .hw code { font-size: 0.92em; }
+  .hw { display: grid; gap: var(--sp-8); }
+  .td-addons-link { margin-top: var(--sp-6); }
+  .td-facts-note { margin-top: var(--sp-6); }
+  .cta { display: grid; justify-items: center; gap: var(--sp-6); }
+  .cta-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-3); }
+</style>

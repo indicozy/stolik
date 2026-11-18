@@ -1,0 +1,22 @@
+/* Shared Telegram-mock base rules (global: several mock components render a bubble). */
+.tgm-bubble {
+  position: relative;
+  max-width: min(82%, 22rem);
+  padding: 7px 11px 8px;
+  border-radius: var(--radius-bubble);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.tgm-bubble::after { content: ''; display: block; clear: both; }
+.tgm-bubble.is-in {
+  align-self: flex-start;
+  background: var(--tg-in);
+  border-bottom-left-radius: var(--radius-xs);
+  box-shadow: var(--shadow-1);
+}
+.tgm-bubble.is-out {
+  align-self: flex-end;
+  background: var(--tg-out);
+  border-bottom-right-radius: var(--radius-xs);
+}

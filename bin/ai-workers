@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# ai-workers: what the Claude sessions, subagents, heavy jobs and GPUs are doing now (same text as /workers).
+#   ai-workers              report with the Haiku summary line per busy session
+#   ai-workers --no-llm     raw last-activity lines only (no claude call)
+#   ai-workers --send       also send the report to Telegram via tg-notify --raw
+set -uo pipefail
+self="$(readlink -f "$0")"
+repo="$(cd "$(dirname "$self")/.." && pwd -P)"
+exec node "$repo/dist/addons/workers/cli.js" "$@"

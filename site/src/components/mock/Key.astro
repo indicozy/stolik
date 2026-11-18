@@ -1,0 +1,59 @@
+---
+import Icon from '../Icon.astro';
+
+interface Props {
+  variant?: 'approve' | 'deny' | 'neutral';
+  state?: 'default' | 'chosen' | 'sibling';
+  decorative?: boolean;
+}
+
+const { variant = 'neutral', state = 'default', decorative = false } = Astro.props;
+const Tag = decorative ? 'span' : 'button';
+const icon = variant === 'approve' ? 'check' : variant === 'deny' ? 'x' : undefined;
+---
+<Tag
+  class:list={['tgm-key', `is-${variant}`, `is-${state}`]}
+  type={decorative ? undefined : 'button'}
+  aria-hidden={decorative ? 'true' : undefined}
+>
+  {icon && <Icon name={icon} size={16} />}
+  <slot />
+</Tag>
+<style>
+  .tgm-key {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding-inline: var(--sp-2);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--tg-in);
+    color: var(--accent-text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .tgm-key > * { position: relative; }
+  .tgm-key::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--hover-fill);
+    opacity: 0;
+  }
+  .tgm-key:hover::before { opacity: 1; }
+  .tgm-key.is-approve { background: linear-gradient(var(--success-soft), var(--success-soft)), var(--tg-in); color: var(--success); }
+  .tgm-key.is-deny { background: linear-gradient(var(--danger-soft), var(--danger-soft)), var(--tg-in); color: var(--danger); }
+  .tgm-key.is-chosen.is-approve { background: var(--success); color: var(--on-success); }
+  .tgm-key.is-chosen.is-deny { background: var(--danger); color: var(--on-danger); }
+  .tgm-key.is-sibling { opacity: 0.4; pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .tgm-key:active { transform: scale(0.97); }
+  }
+</style>

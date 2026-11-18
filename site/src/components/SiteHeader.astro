@@ -1,0 +1,107 @@
+---
+import Logo from './Logo.astro';
+import Badge from './Badge.astro';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { url } from '../lib/url';
+
+const links = [
+  { label: 'Features', href: url('#features') },
+  { label: 'Quickstart', href: url('#quickstart') },
+  { label: 'FAQ', href: url('#faq') },
+  { label: 'Docs', href: url('docs/install/') },
+];
+const repo = 'https://github.com/indicozy/stolik';
+---
+<header class="td-header">
+  <div class="td-container td-header-inner">
+    <div class="td-header-start">
+      <Logo />
+      <span class="td-header-badge"><Badge tone="preview" size="sm">Developer preview</Badge></span>
+    </div>
+    <nav class="td-nav" aria-label="Main">
+      {links.map((l) => <a class="td-nav-link td-small" href={l.href}>{l.label}</a>)}
+    </nav>
+    <div class="td-header-end">
+      <span class="td-header-github"><Button variant="ghost" size="sm" href={repo} iconEnd="arrow-up-right">GitHub</Button></span>
+      <ThemeToggle />
+      <span class="td-header-cta"><Button variant="primary" size="sm" href={url('#quickstart')}>Get started</Button></span>
+      <details class="td-menu">
+        <summary class="td-icon-btn" aria-label="Menu"><Icon name="menu" size={20} /></summary>
+        <div class="td-menu-panel">
+          {links.map((l) => <a class="td-menu-link td-small" href={l.href}>{l.label}</a>)}
+          <div class="td-menu-cta"><Button variant="primary" size="md" href={url('#quickstart')}>Get started</Button></div>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+<style>
+  .td-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    height: var(--header-h);
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--dur-2);
+  }
+  :global(html[data-scrolled]) .td-header { border-bottom-color: var(--line); }
+  .td-header-inner {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+  }
+  .td-header-start { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
+  .td-header-badge { display: none; }
+  .td-nav { display: none; }
+  .td-nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .td-nav-link:hover, .td-nav-link[aria-current] { color: var(--text); }
+  .td-header-end { display: flex; align-items: center; gap: var(--sp-2); }
+  .td-header-github { display: none; }
+  .td-header-cta { display: none; }
+  .td-menu { position: relative; }
+  .td-menu > summary { list-style: none; }
+  .td-menu > summary::-webkit-details-marker { display: none; }
+  .td-menu-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: calc(-1 * var(--gutter));
+    left: calc(-1 * var(--gutter));
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    box-shadow: var(--shadow-2);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    z-index: var(--z-overlay);
+  }
+  .td-menu-link {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding-inline: var(--gutter);
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .td-menu-cta { padding: var(--sp-4) var(--gutter); }
+  .td-menu-cta :global(.td-btn) { width: 100%; }
+
+  @media (min-width: 40em) {
+    .td-header-badge { display: inline-flex; }
+    .td-header-github { display: inline-flex; }
+  }
+  @media (min-width: 50em) {
+    .td-nav { display: flex; gap: var(--sp-6); }
+    .td-header-cta { display: inline-flex; }
+    .td-menu { display: none; }
+  }
+</style>

@@ -1,0 +1,9 @@
+node_modules
+dist
+stt/.venv
+test/.tmp-resume
+
+test/.tmp-*
+ml/.venv
+ml/.smoke
+__pycache__

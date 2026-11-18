@@ -1,0 +1,110 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  code: string;
+  label?: string;
+  prompt?: string;
+  variant?: 'block' | 'inline';
+  lang?: string;
+}
+
+const { code, label = 'terminal', prompt = '$', variant = 'block' } = Astro.props;
+const lines = code.split('\n');
+---
+<div class:list={['td-code', `td-code-${variant}`]} data-copy-block>
+  {variant === 'block' && (
+    <div class="td-code-head">
+      <span class="td-code-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="td-code-label">{label}</span>
+      <span class="td-code-spacer"></span>
+    </div>
+  )}
+  <pre class="td-code-body"><code>{lines.map((line) => (
+    <>{prompt && <span class="td-prompt" aria-hidden="true">{prompt} </span>}{line}{'\n'}</>
+  ))}</code></pre>
+  <button type="button" class="td-copy" data-copy={code} aria-label="Copy command">
+    <span class="td-copy-idle"><Icon name="copy" size={16} /></span>
+    <span class="td-copy-done"><Icon name="check" size={16} /></span>
+  </button>
+  <span class="td-sr-only" data-copy-live aria-live="polite"></span>
+</div>
+<style>
+  .td-code {
+    position: relative;
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    min-width: 0;
+    color: var(--text);
+  }
+  .td-code-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    height: 36px;
+    padding-inline: var(--sp-4);
+    border-bottom: 1px solid var(--line);
+    padding-right: 44px;
+  }
+  .td-code-dots { display: inline-flex; gap: 6px; margin-right: var(--sp-2); }
+  .td-code-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+  .td-code-label { font-family: var(--font-mono); font-size: var(--fs-mono-sm); color: var(--text-muted); }
+  .td-code-spacer { flex: 1; }
+  .td-code-body {
+    margin: 0;
+    padding: var(--sp-4) var(--sp-5);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    line-height: var(--lh-mono);
+    white-space: pre;
+    tab-size: 2;
+    overflow-x: auto;
+    color: var(--text);
+  }
+  .td-code-body code { font: inherit; background: none; border: 0; padding: 0; }
+  .td-prompt { color: var(--code-comment); user-select: none; }
+
+  .td-code-inline { display: flex; align-items: center; height: 48px; }
+  .td-code-inline .td-code-body {
+    flex: 1;
+    min-width: 0;
+    padding: 0 var(--sp-4);
+    line-height: 48px;
+    overflow: hidden;
+  }
+  .td-code-inline .td-code-body code { display: block; overflow: hidden; }
+  .td-code-inline .td-copy { margin-right: var(--sp-2); position: relative; }
+  .td-code-inline .td-copy { top: 0; right: 0; }
+  @media (max-width: 39.99em) {
+    .td-code-inline .td-code-body {
+      -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent);
+      mask-image: linear-gradient(to right, black calc(100% - 40px), transparent);
+    }
+  }
+
+  .td-copy {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .td-code-inline .td-copy { position: relative; top: auto; right: auto; flex: none; }
+  .td-copy:hover { color: var(--text); background: var(--hover-fill); }
+  .td-copy-idle, .td-copy-done { grid-area: 1 / 1; display: grid; place-items: center; }
+  .td-copy-done { color: var(--success); opacity: 0; transform: scale(0.6); }
+  .td-copy.is-copied .td-copy-done { opacity: 1; transform: none; }
+  .td-copy.is-copied .td-copy-idle { opacity: 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .td-copy-done { transition: transform var(--dur-3) var(--ease-spring), opacity var(--dur-2); }
+  }
+</style>

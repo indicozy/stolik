@@ -1,0 +1,31 @@
+tg-bridge commands (send them in General):
+/list: live sessions, and the folders you can start one in
+/to <name> <text>: send to a session, or start one in a trusted folder
+/resume: continue an ended session (live ones are listed too)
+/usage: mode runs and cost today and this week, with the quota pace
+/model [name|default]: the model new sessions start with (running ones keep theirs)
+/digest [date] — summary (if the digest addon is on)
+/addons: list, enable or disable addons
+/away: send everything here
+/here: stop messages until you touch the desktop
+/lock: ignore all messages until unlocked at the desk (tg-bridge-ctl unlock)
+/bind: run once in the group to make it the bot's home (owner only)
+/debug: router status and debug logging (/debug on [minutes], /debug off)
+Reply to any message with /trace to see what the router did with it.
+
+Words that start a message in General, followed by a colon, comma or dash:
+to <name>: send to a session (also: send to, отправь в)
+new <project>: start a session in a folder (also: new, новая, новый)
+note: save to the notes inbox on the PC, not sent to the agent (also: note, заметка, запиши)
+quick: a question, answered with no tools (also: quick, question, вопрос, быстро)
+read: a read-only check of the PC and projects (also: read, check, почитай, проверь)
+web: a web search answer (also: web, search, поиск, загугли)
+Inside a folder topic only /new and /silent are parsed; every other message goes to a session of that folder.
+
+Topics: one topic per folder in the group, shared by the sessions in it. Each answer, approval and question names its session.
+A plain message in a folder topic goes to the session that wrote last there. Swipe-reply to a message to pick its session.
+/new [text] in a folder topic starts another session in that folder (the text is its first message). After a bare /new, the next message there goes to the new session.
+/silent [30m|2h|1d|1w|off|status] in a folder topic: mute its answers and finished tasks (approvals and questions still ping).
+The topic closes when the last session in its folder ends; the next session there reopens it.
+A plain General message goes to the session active in the last 30 minutes. Otherwise you get buttons: a session, New, quick, read or web.
+DM: the private chat is a fallback only. Once the group is set up, messages here are not routed; use the group.

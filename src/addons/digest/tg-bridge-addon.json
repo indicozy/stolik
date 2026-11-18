@@ -1,0 +1,12 @@
+{
+  "name": "digest",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [
+    { "point": "command", "name": "digest" },
+    { "point": "schedule", "everyMinutes": 5 }
+  ],
+  "access": ["message.text", "chatlog.read", "usage.read", "messages.send"],
+  "requires": ["ml-worker"]
+}

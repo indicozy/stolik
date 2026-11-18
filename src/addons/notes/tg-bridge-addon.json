@@ -1,0 +1,9 @@
+{
+  "name": "notes",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [{ "point": "prefix", "words": ["note", "заметка", "запиши"] }],
+  "access": ["message.text", "message.files"],
+  "requires": []
+}

@@ -1,0 +1,9 @@
+{
+  "name": "voice-cleanup",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [{ "point": "text-filter" }],
+  "access": ["message.text", "sessions.names"],
+  "requires": ["ml-worker"]
+}

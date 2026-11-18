@@ -1,0 +1,24 @@
+---
+interface Props {
+  resolved?: string;
+}
+
+const { resolved } = Astro.props;
+---
+<li class="tgm-keys">
+  {resolved ? (
+    <p class="tgm-resolved">{resolved}</p>
+  ) : (
+    <div class="tgm-keys-grid" role="group" aria-label="Choose an answer"><slot /></div>
+  )}
+</li>
+<style>
+  .tgm-keys {
+    align-self: flex-start;
+    width: min(82%, 22rem);
+    margin-top: 4px;
+  }
+  .tgm-keys-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tgm-keys-grid > * { flex: 1 1 0; }
+  .tgm-resolved { font-size: 12.5px; color: var(--text-muted); padding-inline: 4px; }
+</style>

@@ -1,0 +1,41 @@
+---
+import { url } from '../lib/url';
+
+// The wrapping element sets the size; this component fills it. The square art sits on a rounded #0B0F14 tile.
+interface Props {
+  bob?: boolean;
+  sizes?: string;
+}
+
+const { bob = false, sizes = '200px' } = Astro.props;
+---
+<span class:list={['td-mascot', { 'td-mascot-bob': bob }]}>
+  <img
+    src={url('mascot/stolik-mascot-512.webp')}
+    srcset={`${url('mascot/stolik-mascot-256.webp')} 256w, ${url('mascot/stolik-mascot-512.webp')} 512w`}
+    sizes={sizes}
+    width="512"
+    height="512"
+    alt="stolik mascot, a blue blob carrying a terminal"
+    decoding="async"
+  />
+</span>
+<style>
+  .td-mascot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 14%;
+    background: #0b0f14;
+    overflow: hidden;
+    box-shadow: var(--shadow-2);
+  }
+  .td-mascot img { display: block; width: 100%; height: 100%; }
+  @media (prefers-reduced-motion: no-preference) {
+    .td-mascot-bob { animation: td-mascot-bob 2.4s ease-in-out infinite; }
+  }
+  @keyframes td-mascot-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+</style>

@@ -1,0 +1,121 @@
+---
+import Icon from '../Icon.astro';
+
+interface Props {
+  name: string;
+  time: string;
+  preview: string;
+  tag: string;
+  tone?: 1 | 2 | 3 | 4 | 5;
+  sender?: string;
+  state?: 'default' | 'unread' | 'needs-approval' | 'active' | 'muted';
+  count?: number;
+  pill?: string;
+}
+
+const { name, time, preview, tag, tone = 1, sender, state = 'default', count, pill = 'approve' } = Astro.props;
+---
+<li class:list={['tgm-topic', `is-${state}`]}>
+  <span class="tgm-glyph" style={`--av: var(--av-${tone})`} aria-hidden="true">{tag}</span>
+  <span class="tgm-topic-body">
+    <span class="tgm-topic-line">
+      <span class="tgm-topic-name">{name}</span>
+      <span class="tgm-time">{time}</span>
+    </span>
+    <span class="tgm-topic-line">
+      <span class="tgm-preview">{sender && <span class="tgm-sender">{sender}: </span>}{preview}</span>
+      {state === 'unread' && <span class="tgm-pill">{count}</span>}
+      {state === 'muted' && <span class="tgm-pill is-muted">{count}</span>}
+      {state === 'needs-approval' && (
+        <span class="tgm-approve"><span class="tgm-approve-dot" aria-hidden="true"></span>{pill}</span>
+      )}
+    </span>
+  </span>
+</li>
+<style>
+  .tgm-topic {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 60px;
+    padding-inline: var(--sp-3);
+    border-radius: var(--radius-sm);
+  }
+  .tgm-topic::after {
+    content: '';
+    position: absolute;
+    left: 64px;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--line);
+  }
+  .tgm-topic:last-child::after { display: none; }
+  .tgm-topic.is-active { background: var(--surface-2); }
+  .tgm-glyph {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-md);
+    background: var(--av);
+    color: var(--on-accent);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .tgm-topic-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .tgm-topic-line { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+  .tgm-topic-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tgm-time { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; flex: none; }
+  .tgm-preview {
+    flex: 1;
+    min-width: 0;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tgm-sender { color: var(--text); }
+  .tgm-pill {
+    flex: none;
+    min-width: 20px;
+    height: 20px;
+    padding-inline: 6px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .tgm-pill.is-muted { background: var(--surface-2); color: var(--text-muted); }
+  .tgm-approve {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 20px;
+    padding-inline: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-2-soft);
+    color: var(--accent-2-text);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .tgm-approve-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-2-text); }
+</style>

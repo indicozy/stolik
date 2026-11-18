@@ -1,0 +1,11 @@
+{
+  "name": "usage-watch",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [
+    { "point": "schedule", "everyMinutes": 15 },
+    { "point": "command", "name": "usagecheck" }
+  ],
+  "access": ["messages.send"]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "ml-worker",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [],
+  "access": ["message.audio", "message.text", "sessions.names"],
+  "requires": [],
+  "serves": ["generate", "transcribe", "clean"]
+}

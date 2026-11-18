@@ -1,0 +1,49 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  question: string;
+}
+
+const { question } = Astro.props;
+---
+<details class="td-faq-item">
+  <summary class="td-faq-q">
+    <span class="td-faq-title">{question}</span>
+    <span class="td-faq-plus"><Icon name="plus" size={20} /></span>
+  </summary>
+  <div class="td-faq-body"><slot /></div>
+</details>
+<style>
+  .td-faq-item { border-bottom: 1px solid var(--line); }
+  .td-faq-q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding-block: var(--sp-5);
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .td-faq-q::-webkit-details-marker { display: none; }
+  .td-faq-q:hover .td-faq-title { color: var(--accent-text); }
+  .td-faq-plus { color: var(--text-muted); display: grid; place-items: center; }
+  .td-faq-item[open] .td-faq-plus { transform: rotate(45deg); }
+  @media (prefers-reduced-motion: no-preference) {
+    .td-faq-plus { transition: transform var(--dur-3) var(--ease-out); }
+  }
+  .td-faq-body {
+    max-width: var(--w-prose);
+    padding-bottom: var(--sp-5);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-muted);
+  }
+  .td-faq-body :global(a) { color: var(--accent-text); }
+</style>

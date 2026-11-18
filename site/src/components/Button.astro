@@ -1,0 +1,70 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  href?: string;
+  icon?: string;
+  iconEnd?: string;
+  disabled?: boolean;
+  label?: string;
+}
+
+const { variant = 'primary', size = 'md', href, icon, iconEnd, disabled = false, label } = Astro.props;
+const iconSize = { sm: 16, md: 18, lg: 20 }[size];
+const Tag = href ? (disabled ? 'span' : 'a') : 'button';
+---
+<Tag
+  class:list={['td-btn', `td-btn-${variant}`, `td-btn-${size}`]}
+  href={Tag === 'a' ? href : undefined}
+  type={Tag === 'button' ? 'button' : undefined}
+  disabled={Tag === 'button' ? disabled : undefined}
+  aria-disabled={disabled && Tag !== 'button' ? 'true' : undefined}
+  aria-label={label}
+>
+  {icon && <Icon name={icon} size={iconSize} />}
+  <slot />
+  {iconEnd && <Icon name={iconEnd} size={iconSize} />}
+</Tag>
+<style>
+  .td-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-1), color var(--dur-1),
+      transform var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+  }
+  .td-btn-sm { height: 32px; padding: 0 var(--sp-3); font-size: 13px; }
+  .td-btn-md { height: 40px; padding: 0 var(--sp-4); font-size: 15px; }
+  .td-btn-lg { height: 48px; padding: 0 var(--sp-6); font-size: 16px; }
+
+  .td-btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--keycap); }
+  .td-btn-primary:hover { background: var(--accent-hover); }
+  .td-btn-secondary {
+    background: var(--surface); color: var(--text); border-color: var(--line-strong);
+    box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.11);
+  }
+  .td-btn-secondary:hover { background: var(--surface-2); }
+  .td-btn-ghost { background: transparent; color: var(--text); }
+  .td-btn-ghost:hover { background: var(--hover-fill); }
+  .td-btn-ghost:active { background: var(--surface-2); }
+
+  .td-btn:active { box-shadow: none; }
+
+  .td-btn[disabled], .td-btn[aria-disabled='true'] { opacity: 0.5; pointer-events: none; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .td-btn:hover:not([disabled]) { transform: translateY(-1px); }
+    .td-btn:active:not([disabled]) { transform: translateY(1px); }
+  }
+</style>

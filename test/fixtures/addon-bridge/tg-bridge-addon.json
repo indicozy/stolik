@@ -1,0 +1,12 @@
+{
+  "name": "addon-bridge",
+  "version": "0.1.0",
+  "protocol": 2,
+  "command": ["node", "index.mjs"],
+  "provides": [
+    { "point": "prefix", "words": ["bridge"] },
+    { "point": "reply" }
+  ],
+  "access": ["message.text", "messages.send"],
+  "requires": []
+}

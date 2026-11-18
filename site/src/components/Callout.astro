@@ -1,0 +1,24 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+<aside class="td-callout">
+  <p class="td-callout-title">{title}</p>
+  <div class="td-callout-body td-small"><slot /></div>
+</aside>
+<style>
+  .td-callout {
+    display: grid;
+    gap: var(--sp-3);
+    padding: var(--sp-5);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+  }
+  .td-callout-title { font-family: var(--font-display); font-weight: 600; color: var(--text); }
+  .td-callout-body :global(ul) { display: grid; gap: var(--sp-2); padding-left: 1.25em; list-style: disc; }
+  .td-callout-body :global(li::marker) { color: var(--text-muted); }
+</style>

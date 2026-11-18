@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# tg-claude: claude with the tg-bridge channel enabled. Installed as `alias claude=tg-claude`.
+# Non-interactive and management subcommands run the plain claude binary unchanged.
+set -euo pipefail
+
+# Long-lived OAuth token (from `claude setup-token`) shared by every session, so concurrent sessions no longer refresh
+# and rotate the one login in ~/.claude/.credentials.json (a refresh race logged sessions out). Only
+# CLAUDE_CODE_OAUTH_TOKEN is read from the file; it is never put on a command line. An already set value wins.
+TG_CLAUDE_TOKEN_FILE="${TG_CLAUDE_TOKEN_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/tg-bridge/claude.env}"
+if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -r "$TG_CLAUDE_TOKEN_FILE" ]; then
+  tok="$(sed -n 's/^CLAUDE_CODE_OAUTH_TOKEN=//p' "$TG_CLAUDE_TOKEN_FILE" | head -n 1)"
+  if [ -n "$tok" ]; then export CLAUDE_CODE_OAUTH_TOKEN="$tok"; fi
+  unset tok
+fi
+
+# Subcommands that run the plain claude binary. The fallback list is used when `claude --help` cannot be read; otherwise
+# every subcommand in its Commands section counts. That list is cached in the state dir and re-read after a day.
+CLAUDE_SUBCOMMANDS_FALLBACK="mcp config plugin plugins update upgrade doctor install setup-token migrate-installer"
+
+# The subcommand names, one per line: the fallback list plus the cached names from `claude --help`. Never fails.
+claude_subcommands() {
+  local cache="${XDG_STATE_HOME:-$HOME/.local/state}/tg-bridge-v3/claude-subcommands" names help
+  # One attempt a day: a failed or empty read is cached too, so an unreadable help does not slow every launch.
+  if [ ! -e "$cache" ] || [ -n "$(find "$cache" -mmin +1440 2>/dev/null)" ]; then
+    help="$(timeout 10 claude --help 2>/dev/null || true)"
+    names="$(printf '%s\n' "$help" | awk '/^Commands:/{f=1; next} /^[^ ]/{f=0} f && /^  [a-z][a-z0-9-]*([ |]|$)/{print $1}' | tr '|' '\n')"
+    mkdir -p "$(dirname "$cache")" 2>/dev/null && printf '%s\n' "$names" > "$cache.tmp" 2>/dev/null && mv "$cache.tmp" "$cache" 2>/dev/null || true
+  fi
+  printf '%s\n' $CLAUDE_SUBCOMMANDS_FALLBACK
+  [ -r "$cache" ] && cat "$cache" || true
+}
+
+passthrough=0
+case "${1:-}" in
+  -v|--version|-h|--help) passthrough=1 ;;
+  ""|-*) ;;
+  *)
+    subs="$(claude_subcommands)"
+    grep -qxF -- "$1" <<<"$subs" && passthrough=1 || true
+    ;;
+esac
+for arg in "$@"; do
+  case "$arg" in -p|--print) passthrough=1 ;; esac
+done
+
+# Inside a script the alias is not expanded, so this runs the real claude binary.
+if [ "$passthrough" = 1 ]; then
+  exec claude "$@"
+fi
+
+# Self channel: a router on a non-default socket (a trial instance, or a session the router spawned for one) must
+# register with its own channel server, not with the user-scope "tg-bridge" one. Chosen only when TG_BRIDGE_CHANNEL=self
+# (the router sets it on every session it starts with a non-default socket; see src/adapters/tmux.ts). The channel server
+# is this checkout's dist/channel.js, started through bin/tg-plugin-node (nodePath from config.json, then node on PATH),
+# and claude is given only that server (--strict-mcp-config) so the old "tg-bridge" server is not loaded.
+sock="${TG_BRIDGE_SOCKET:-}"
+if [ "${TG_BRIDGE_CHANNEL:-}" = self ]; then
+  repo="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+  json_str() { local s=${1//\\/\\\\}; s=${s//\"/\\\"}; printf '"%s"' "$s"; }
+  env_json="\"MCP_PROTOCOL_NEGOTIATION\":\"legacy\""
+  if [ -n "$sock" ]; then env_json="\"TG_BRIDGE_SOCKET\":$(json_str "$sock"),$env_json"; fi
+  mcp_json="{\"mcpServers\":{\"tg-bridge-v3\":{\"command\":$(json_str "$repo/bin/tg-plugin-node"),\"args\":[$(json_str "$repo/dist/channel.js")],\"env\":{$env_json}}}}"
+  exec claude --mcp-config "$mcp_json" --strict-mcp-config --dangerously-load-development-channels server:tg-bridge-v3 "$@"
+fi
+
+# Default: the channel server registered by install.sh (user-scope MCP "tg-bridge"). TG_BRIDGE_PLUGIN=1 loads the
+# Claude Code plugin in plugin/ instead (local marketplace "indicozy"; install it once with /plugin install).
+if [ "${TG_BRIDGE_PLUGIN:-0}" = 1 ]; then
+  exec claude --dangerously-load-development-channels plugin:tg-bridge@indicozy "$@"
+fi
+exec claude --dangerously-load-development-channels server:tg-bridge "$@"

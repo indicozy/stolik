@@ -1,0 +1,520 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import Section from '../components/Section.astro';
+import Specimen from '../components/Specimen.astro';
+import Logo from '../components/Logo.astro';
+import Mascot from '../components/Mascot.astro';
+import Button from '../components/Button.astro';
+import Badge from '../components/Badge.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import FeatureCard from '../components/FeatureCard.astro';
+import Faq from '../components/Faq.astro';
+import FaqItem from '../components/FaqItem.astro';
+import Icon from '../components/Icon.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import Phone from '../components/mock/Phone.astro';
+import ChatHeader from '../components/mock/ChatHeader.astro';
+import TopicRow from '../components/mock/TopicRow.astro';
+import Bubble from '../components/mock/Bubble.astro';
+import Keyboard from '../components/mock/Keyboard.astro';
+import Key from '../components/mock/Key.astro';
+import VoiceNote from '../components/mock/VoiceNote.astro';
+import Typing from '../components/mock/Typing.astro';
+import ServiceLine from '../components/mock/ServiceLine.astro';
+import { url } from '../lib/url';
+
+const colorTokens = [
+  '--bg', '--surface', '--surface-2', '--line', '--line-strong', '--text', '--text-muted',
+  '--accent', '--accent-hover', '--on-accent', '--accent-text', '--accent-soft',
+  '--accent-2', '--accent-2-text', '--accent-2-soft',
+  '--success', '--on-success', '--success-soft', '--danger', '--on-danger', '--danger-soft',
+  '--focus', '--hover-fill', '--code-bg', '--code-comment',
+  '--tg-bg', '--tg-in', '--tg-out', '--tg-out-meta', '--device',
+  '--av-1', '--av-2', '--av-3', '--av-4', '--av-5',
+];
+
+// Table 2.2. `on` = background token(s); `over` = base the tint is composited onto (worst case).
+const aaRows = [
+  { label: 'text on bg / surface / surface-2 / code-bg', fg: '--text', on: '--bg --surface --surface-2 --code-bg' },
+  { label: 'text-muted on bg / surface / surface-2 / code-bg', fg: '--text-muted', on: '--bg --surface --surface-2 --code-bg' },
+  { label: 'accent-text on bg / surface / surface-2 / code-bg', fg: '--accent-text', on: '--bg --surface --surface-2 --code-bg' },
+  { label: 'accent-2-text on bg / surface / surface-2 / code-bg', fg: '--accent-2-text', on: '--bg --surface --surface-2 --code-bg' },
+  { label: 'success on bg / surface / surface-2', fg: '--success', on: '--bg --surface --surface-2' },
+  { label: 'danger on bg / surface / surface-2', fg: '--danger', on: '--bg --surface --surface-2' },
+  { label: 'on-accent on accent / accent-hover / accent-2', fg: '--on-accent', on: '--accent --accent-hover --accent-2' },
+  { label: 'on-success on success', fg: '--on-success', on: '--success' },
+  { label: 'on-danger on danger', fg: '--on-danger', on: '--danger' },
+  { label: 'accent-text on own soft tint (worst of bg, surface, surface-2)', fg: '--accent-text', on: '--accent-soft', over: '--bg --surface --surface-2' },
+  { label: 'accent-2-text on own soft tint (worst)', fg: '--accent-2-text', on: '--accent-2-soft', over: '--bg --surface --surface-2' },
+  { label: 'success on own soft tint (worst)', fg: '--success', on: '--success-soft', over: '--bg --surface --surface-2' },
+  { label: 'danger on own soft tint (worst)', fg: '--danger', on: '--danger-soft', over: '--bg --surface --surface-2' },
+  { label: 'code-comment on code-bg', fg: '--code-comment', on: '--code-bg' },
+  { label: 'text on tg-in / tg-out', fg: '--text', on: '--tg-in --tg-out' },
+  { label: 'text-muted on tg-in / tg-bg', fg: '--text-muted', on: '--tg-in --tg-bg' },
+  { label: 'tg-out-meta on tg-out', fg: '--tg-out-meta', on: '--tg-out' },
+  { label: 'success on soft tint over tg-in (approve key)', fg: '--success', on: '--success-soft', over: '--tg-in' },
+  { label: 'danger on soft tint over tg-in (deny key)', fg: '--danger', on: '--danger-soft', over: '--tg-in' },
+  { label: 'line-strong on bg / surface / surface-2 (UI, min 3)', fg: '--line-strong', on: '--bg --surface --surface-2', min: 3 },
+  { label: 'focus on bg / surface / surface-2 (UI, min 3)', fg: '--focus', on: '--bg --surface --surface-2', min: 3 },
+];
+
+const spacing = ['--sp-1', '--sp-2', '--sp-3', '--sp-4', '--sp-5', '--sp-6', '--sp-8', '--sp-10', '--sp-12', '--sp-16', '--sp-20', '--sp-24'];
+const radii = ['--radius-xs', '--radius-sm', '--radius-md', '--radius-lg', '--radius-bubble', '--radius-device', '--radius-pill'];
+const shadows = ['--shadow-1', '--shadow-2', '--shadow-3', '--shadow-4', '--glow-lamp'];
+const typeRoles = [
+  { name: 'display', cls: 'td-display', meta: '36→60px · lh 1.04 · 700 · -0.03em' },
+  { name: 'h1', cls: 'td-h1', meta: '30→40px · lh 1.1 · 700 · -0.025em' },
+  { name: 'h2', cls: 'td-h2', meta: '24→30px · lh 1.15 · 650 · -0.02em' },
+  { name: 'h3', cls: 'td-h3', meta: '20px · lh 1.3 · 600 · -0.01em' },
+  { name: 'lede', cls: 'td-lede', meta: '17→19px · lh 1.55 · 400' },
+  { name: 'body', cls: 'type-body', meta: '16px · lh 1.65 · 400' },
+  { name: 'small', cls: 'td-small', meta: '14px · lh 1.5 · 400 (500 labels)' },
+  { name: 'micro', cls: 'td-micro', meta: '12px · lh 1.4 · 500' },
+  { name: 'mono', cls: 'type-mono', meta: '14px · lh 1.6 · 400' },
+  { name: 'mono-sm', cls: 'type-mono-sm', meta: '13px · lh 1.4 · 500' },
+  { name: 'eyebrow', cls: 'td-eyebrow', meta: '12px · lh 1.4 · 500 · 0.08em uppercase' },
+];
+const motion = [
+  { token: '--dur-1', value: '100ms', use: 'press, colour' },
+  { token: '--dur-2', value: '160ms', use: 'hover, icon swap' },
+  { token: '--dur-3', value: '240ms', use: 'card lift, accordion' },
+  { token: '--dur-4', value: '420ms', use: 'bubble pop-in, rise-in' },
+  { token: '--dur-5', value: '600ms', use: 'hero entrance' },
+  { token: '--ease-out', value: 'cubic-bezier(.22, 1, .36, 1)', use: 'enter and move' },
+  { token: '--ease-spring', value: 'cubic-bezier(.34, 1.56, .64, 1)', use: 'pop-ins' },
+  { token: '--ease-in-out', value: 'cubic-bezier(.4, 0, .2, 1)', use: 'loops' },
+  { token: '--stagger', value: '60ms', use: 'calc(var(--i) * var(--stagger))' },
+];
+const iconNames = ['arrow-up-right', 'arrow-right', 'check', 'check-check', 'chevron-left', 'copy', 'menu', 'mic', 'moon', 'more-vertical', 'pause', 'play', 'plus', 'sun', 'x'];
+---
+<BaseLayout title="Design system" description="stolik design system, low-fidelity showcase." noindex>
+  <SiteHeader />
+  <main id="main" class="ds">
+    <Section id="intro" index="01" eyebrow="intro" title="stolik design system" lede="Low-fidelity first pass. Every token and component, in light and dark side by side. Placeholder palette and fonts.">
+      <div class="intro-row td-rise" style="--i: 3">
+        <Logo size="lg" />
+        <Badge tone="preview" dot>Developer preview</Badge>
+        <p class="td-small td-muted">Your desk, in your pocket.</p>
+        <ThemeToggle />
+      </div>
+    </Section>
+
+    <Section id="colour" index="02" eyebrow="colour" title="Colour tokens and contrast" lede="Each swatch prints its computed value. The contrast table is computed live, in each theme.">
+      <Specimen>
+        <div class="swatches">
+          {colorTokens.map((t) => (
+            <div class="swatch" data-token={t}>
+              <span class="swatch-chip" style={`background: var(${t})`}></span>
+              <span class="type-mono-sm">{t}</span>
+              <span class="swatch-value type-mono-sm td-muted" data-value></span>
+            </div>
+          ))}
+        </div>
+      </Specimen>
+      <h3 class="sub-h td-h3">Contrast (table 2.2)</h3>
+      <Specimen>
+        <div class="aa-list">
+          {aaRows.map((r) => (
+            <div class="aa-row" data-aa-row data-fg={r.fg} data-on={r.on} data-over={r.over ?? ''} data-min={r.min ?? 4.5}>
+              <span class="aa-base" style={`background: var(${(r.over ?? r.on).split(' ')[0]})`}>
+                <span class="aa-sample" style={`color: var(${r.fg}); background: var(${r.on.split(' ')[0]})`}>Aa</span>
+              </span>
+              <span class="aa-label td-small">{r.label}</span>
+              <span class="aa-ratio type-mono-sm" data-ratios></span>
+            </div>
+          ))}
+        </div>
+      </Specimen>
+    </Section>
+
+    <Section id="type" index="03" eyebrow="type" title="Type roles" lede="Display and body faces are placeholders; the sizes and tracking follow table 2.3.">
+      <Specimen>
+        <div class="type-list">
+          {typeRoles.map((r) => (
+            <div class="type-item">
+              <p class="type-meta type-mono-sm td-muted">{r.name} · {r.meta}</p>
+              <p class={r.cls}>Approve <code>rm -rf node_modules</code> from the bus stop.</p>
+            </div>
+          ))}
+          <div class="type-item">
+            <p class="type-meta type-mono-sm td-muted">paragraph · max-width --w-prose</p>
+            <p class="type-body">stolik keeps your agents running on your PC. Messages, approvals and voice notes travel through one private Telegram chat, and the phone only pings you when you are away from the desk.</p>
+          </div>
+        </div>
+      </Specimen>
+    </Section>
+
+    <Section id="space" index="04" eyebrow="spacing, radii, shadows" title="Scale" lede="A 4px spacing scale, radius steps and elevation. Shadows are large and soft, never hard drop shadows.">
+      <div class="scale">
+        <h3 class="sub-h td-h3">Spacing</h3>
+        {spacing.map((s) => (
+          <div class="space-row">
+            <span class="type-mono-sm td-muted">{s}</span>
+            <span class="space-bar" style={`width: var(${s})`}></span>
+          </div>
+        ))}
+        <h3 class="sub-h td-h3">Radii</h3>
+        <div class="radius-row">
+          {radii.map((r) => (
+            <div class="radius-item">
+              <span class="radius-square" style={`border-radius: var(${r})`}></span>
+              <span class="type-mono-sm td-muted">{r}</span>
+            </div>
+          ))}
+        </div>
+        <h3 class="sub-h td-h3">Shadows</h3>
+        <Specimen>
+          <div class="shadow-row">
+            {shadows.map((s) => (
+              <div class="shadow-card" style={`box-shadow: var(${s})`}>
+                <span class="type-mono-sm">{s}</span>
+              </div>
+            ))}
+          </div>
+        </Specimen>
+      </div>
+    </Section>
+
+    <Section id="motion" index="05" eyebrow="motion" title="Motion tokens" lede="Motion is limited to the contract in 2.5. Play tiles are skipped in this low-fidelity pass.">
+      <table class="motion-table">
+        <thead><tr><th scope="col">Token</th><th scope="col">Value</th><th scope="col">Used for</th></tr></thead>
+        <tbody>
+          {motion.map((m) => (
+            <tr><td class="type-mono-sm">{m.token}</td><td class="type-mono-sm">{m.value}</td><td class="td-small">{m.use}</td></tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="reduced-note td-small" data-reduced hidden>Reduced motion is ON: animations are disabled.</p>
+    </Section>
+
+    <Section id="components" index="06" eyebrow="components" title="Components" lede="One specimen per component, light and dark. The header and footer on this page are live instances.">
+      <div class="spec-stack">
+        <h3 class="sub-h td-h3">Logo (4.1)</h3>
+        <Specimen>
+          <div class="spec-row">
+            <Logo size="sm" />
+            <Logo />
+            <Logo size="lg" />
+          </div>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Mascot</h3>
+        <Specimen>
+          <div class="ds-mascot">
+            <Mascot />
+          </div>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Button (4.2)</h3>
+        <Specimen>
+          <div class="spec-col">
+            <div class="spec-row">
+              <Button variant="primary" size="sm">Primary sm</Button>
+              <Button variant="primary" size="md">Primary md</Button>
+              <Button variant="primary" size="lg">Primary lg</Button>
+            </div>
+            <div class="spec-row">
+              <Button variant="secondary" size="md" icon="plus">Secondary</Button>
+              <Button variant="ghost" size="md" iconEnd="arrow-right">Ghost</Button>
+              <Button variant="primary" size="md" disabled>Disabled</Button>
+            </div>
+          </div>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Badge (4.3)</h3>
+        <Specimen>
+          <div class="spec-row">
+            <Badge tone="neutral">neutral</Badge>
+            <Badge tone="accent">accent</Badge>
+            <Badge tone="preview" dot>Developer preview</Badge>
+            <Badge tone="success">success</Badge>
+            <Badge tone="danger" size="sm">danger sm</Badge>
+          </div>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Code and install block (4.4)</h3>
+        <Specimen>
+          <div class="spec-col">
+            <CodeBlock code="npx stolik setup" />
+            <CodeBlock variant="inline" code="npx stolik setup" prompt="$" />
+          </div>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Section (4.5)</h3>
+        <p class="td-small td-muted">Each section on this page is the component: eyebrow "02 / colour", title, lede, then the content slot.</p>
+
+        <h3 class="sub-h td-h3">Feature card and grid (4.6)</h3>
+        <Specimen>
+          <div class="spec-cards">
+            <FeatureCard title="A topic per project" body="Each session gets its own topic." i={0}>
+              <Fragment slot="mock">
+                <ul class="tgm-list">
+                  <TopicRow name="garden-app" time="14:01" preview="Layout tests passed." tag="ga" tone={3} state="unread" count={3} />
+                </ul>
+              </Fragment>
+            </FeatureCard>
+            <FeatureCard title="Wide card" body="From lg: text column 32%, mock on the right." wide i={1}>
+              <Fragment slot="mock">
+                <ol class="tgm-chat">
+                  <Bubble side="in" sender="api-server">Run npm test in api-server?</Bubble>
+                  <Bubble side="out">Approve</Bubble>
+                </ol>
+              </Fragment>
+            </FeatureCard>
+          </div>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Header, theme toggle and footer (4.7, 4.8)</h3>
+        <p class="td-small td-muted">The header above and footer below are the live components. The toggle sits in the intro row and the header.</p>
+
+        <h3 class="sub-h td-h3">FAQ (4.8)</h3>
+        <Specimen>
+          <Faq>
+            <FaqItem question="Is stolik free?">Placeholder answer with a <code>code</code> span and a link.</FaqItem>
+          </Faq>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Telegram mock family (4.9)</h3>
+        <Specimen>
+          <div class="spec-col">
+            <ChatHeader title="garden-app" subtitle="4 topics" kind="count" avatar="ga" tone={3} />
+            <ChatHeader title="api-server" subtitle="online" kind="online" avatar="as" tone={2} />
+            <ChatHeader title="api-server" subtitle="stolik is typing…" kind="typing" avatar="as" tone={2} />
+            <ChatHeader title="notes" subtitle="topic" kind="topic" avatar=">_" tone={5} />
+          </div>
+        </Specimen>
+        <Specimen>
+          <ul class="tgm-list">
+            <TopicRow name="garden-app" time="14:01" preview="Layout tests passed." tag="ga" tone={3} state="unread" count={3} />
+            <TopicRow name="api-server" time="13:58" preview="Run npm test?" tag="as" tone={2} state="needs-approval" />
+            <TopicRow name="docs-site" time="Mon" preview="Build is green." tag="ds" tone={4} state="muted" count={2} />
+            <TopicRow name="notes" time="Sun" preview="Session resumed" tag=">_" tone={5} state="active" />
+          </ul>
+        </Specimen>
+        <Specimen>
+          <ol class="tgm-chat">
+            <ServiceLine>Today</ServiceLine>
+            <Bubble side="in" sender="api-server">Run <code>npm test</code> in api-server?</Bubble>
+            <Keyboard>
+              <Key variant="approve">Approve</Key>
+              <Key variant="deny">Deny</Key>
+              <Key variant="neutral">Later</Key>
+            </Keyboard>
+            <Keyboard>
+              <Key variant="approve" state="chosen">Approve</Key>
+              <Key variant="deny" state="sibling">Deny</Key>
+            </Keyboard>
+            <Keyboard resolved="Approved by you · 14:02" />
+            <Bubble side="in" kind="code">npm test{'\n'}12 passed · 0 failed</Bubble>
+            <Bubble side="out">Thanks, ship it.</Bubble>
+            <VoiceNote state="playing" played={9} transcript="Ship the fix once the tests pass." />
+            <VoiceNote state="transcribing" />
+            <VoiceNote state="transcribed" transcript="Ship the fix once the tests pass." />
+            <Typing />
+            <Typing inline />
+          </ol>
+        </Specimen>
+        <Specimen>
+          <div class="spec-row">
+            <Phone bare label="Bare phone: topic list">
+              <ul class="tgm-list">
+                <TopicRow name="garden-app" time="14:01" preview="Layout tests passed." tag="ga" tone={3} state="unread" count={3} />
+              </ul>
+            </Phone>
+          </div>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Full played chat (4.9, showcase example)</h3>
+        <Specimen>
+          <Phone>
+            <ChatHeader slot="header" title="api-server" subtitle="online" kind="online" avatar="as" tone={2} />
+            <ol class="tgm-chat">
+              <ServiceLine>Today</ServiceLine>
+              <Bubble side="out">Run the tests after the migration.</Bubble>
+              <Bubble side="in" sender="api-server">Run <code>npm test</code> in api-server?</Bubble>
+              <Keyboard>
+                <Key variant="approve" state="chosen">Approve</Key>
+                <Key variant="deny" state="sibling">Deny</Key>
+              </Keyboard>
+              <Keyboard resolved="Approved by you · 14:02" />
+              <Bubble side="in" kind="code">npm test{'\n'}12 passed · 0 failed</Bubble>
+              <VoiceNote state="transcribed" transcript="Ship the fix once the tests pass." />
+            </ol>
+          </Phone>
+        </Specimen>
+
+        <h3 class="sub-h td-h3">Icons (4.10)</h3>
+        <Specimen>
+          <div class="icon-grid">
+            {iconNames.map((n) => (
+              <div class="icon-cell">
+                <Icon name={n} size={20} />
+                <span class="type-mono-sm td-muted">{n}</span>
+              </div>
+            ))}
+          </div>
+        </Specimen>
+      </div>
+    </Section>
+
+    <Section id="docs-check" index="07" eyebrow="docs check" title="Compare with the docs" lede="The placeholder install page uses the same tokens through Starlight. Open it and compare:">
+      <ul class="docs-list td-small">
+        <li>Fonts: display face on the title, body face on paragraphs, mono on code.</li>
+        <li>Link colour and underline offset (<code>--accent-text</code>).</li>
+        <li>Current sidebar item and its background.</li>
+        <li>Code block frame, radius and inline code.</li>
+        <li>Focus ring: amber, 2px, offset 2px.</li>
+      </ul>
+      <p class="docs-link"><a href={url('docs/install/')}>Open the install page</a></p>
+    </Section>
+  </main>
+  <SiteFooter />
+</BaseLayout>
+
+<style>
+  .ds { display: block; }
+  .intro-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4) var(--sp-6); }
+  .sub-h { margin-top: var(--sp-12); margin-bottom: var(--sp-4); }
+  .sub-h:first-child { margin-top: 0; }
+  .td-muted { color: var(--text-muted); }
+  .type-mono { font-family: var(--font-mono); font-size: var(--fs-mono); line-height: var(--lh-mono); }
+  .type-mono-sm { font-family: var(--font-mono); font-size: var(--fs-mono-sm); line-height: 1.4; font-weight: 500; }
+  .type-body { font-size: var(--fs-body); line-height: var(--lh-body); }
+
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-4); }
+  .swatch { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+  .swatch-chip { display: block; width: 100%; height: 56px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+  .swatch-value { overflow-wrap: anywhere; }
+
+  .aa-list { display: flex; flex-direction: column; }
+  .aa-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    align-items: center;
+    gap: var(--sp-3);
+    padding-block: var(--sp-2);
+    border-bottom: 1px solid var(--line);
+    border-radius: var(--radius-xs);
+  }
+  .aa-row[data-aa='fail'] { outline: 2px solid var(--danger); outline-offset: 2px; }
+  .aa-row[data-aa='pass'] .aa-ratio { color: var(--success); }
+  .aa-base { display: grid; place-items: center; height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+  .aa-sample { font-weight: 700; padding: 2px 6px; border-radius: var(--radius-xs); }
+  .aa-ratio { text-align: right; white-space: nowrap; }
+
+  .type-list { display: flex; flex-direction: column; gap: var(--sp-6); }
+  .type-item { display: flex; flex-direction: column; gap: var(--sp-2); }
+  .type-meta { margin: 0; }
+
+  .scale { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .space-row { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: var(--sp-3); }
+  .space-bar { display: block; height: 12px; background: var(--accent-text); border-radius: var(--radius-xs); min-width: 2px; }
+  .radius-row { display: flex; flex-wrap: wrap; gap: var(--sp-5); }
+  .radius-item { display: flex; flex-direction: column; gap: var(--sp-2); align-items: flex-start; }
+  .radius-square { display: block; width: 64px; height: 64px; border: 2px solid var(--accent-text); background: var(--accent-soft); }
+  .shadow-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--sp-8); padding: var(--sp-6); }
+  .shadow-card {
+    display: flex;
+    align-items: flex-end;
+    height: 110px;
+    padding: var(--sp-3);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    color: var(--text);
+  }
+
+  .motion-table { width: 100%; border-collapse: collapse; }
+  .motion-table th, .motion-table td { text-align: left; padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--line); }
+  .motion-table th { font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+  .reduced-note { margin-top: var(--sp-4); color: var(--accent-2-text); }
+  .reduced-note[hidden] { display: none; }
+
+  .spec-stack { display: flex; flex-direction: column; }
+  .spec-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); }
+  .ds-mascot { width: min(100%, 320px); }
+  .spec-col { display: flex; flex-direction: column; gap: var(--sp-3); width: 100%; min-width: 0; }
+  .spec-cards { display: grid; grid-template-columns: 1fr; gap: var(--sp-4); }
+  @media (min-width: 64em) { .spec-cards { grid-template-columns: repeat(6, minmax(0, 1fr)); } .spec-cards > :first-child { grid-column: span 2; } .spec-cards > :last-child { grid-column: span 4; } }
+  .tgm-list { display: flex; flex-direction: column; width: 100%; }
+  .tgm-chat { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+  .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--sp-4); }
+  .icon-cell { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2); }
+
+  .docs-list { display: flex; flex-direction: column; gap: var(--sp-2); list-style: disc; padding-left: var(--sp-5); }
+  .docs-link { margin-top: var(--sp-4); }
+</style>
+
+<script>
+  // Swatch values: the computed colour of each chip, in the theme it sits in.
+  document.querySelectorAll<HTMLElement>('.swatch').forEach((sw) => {
+    const chip = sw.querySelector<HTMLElement>('.swatch-chip');
+    const out = sw.querySelector<HTMLElement>('[data-value]');
+    if (chip && out) out.textContent = getComputedStyle(chip).backgroundColor;
+  });
+
+  type RGBA = [number, number, number, number];
+
+  // Resolve a token to a computed colour, inside the element that holds the row (so its data-theme applies).
+  function resolve(host: HTMLElement, token: string): RGBA {
+    const probe = document.createElement('span');
+    probe.style.display = 'none';
+    probe.style.backgroundColor = `var(${token})`;
+    host.appendChild(probe);
+    const c = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return parse(c);
+  }
+
+  function parse(c: string): RGBA {
+    const nums = (c.match(/[-\d.]+/g) ?? []).map(Number);
+    if (c.startsWith('color(')) return [nums[0] * 255, nums[1] * 255, nums[2] * 255, nums[3] ?? 1];
+    return [nums[0], nums[1], nums[2], nums[3] ?? 1];
+  }
+
+  function over(top: RGBA, under: RGBA): RGBA {
+    const a = top[3];
+    return [a * top[0] + (1 - a) * under[0], a * top[1] + (1 - a) * under[1], a * top[2] + (1 - a) * under[2], 1];
+  }
+
+  function lum(c: RGBA): number {
+    const [r, g, b] = c.slice(0, 3).map((v) => {
+      const s = v / 255;
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+
+  function ratio(a: RGBA, b: RGBA): number {
+    const la = lum(a);
+    const lb = lum(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+
+  const floor1 = (x: number) => Math.floor(x * 10) / 10;
+
+  document.querySelectorAll<HTMLElement>('[data-aa-row]').forEach((row) => {
+    const fg = resolve(row, row.dataset.fg ?? '--text');
+    const on = (row.dataset.on ?? '').split(' ').filter(Boolean);
+    const bases = (row.dataset.over ?? '').split(' ').filter(Boolean);
+    const min = Number(row.dataset.min ?? 4.5);
+    const ratios: number[] = [];
+    on.forEach((t) => {
+      const tint = resolve(row, t);
+      if (bases.length === 0) {
+        ratios.push(floor1(ratio(fg, tint)));
+      } else {
+        bases.forEach((b) => ratios.push(floor1(ratio(fg, over(tint, resolve(row, b))))));
+      }
+    });
+    row.dataset.aa = ratios.every((r) => r >= min) ? 'pass' : 'fail';
+    const out = row.querySelector<HTMLElement>('[data-ratios]');
+    if (out) out.textContent = ratios.map((r) => r.toFixed(1)).join(' · ');
+  });
+
+  // Reduced motion note.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll<HTMLElement>('[data-reduced]').forEach((p) => { p.hidden = false; });
+  }
+</script>

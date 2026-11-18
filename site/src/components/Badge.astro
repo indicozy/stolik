@@ -1,0 +1,71 @@
+---
+interface Props {
+  tone?: 'neutral' | 'accent' | 'preview' | 'success' | 'danger';
+  dot?: boolean;
+  size?: 'sm' | 'md';
+}
+
+const { tone = 'neutral', dot = false, size = 'md' } = Astro.props;
+---
+<span class:list={['td-badge', `td-badge-${tone}`, `td-badge-${size}`]}>
+  {dot && <span class="td-badge-dot" aria-hidden="true"></span>}
+  <slot />
+</span>
+<style>
+  .td-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .td-badge-sm { height: 20px; padding: 0 8px; font-size: 12px; }
+  .td-badge-md { height: 24px; padding: 0 10px; }
+
+  .td-badge-neutral { background: var(--surface-2); color: var(--text-muted); border-color: var(--line); }
+  .td-badge-accent {
+    background: var(--accent-soft); color: var(--accent-text);
+    border-color: color-mix(in srgb, var(--accent-text) 30%, transparent);
+  }
+  .td-badge-preview {
+    background: var(--accent-2-soft); color: var(--accent-2-text);
+    border-color: color-mix(in srgb, var(--accent-2-text) 35%, transparent);
+  }
+  .td-badge-success {
+    background: var(--success-soft); color: var(--success);
+    border-color: color-mix(in srgb, var(--success) 30%, transparent);
+  }
+  .td-badge-danger {
+    background: var(--danger-soft); color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  }
+
+  .td-badge-dot {
+    position: relative;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .td-badge-dot::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: currentColor;
+      animation: td-ping 1.6s var(--ease-out) infinite;
+    }
+    @keyframes td-ping {
+      from { transform: scale(1); opacity: 0.6; }
+      to { transform: scale(2.2); opacity: 0; }
+    }
+  }
+</style>

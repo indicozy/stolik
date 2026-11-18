@@ -1,0 +1,9 @@
+{
+  "name": "voice",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [{ "point": "media", "kinds": ["voice"] }],
+  "access": ["message.audio"],
+  "requires": ["ml-worker"]
+}

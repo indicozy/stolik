@@ -1,0 +1,10 @@
+{
+  "name": "workers",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [
+    { "point": "command", "name": "workers" }
+  ],
+  "access": ["messages.send"]
+}

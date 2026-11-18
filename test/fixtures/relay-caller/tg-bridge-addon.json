@@ -1,0 +1,9 @@
+{
+  "name": "relay-caller",
+  "version": "0.1.0",
+  "protocol": 2,
+  "command": ["node", "index.mjs"],
+  "provides": [{ "point": "media", "kinds": ["voice"] }, { "point": "text-filter" }],
+  "access": ["message.audio", "message.text", "sessions.names"],
+  "requires": ["ml-fake"]
+}

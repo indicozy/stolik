@@ -1,0 +1,38 @@
+#!/bin/sh
+# Claude Code PostToolUse hook (plan 1.2). Forwards the event to the router only while a permission prompt of this
+# Claude session is pending: the router keeps a marker file named after the Claude pid in pending/, beside the router
+# socket (src/adapters/hooks/pending-marker.ts). Without a marker it exits at once. Usage in settings.json:
+# tg-posttool-hook <node> <repo>/dist/hook.js. Always exits 0.
+# The folder comes from the socket path: TG_BRIDGE_SOCKET (set by the router for its sessions), else the default socket
+# in $XDG_RUNTIME_DIR. Keep this rule in step with pendingDir() in pending-marker.ts.
+node="$1"
+hook="$2"
+sock="${TG_BRIDGE_SOCKET:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/tg-bridge.sock}"
+dir="${sock%/*}/pending"
+[ -d "$dir" ] || exit 0
+[ -n "$node" ] && [ -n "$hook" ] || exit 0
+
+# Walk up from the parent process (the Claude process is a few levels up: the hook runs through a shell).
+p="$PPID"
+i=0
+found=""
+while [ -n "$p" ] && [ "$p" -gt 1 ] && [ "$i" -lt 12 ]; do
+  if [ -f "$dir/$p" ]; then
+    found=1
+    break
+  fi
+  if [ -r "/proc/$p/stat" ]; then
+    read -r stat < "/proc/$p/stat" || stat=""
+    rest="${stat##*) }"
+    set -- $rest
+    ppid="$2"
+  else
+    ppid="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')"
+  fi
+  p="$ppid"
+  i=$((i + 1))
+done
+[ -n "$found" ] || exit 0
+
+"$node" "$hook" PostToolUse >/dev/null 2>&1
+exit 0

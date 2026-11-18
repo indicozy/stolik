@@ -1,0 +1,29 @@
+---
+// Renders the slot twice, once per theme. Tokens resolve through the nearest data-theme.
+const html = await Astro.slots.render('default');
+---
+<div class="td-specimen">
+  <div class="td-spec" data-theme="light">
+    <span class="td-spec-label td-micro">light</span>
+    <div class="td-spec-body" set:html={html}></div>
+  </div>
+  <div class="td-spec" data-theme="dark">
+    <span class="td-spec-label td-micro">dark</span>
+    <div class="td-spec-body" set:html={html}></div>
+  </div>
+</div>
+<style>
+  .td-specimen { display: grid; gap: var(--sp-4); }
+  @media (min-width: 64em) { .td-specimen { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .td-spec {
+    min-width: 0;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-6);
+  }
+  .td-spec-label { display: block; margin-bottom: var(--sp-4); color: var(--text-muted); font-family: var(--font-mono); }
+  .td-spec-body { display: flex; flex-direction: column; gap: var(--sp-4); align-items: flex-start; min-width: 0; }
+  .td-spec-body > * { max-width: 100%; }
+</style>

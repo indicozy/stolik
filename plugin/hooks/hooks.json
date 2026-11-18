@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/../bin/tg-plugin-node \"${CLAUDE_PLUGIN_ROOT}\"/../dist/hook.js UserPromptSubmit", "timeout": 5 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/../bin/tg-plugin-node \"${CLAUDE_PLUGIN_ROOT}\"/../dist/hook.js Stop", "timeout": 5 }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/../bin/tg-plugin-node \"${CLAUDE_PLUGIN_ROOT}\"/../dist/hook.js Notification", "timeout": 5 }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/../bin/tg-plugin-node \"${CLAUDE_PLUGIN_ROOT}\"/../dist/hook.js PermissionRequest", "timeout": 3600 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/../bin/tg-posttool-hook \"${CLAUDE_PLUGIN_ROOT}\"/../bin/tg-plugin-node \"${CLAUDE_PLUGIN_ROOT}\"/../dist/hook.js", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# tg-notify: send yourself a Telegram message. Thin wrapper around dist/notify.js (resolved via symlink).
+#   tg-notify "build finished"
+#   some-command | tg-notify
+#   tg-notify --raw "text"            # no [project] tag, direct send
+#   tg-notify --file ./out.png "done" # repeatable; files go through the router
+#   tg-notify --silent "progress"     # no ping (--critical: always pings)
+set -uo pipefail
+self="$(readlink -f "$0")"
+repo="$(cd "$(dirname "$self")/.." && pwd -P)"
+exec node "$repo/dist/notify.js" "$@"

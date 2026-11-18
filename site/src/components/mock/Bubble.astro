@@ -1,0 +1,57 @@
+---
+import Icon from '../Icon.astro';
+
+interface Props {
+  side?: 'in' | 'out';
+  kind?: 'text' | 'code';
+  sender?: string;
+  time?: string;
+}
+
+const { side = 'in', kind = 'text', sender, time = '14:02' } = Astro.props;
+---
+<li class:list={['tgm-bubble', `is-${side}`, `is-${kind}`]}>
+  {sender && side === 'in' && <span class="tgm-sender">{sender}</span>}
+  {kind === 'code' ? (
+    <pre class="tgm-code"><code><slot /></code></pre>
+  ) : (
+    <span class="tgm-text"><slot /></span>
+  )}
+  <span class="tgm-meta">
+    <span>{time}</span>
+    {side === 'out' && <Icon name="check-check" size={14} />}
+  </span>
+</li>
+<style>
+  .tgm-sender {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-text);
+  }
+  .tgm-text { display: inline; }
+  .tgm-code {
+    margin: 4px 0 0;
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--code-bg);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .tgm-code code { font: inherit; background: none; border: 0; padding: 0; }
+  .tgm-meta {
+    float: right;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin: 6px 0 0 var(--sp-3);
+    font-size: 11.5px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+  .tgm-bubble.is-out .tgm-meta { color: var(--tg-out-meta); }
+</style>

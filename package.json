@@ -1,0 +1,33 @@
+{
+  "name": "tg-bridge",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "tg-bridge": "dist/cli/tg-bridge.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -p . && for a in modes notes ml-worker voice voice-cleanup digest router usage-watch cost-guard workers; do cp src/addons/$a/tg-bridge-addon.json dist/addons/$a/; done && cp src/addons/usage-watch/check.py dist/addons/usage-watch/",
+    "test": "node --test --experimental-strip-types test/*.test.ts && python3 -I -m unittest discover -s ml -p 'test_*.py' && python3 -I -m unittest discover -s test -p 'test_usage_*.py'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "grammy": "^1.30.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  },
+  "optionalDependencies": {
+    "@discordjs/core": "2.7.0",
+    "@discordjs/formatters": "0.6.2",
+    "@discordjs/rest": "2.6.3",
+    "@discordjs/ws": "2.0.4",
+    "discord-api-types": "0.38.59"
+  }
+}

@@ -1,0 +1,46 @@
+---
+interface Props {
+  inline?: boolean;
+  label?: string;
+}
+
+const { inline = false, label = 'stolik is typing' } = Astro.props;
+---
+{inline ? (
+  <span class="tgm-typing-inline" role="img" aria-label={label}><span class="tgm-dots"><i></i><i></i><i></i></span></span>
+) : (
+  <li class="tgm-bubble tgm-typing is-in" role="img" aria-label={label}>
+    <span class="tgm-dots"><i></i><i></i><i></i></span>
+  </li>
+)}
+<style>
+  .tgm-typing {
+    align-self: flex-start;
+    width: 52px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-bubble);
+    border-bottom-left-radius: var(--radius-xs);
+    background: var(--tg-in);
+    box-shadow: var(--shadow-1);
+  }
+  .tgm-dots { display: inline-flex; gap: 4px; }
+  .tgm-dots i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    opacity: 0.6;
+  }
+  .tgm-typing-inline .tgm-dots i { background: var(--accent-text); }
+  @media (prefers-reduced-motion: no-preference) {
+    .tgm-dots i { animation: td-dot 1.2s var(--ease-in-out) infinite; opacity: 0.4; }
+    .tgm-dots i:nth-child(2) { animation-delay: 150ms; }
+    .tgm-dots i:nth-child(3) { animation-delay: 300ms; }
+    @keyframes td-dot {
+      0%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-3px); opacity: 1; }
+    }
+  }
+</style>

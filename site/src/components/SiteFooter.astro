@@ -1,0 +1,81 @@
+---
+import Logo from './Logo.astro';
+import Badge from './Badge.astro';
+import { url } from '../lib/url';
+
+const repo = 'https://github.com/indicozy/stolik';
+const columns = [
+  {
+    title: 'Product',
+    items: [
+      { label: 'Features', href: url('#features') },
+      { label: 'Quickstart', href: url('#quickstart') },
+      { label: 'How it works', href: url('#how-it-works') },
+      { label: 'FAQ', href: url('#faq') },
+    ],
+  },
+  {
+    title: 'Docs',
+    items: [
+      { label: 'Install', href: url('docs/install/') },
+      { label: 'Commands', href: url('docs/commands/') },
+      { label: 'Addons', href: url('docs/addons/') },
+      { label: 'Why the flag?', href: url('docs/why-the-flag/') },
+    ],
+  },
+  {
+    title: 'Project',
+    items: [
+      { label: 'GitHub', href: repo },
+      { label: 'Issues', href: `${repo}/issues` },
+      { label: 'Licence', href: `${repo}/blob/main/LICENSE` },
+    ],
+  },
+];
+---
+<footer class="td-footer">
+  <div class="td-container">
+    <div class="td-footer-grid">
+      <div class="td-footer-brand">
+        <Logo size="sm" tile={40} />
+        <p class="td-small td-muted">Your desk, in your pocket.</p>
+        <div><Badge tone="preview" size="sm">Developer preview</Badge></div>
+      </div>
+      {columns.map((col) => (
+        <nav class="td-footer-col" aria-label={col.title}>
+          <h2 class="td-eyebrow td-muted">{col.title}</h2>
+          <ul>
+            {col.items.map((it) => <li><a class="td-small" href={it.href}>{it.label}</a></li>)}
+          </ul>
+        </nav>
+      ))}
+    </div>
+    <div class="td-footer-bottom td-micro td-muted">
+      <span>Apache-2.0 licensed. © 2026 indicozy.</span>
+      <span>Not affiliated with Telegram or Anthropic.</span>
+    </div>
+  </div>
+</footer>
+<style>
+  .td-footer { border-top: 1px solid var(--line); padding-top: var(--sp-12); padding-bottom: var(--sp-8); }
+  .td-footer-grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-8); }
+  .td-footer-brand { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); }
+  .td-footer-col ul { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); }
+  .td-footer-col a { color: var(--text-muted); text-decoration: none; }
+  .td-footer-col a:hover { color: var(--text); }
+  .td-muted { color: var(--text-muted); }
+  .td-footer-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin-top: var(--sp-10);
+    padding-top: var(--sp-6);
+    border-top: 1px solid var(--line);
+  }
+  @media (min-width: 40em) {
+    .td-footer-bottom { flex-direction: row; justify-content: space-between; }
+  }
+  @media (min-width: 50em) {
+    .td-footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  }
+</style>

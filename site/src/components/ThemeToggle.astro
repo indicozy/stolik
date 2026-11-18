@@ -1,0 +1,13 @@
+---
+import Icon from './Icon.astro';
+---
+<button type="button" class="td-icon-btn td-theme-toggle" data-theme-toggle hidden aria-label="Switch to dark theme">
+  <span class="td-theme-icon td-theme-sun"><Icon name="sun" size={18} /></span>
+  <span class="td-theme-icon td-theme-moon"><Icon name="moon" size={18} /></span>
+</button>
+<style>
+  .td-theme-toggle[hidden] { display: none; }
+  .td-theme-icon { display: grid; place-items: center; transition: transform var(--dur-3) var(--ease-out), opacity var(--dur-3); }
+  :global(:root[data-theme='dark']) .td-theme-moon,
+  :global(:root:not([data-theme='dark'])) .td-theme-sun { display: none; }
+</style>

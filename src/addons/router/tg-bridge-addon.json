@@ -1,0 +1,9 @@
+{
+  "name": "router",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [{ "point": "route" }],
+  "access": ["message.text", "sessions.read"],
+  "requires": ["ml-worker"]
+}

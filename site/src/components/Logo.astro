@@ -1,0 +1,41 @@
+---
+import Mascot from './Mascot.astro';
+import { url } from '../lib/url';
+
+interface Props {
+  size?: 'sm' | 'md' | 'lg';
+  /** Edge length of the mascot tile in px. */
+  tile?: number;
+}
+
+const { size = 'md', tile = 32 } = Astro.props;
+---
+<a class:list={['td-logo', `td-logo-${size}`]} href={url()} aria-label="stolik home" style={`--tile: ${tile}px`}>
+  <span class="td-logo-tile"><Mascot sizes={`${tile}px`} /></span>
+  <span class="td-logo-word">stolik</span>
+</a>
+<style>
+  .td-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-3);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 17px;
+    border-radius: var(--radius-sm);
+  }
+  .td-logo-sm { font-size: 15px; }
+  .td-logo-lg { font-size: 28px; }
+  .td-logo-word { display: inline-flex; align-items: center; }
+  .td-logo-tile {
+    display: block;
+    width: var(--tile);
+    height: var(--tile);
+    flex: none;
+  }
+  .td-logo :global(.td-mascot) { box-shadow: none; }
+</style>
