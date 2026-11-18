@@ -1,0 +1,547 @@
+---
+// "How stolik works" as HTML and CSS. It replaces the PNG that was rendered from
+// stolik-assets/how-stolik-works.html. Same text, same five sections.
+// Layout uses container queries, so it adapts to the width of its parent
+// (the home page section or the docs column), not the viewport.
+---
+<article class="hiw" aria-label="How stolik works">
+  <header>
+    <p class="hiw-brand"><span class="hiw-brand-dot" aria-hidden="true"></span>stolik</p>
+    <p class="hiw-title">talk to all my <span class="hiw-c-claude">Claude Code</span> sessions from <span class="hiw-c-tg">Telegram</span> or <span class="hiw-c-dc">Discord</span></p>
+    <p class="hiw-sub">One bot, two chats, many sessions. Two-way, and it pings me only when needed.</p>
+  </header>
+
+  <!-- 01 Architecture -->
+  <section class="hiw-sec" aria-labelledby="hiw-h-arch">
+    <div class="hiw-sec-head">
+      <span class="hiw-num" aria-hidden="true">01</span>
+      <h3 id="hiw-h-arch" class="hiw-h">Architecture</h3>
+      <p class="hiw-note">one router, many sessions</p>
+    </div>
+
+    <div class="hiw-arch">
+      <div class="hiw-card hiw-chat hiw-tg">
+        <span class="hiw-glyph hiw-glyph-tg" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+            <rect x="6" y="2" width="12" height="20" rx="3"></rect>
+            <line x1="11" y1="18" x2="13" y2="18"></line>
+          </svg>
+        </span>
+        <p class="hiw-name">Telegram</p>
+        <p class="hiw-desc">one group, a topic per folder</p>
+      </div>
+
+      <div class="hiw-link hiw-l-tg" aria-hidden="true">
+        <svg class="hiw-h-svg" viewBox="0 0 88 24" focusable="false"><path d="M12 12H76" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path><path d="M1 12L12 5.5V18.5Z" fill="currentColor"></path><path d="M87 12L76 5.5V18.5Z" fill="currentColor"></path></svg>
+        <svg class="hiw-v-svg" viewBox="0 0 24 40" focusable="false"><path d="M12 12V28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path><path d="M12 1L19 12H5Z" fill="currentColor"></path><path d="M12 39L19 28H5Z" fill="currentColor"></path></svg>
+      </div>
+
+      <div class="hiw-link hiw-mid-b">
+        <p class="hiw-cap">Bot APIs</p>
+      </div>
+
+      <div class="hiw-link hiw-l-dc hiw-dc-color" aria-hidden="true">
+        <svg class="hiw-h-svg" viewBox="0 0 88 24" focusable="false"><path d="M12 12H76" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path><path d="M1 12L12 5.5V18.5Z" fill="currentColor"></path><path d="M87 12L76 5.5V18.5Z" fill="currentColor"></path></svg>
+        <svg class="hiw-v-svg" viewBox="0 0 24 40" focusable="false"><path d="M12 12V28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path><path d="M12 1L19 12H5Z" fill="currentColor"></path><path d="M12 39L19 28H5Z" fill="currentColor"></path></svg>
+      </div>
+
+      <div class="hiw-card hiw-chat hiw-dc hiw-dc-color">
+        <span class="hiw-glyph hiw-glyph-dc" aria-hidden="true">#</span>
+        <p class="hiw-name">Discord</p>
+        <p class="hiw-desc">one private channel per folder</p>
+      </div>
+
+      <div class="hiw-router">
+        <p class="hiw-tag">systemd --user service</p>
+        <h4 class="hiw-h4">Router</h4>
+        <ul class="hiw-list">
+          <li class="hiw-li"><span class="hiw-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" focusable="false"><path d="M4 12h16M14 6l6 6-6 6"></path></svg></span><span><strong>Telegram</strong> <span class="hiw-dim">+ Discord</span></span></li>
+          <li class="hiw-li"><span class="hiw-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" focusable="false"><rect x="4" y="4" width="16" height="6" rx="2"></rect><rect x="4" y="14" width="16" height="6" rx="2"></rect></svg></span><span><strong>Session registry</strong></span></li>
+          <li class="hiw-li"><span class="hiw-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M5 12a7 7 0 0 1 14 0M2 12a10 10 0 0 1 20 0"></path></svg></span><span><strong>Presence</strong> <span class="hiw-dim">detection</span></span></li>
+          <li class="hiw-li"><span class="hiw-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" focusable="false"><path d="M12 3v12M7 9v3a5 5 0 0 0 10 0V9M5 19h14"></path></svg></span><span><strong>Voice</strong> <span class="hiw-dim">transcription</span></span></li>
+        </ul>
+      </div>
+
+      <div class="hiw-link hiw-mid-s">
+        <p class="hiw-cap">unix socket</p>
+        <svg class="hiw-h-svg" viewBox="0 0 88 24" focusable="false"><path d="M12 12H76" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path><path d="M1 12L12 5.5V18.5Z" fill="currentColor"></path><path d="M87 12L76 5.5V18.5Z" fill="currentColor"></path></svg>
+        <svg class="hiw-v-svg" viewBox="0 0 24 40" focusable="false"><path d="M12 12V28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path><path d="M12 1L19 12H5Z" fill="currentColor"></path><path d="M12 39L19 28H5Z" fill="currentColor"></path></svg>
+      </div>
+
+      <div class="hiw-link hiw-l-s1" aria-hidden="true">
+        <svg class="hiw-h-svg" viewBox="0 0 88 24" focusable="false"><path d="M12 12H76" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path><path d="M1 12L12 5.5V18.5Z" fill="currentColor"></path><path d="M87 12L76 5.5V18.5Z" fill="currentColor"></path></svg>
+      </div>
+      <div class="hiw-link hiw-l-s3" aria-hidden="true">
+        <svg class="hiw-h-svg" viewBox="0 0 88 24" focusable="false"><path d="M12 12H76" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path><path d="M1 12L12 5.5V18.5Z" fill="currentColor"></path><path d="M87 12L76 5.5V18.5Z" fill="currentColor"></path></svg>
+      </div>
+
+      <div class="hiw-card hiw-sess hiw-s1">
+        <p class="hiw-proj">[cat-garden]</p>
+        <p class="hiw-what">Claude Code session</p>
+        <p class="hiw-mcp">+ channel MCP server</p>
+      </div>
+      <div class="hiw-card hiw-sess hiw-s2">
+        <p class="hiw-proj">[my-api]</p>
+        <p class="hiw-what">Claude Code session</p>
+        <p class="hiw-mcp">+ channel MCP server</p>
+      </div>
+      <div class="hiw-card hiw-sess hiw-s3">
+        <p class="hiw-proj">[stolik]</p>
+        <p class="hiw-what">Claude Code session</p>
+        <p class="hiw-mcp">+ channel MCP server</p>
+      </div>
+    </div>
+
+    <p class="hiw-legend">
+      <span><span class="hiw-swatch" aria-hidden="true"></span>Telegram / Discord ⇄ Router ⇄ sessions</span>
+      <span><span class="hiw-swatch hiw-swatch-hook" aria-hidden="true"></span>Hooks → router: <code class="hiw-code">Stop</code> · <code class="hiw-code">Notification</code> · <code class="hiw-code">UserPromptSubmit</code></span>
+    </p>
+  </section>
+
+  <!-- 02 Talking to a session -->
+  <section class="hiw-sec" aria-labelledby="hiw-h-talk">
+    <div class="hiw-sec-head">
+      <span class="hiw-num" aria-hidden="true">02</span>
+      <h3 id="hiw-h-talk" class="hiw-h">Talking to a session</h3>
+    </div>
+    <div class="hiw-talks">
+      <div class="hiw-card hiw-talk">
+        <p class="hiw-idx" aria-hidden="true">A</p>
+        <h4 class="hiw-h4">Swipe-reply</h4>
+        <p class="hiw-p">Goes to the session that sent it.</p>
+      </div>
+      <div class="hiw-card hiw-talk">
+        <p class="hiw-idx" aria-hidden="true">B</p>
+        <h4 class="hiw-h4"><code class="hiw-cmd">to &lt;project&gt;: …</code></h4>
+        <p class="hiw-p">Names the session in General. Works by voice too.</p>
+      </div>
+      <div class="hiw-card hiw-talk is-new">
+        <span class="hiw-pill-new">NEW</span>
+        <p class="hiw-idx" aria-hidden="true">C</p>
+        <h4 class="hiw-h4">Plain message</h4>
+        <p class="hiw-p">In a folder topic, it goes to that folder's last session. In General, the one active in the last 30 minutes, or buttons.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 When does it message me -->
+  <section class="hiw-sec" aria-labelledby="hiw-h-when">
+    <div class="hiw-sec-head">
+      <span class="hiw-num" aria-hidden="true">03</span>
+      <h3 id="hiw-h-when" class="hiw-h">When does it message me?</h3>
+    </div>
+    <div class="hiw-away">
+      <p class="hiw-big">Only when <span class="hiw-amber">I'm away</span></p>
+      <p class="hiw-def"><span class="hiw-strong">Away</span> = 5 min idle, screen locked, or <span class="hiw-strong">/away</span></p>
+    </div>
+    <div class="hiw-trigs">
+      <div class="hiw-card hiw-trig">
+        <p class="hiw-n" aria-hidden="true">01</p>
+        <p class="hiw-ic-emoji" aria-hidden="true">✅</p>
+        <h4 class="hiw-h4">Turn finished</h4>
+        <p class="hiw-p">Final message forwarded.</p>
+      </div>
+      <div class="hiw-card hiw-trig">
+        <p class="hiw-n" aria-hidden="true">02</p>
+        <p class="hiw-ic-emoji" aria-hidden="true">🔐</p>
+        <h4 class="hiw-h4">Permission prompt</h4>
+        <p class="hiw-p">Allow or deny from the phone.</p>
+        <p class="hiw-btns" aria-hidden="true"><span>✅ Allow</span><span>❌ Deny</span></p>
+      </div>
+      <div class="hiw-card hiw-trig">
+        <p class="hiw-n" aria-hidden="true">03</p>
+        <p class="hiw-ic-emoji" aria-hidden="true">⏳</p>
+        <h4 class="hiw-h4">Waiting for input</h4>
+        <p class="hiw-p">A nudge, so nothing stalls.</p>
+      </div>
+      <div class="hiw-card hiw-trig">
+        <p class="hiw-n" aria-hidden="true">04</p>
+        <p class="hiw-ic-emoji" aria-hidden="true">🧭</p>
+        <h4 class="hiw-h4">Judgment calls</h4>
+        <p class="hiw-p">Milestones, surprises, and decisions I might veto.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 Phone superpowers -->
+  <section class="hiw-sec" aria-labelledby="hiw-h-super">
+    <div class="hiw-sec-head">
+      <span class="hiw-num" aria-hidden="true">04</span>
+      <h3 id="hiw-h-super" class="hiw-h">Phone superpowers</h3>
+    </div>
+    <div class="hiw-supers">
+      <div class="hiw-card hiw-sp">
+        <p class="hiw-emo hiw-emo-tg" aria-hidden="true">🎙</p>
+        <div>
+          <h4 class="hiw-h4">Voice notes</h4>
+          <p class="hiw-p">Transcribed on your PC. Speech never leaves it.</p>
+        </div>
+      </div>
+      <div class="hiw-card hiw-sp">
+        <p class="hiw-emo hiw-emo-cl" aria-hidden="true">📷</p>
+        <div>
+          <h4 class="hiw-h4">Photos &amp; files</h4>
+          <p class="hiw-p">Land directly in the session.</p>
+        </div>
+      </div>
+      <div class="hiw-card hiw-sp">
+        <p class="hiw-emo hiw-emo-tg" aria-hidden="true">🆕</p>
+        <div>
+          <h4 class="hiw-h4">Start work from the phone</h4>
+          <p class="hiw-p">New sessions in trusted folders, from anywhere.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 Safety rails -->
+  <section class="hiw-sec" aria-labelledby="hiw-h-safe">
+    <div class="hiw-sec-head">
+      <span class="hiw-num" aria-hidden="true">05</span>
+      <h3 id="hiw-h-safe" class="hiw-h">Safety rails</h3>
+    </div>
+    <ul class="hiw-card hiw-chips">
+      <li class="hiw-chip">Only the paired account</li>
+      <li class="hiw-chip">Secrets redacted before sending</li>
+      <li class="hiw-chip">Credential files can't be sent</li>
+      <li class="hiw-chip">Forwarded messages = untrusted data</li>
+      <li class="hiw-chip is-warn">No remote Allow if input was redacted</li>
+      <li class="hiw-chip">Phone-started sessions: trusted folders only, normal permissions</li>
+      <li class="hiw-chip is-kill">/lock kill switch, unlock only at the desk</li>
+      <li class="hiw-chip">Chat log on your PC</li>
+    </ul>
+  </section>
+
+  <footer class="hiw-foot">
+    <p class="hiw-p">Built with Claude Code</p>
+    <p class="hiw-p"><span class="hiw-strong-tg">Node</span> + Telegram + Discord · <span class="hiw-em-cl">runs locally</span></p>
+  </footer>
+</article>
+
+<style>
+  /* Colours come from tokens.css (light-dark on :root, switched by data-theme).
+     Discord has no token, so its hue is defined here, for both themes. */
+  .hiw {
+    --hiw-dc: light-dark(#5B4BC7, #A796FF);
+    container: hiw / inline-size;
+    padding: clamp(1rem, 0.6rem + 2vw, 2.25rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+  }
+
+  /* Header */
+  .hiw-brand {
+    display: flex; align-items: center; gap: var(--sp-3);
+    margin: 0;
+    font: 700 1rem/1 var(--font-mono);
+    letter-spacing: 0.04em;
+    color: var(--accent-text);
+  }
+  .hiw-brand-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--accent-2); }
+  .hiw-title {
+    margin: var(--sp-5) 0 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.5rem, 1.05rem + 2vw, 2.5rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    max-width: 36ch;
+    color: var(--text);
+  }
+  .hiw-c-claude { color: var(--accent-2-text); }
+  .hiw-c-tg { color: var(--accent-text); }
+  .hiw-c-dc { color: var(--hiw-dc); }
+  .hiw-sub {
+    margin: var(--sp-4) 0 0;
+    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+    color: var(--text-muted);
+    max-width: 52ch;
+  }
+
+  /* Sections */
+  .hiw-sec { margin-top: clamp(2rem, 1.5rem + 2vw, 3.5rem); }
+  .hiw-sec-head {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-5);
+  }
+  .hiw-num {
+    font: 700 0.875rem/1 var(--font-mono);
+    color: var(--accent-2-text);
+    padding: 0.5rem 0.7rem;
+    border: 1.5px solid color-mix(in srgb, var(--accent-2-text) 55%, transparent);
+    border-radius: var(--radius-sm);
+  }
+  .hiw-h {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .hiw-h4 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .hiw-note { margin: 0 0 0 auto; font-size: var(--fs-small); color: var(--text-muted); }
+  .hiw-p { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text-muted); }
+  .hiw-dim { color: var(--text-muted); }
+  .hiw-strong { color: var(--text); font-weight: 700; }
+  .hiw-strong-tg { color: var(--accent-text); font-weight: 700; }
+  .hiw-em-cl { color: var(--accent-2-text); font-style: normal; font-weight: 700; }
+  .hiw-amber { color: var(--accent-2-text); }
+  .hiw-code, .hiw-cmd {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    color: var(--accent-text);
+    background: none;
+    border: 0;
+    padding: 0;
+  }
+  .hiw-cmd { font-weight: 600; font-size: 1rem; }
+  .hiw-code { color: var(--text); font-weight: 600; white-space: nowrap; }
+
+  .hiw-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    padding: var(--sp-5);
+  }
+
+  /* Architecture: stacked on narrow widths, a 5-column grid when there is room */
+  .hiw-arch { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-2); justify-items: stretch; }
+  .hiw-chat { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .hiw-glyph {
+    width: 3.5rem; height: 3.5rem; border-radius: 50%;
+    display: grid; place-items: center;
+    margin-bottom: var(--sp-3);
+    font: 800 1.75rem/1 var(--font-display);
+  }
+  .hiw-glyph-tg { background: var(--accent-soft); color: var(--accent-text); }
+  .hiw-glyph-dc { background: color-mix(in srgb, var(--hiw-dc) 18%, transparent); color: var(--hiw-dc); }
+  .hiw-name { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; line-height: 1.1; color: var(--text); }
+  .hiw-desc { margin: var(--sp-2) 0 0; font-size: var(--fs-small); color: var(--text-muted); }
+  .hiw-tg { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .hiw-dc { border-color: color-mix(in srgb, var(--hiw-dc) 45%, var(--line)); }
+  .hiw-dc-color { color: var(--hiw-dc); }
+
+  .hiw-router {
+    border: 1.5px solid var(--accent-text);
+    background: linear-gradient(180deg, var(--accent-soft), transparent 60%), var(--surface);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-5);
+    box-shadow: var(--shadow-3);
+  }
+  .hiw-tag {
+    display: inline-block; margin: 0;
+    font: 600 0.8125rem/1 var(--font-mono);
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-pill);
+  }
+  .hiw-router .hiw-h4 { margin-top: var(--sp-4); font-size: 1.75rem; }
+  .hiw-list { list-style: none; margin: var(--sp-4) 0 0; padding: 0; }
+  .hiw-li {
+    display: flex; gap: var(--sp-3); align-items: flex-start;
+    padding: var(--sp-2) 0;
+    border-top: 1px solid var(--line);
+    font-size: 0.9375rem;
+    line-height: 1.35;
+    color: var(--text);
+  }
+  .hiw-ic {
+    flex: 0 0 auto;
+    width: 2.25rem; height: 2.25rem; border-radius: var(--radius-sm);
+    display: grid; place-items: center;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+  }
+
+  .hiw-sess { border-color: color-mix(in srgb, var(--accent-2) 60%, var(--line)); }
+  .hiw-proj { margin: 0; font: 700 1rem/1 var(--font-mono); color: var(--accent-2-text); }
+  .hiw-what { margin: var(--sp-3) 0 0; font-weight: 600; color: var(--text); }
+  .hiw-mcp { margin: var(--sp-1) 0 0; font-size: var(--fs-small); color: var(--text-muted); }
+
+  /* Connectors: arrows are SVG, labels are text */
+  .hiw-link {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: var(--sp-1);
+    color: var(--accent-text);
+    min-height: 0;
+  }
+  .hiw-h-svg { display: none; width: 5.5rem; height: 1.5rem; }
+  .hiw-v-svg { display: block; width: 1.5rem; height: 2.5rem; }
+  .hiw-link.hiw-dc-color { color: var(--hiw-dc); }
+  .hiw-cap {
+    margin: 0;
+    font: 700 0.8125rem/1.2 var(--font-display);
+    color: var(--accent-text);
+    white-space: nowrap;
+    text-align: center;
+  }
+  .hiw-mid-b, .hiw-mid-s { color: var(--accent-text); }
+
+  /* Narrow: one column. Order is set here, so the reading order is the DOM order. */
+  .hiw-l-tg, .hiw-l-s1, .hiw-l-s3 { display: none; }
+  .hiw-tg { order: 1; }
+  .hiw-dc { order: 2; }
+  .hiw-mid-b { order: 3; }
+  .hiw-l-dc { order: 4; }
+  .hiw-router { order: 5; }
+  .hiw-mid-s { order: 6; }
+  .hiw-s1 { order: 7; }
+  .hiw-s2 { order: 8; }
+  .hiw-s3 { order: 9; }
+
+  /* Talking to a session, Triggers, Superpowers */
+  .hiw-talks, .hiw-trigs, .hiw-supers { display: grid; gap: var(--sp-4); }
+  .hiw-talk, .hiw-trig { padding: var(--sp-5); }
+  .hiw-talk.is-new {
+    border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+    background: linear-gradient(180deg, var(--accent-soft), transparent 70%), var(--surface);
+  }
+  .hiw-talk .hiw-h4 { margin-top: var(--sp-4); }
+  .hiw-talk .hiw-p { margin-top: var(--sp-3); }
+  .hiw-idx { margin: 0; font: 700 0.875rem/1 var(--font-mono); color: var(--text-muted); }
+  .hiw-pill-new {
+    position: absolute; top: -0.75rem; right: 1rem;
+    font: 800 0.75rem/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    background: var(--accent);
+    color: var(--on-accent);
+    padding: 0.5rem 0.8rem;
+    border-radius: var(--radius-pill);
+  }
+  .hiw-n { margin: 0; font: 700 0.875rem/1 var(--font-mono); color: var(--accent-text); }
+  .hiw-ic-emoji { margin: var(--sp-3) 0 0; font-size: 2rem; line-height: 1; }
+  .hiw-trig .hiw-h4 { margin-top: var(--sp-3); }
+  .hiw-trig .hiw-p { margin-top: var(--sp-2); }
+  .hiw-btns { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-4) 0 0; }
+  .hiw-btns span {
+    font-size: 0.875rem; font-weight: 700; line-height: 1;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  .hiw-away {
+    display: flex; flex-direction: column; gap: var(--sp-3);
+    padding: var(--sp-5);
+    border: 1.5px solid var(--accent-2-text);
+    border-radius: var(--radius-lg);
+    background: var(--accent-2-soft);
+  }
+  .hiw-big {
+    margin: 0;
+    font: 800 clamp(1.75rem, 1.3rem + 2vw, 3.5rem)/1.05 var(--font-display);
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .hiw-def { margin: 0; font-size: 1rem; color: var(--text-muted); }
+
+  .hiw-emo {
+    margin: 0;
+    flex: 0 0 auto;
+    width: 3.5rem; height: 3.5rem; border-radius: var(--radius-md);
+    display: grid; place-items: center;
+    font-size: 1.75rem; line-height: 1;
+  }
+  .hiw-emo-tg { background: var(--accent-soft); }
+  .hiw-emo-cl { background: var(--accent-2-soft); }
+  .hiw-sp { display: flex; gap: var(--sp-4); align-items: flex-start; }
+  .hiw-sp .hiw-h4 { font-size: 1.125rem; }
+  .hiw-sp .hiw-p { margin-top: var(--sp-2); }
+
+  /* Safety rails */
+  .hiw-chips { list-style: none; margin: 0; display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+  .hiw-chip {
+    display: inline-flex; align-items: center; gap: var(--sp-3);
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-2);
+    font-size: 0.9375rem; font-weight: 600; line-height: 1.25;
+    color: var(--text);
+  }
+  .hiw-chip::before {
+    content: ""; flex: 0 0 auto;
+    width: 0.625rem; height: 0.625rem; border-radius: 50%;
+    background: var(--accent);
+  }
+  .hiw-chip.is-warn::before { background: var(--accent-2); }
+  .hiw-chip.is-kill { border-color: var(--accent-2-text); background: var(--accent-2-soft); }
+  .hiw-chip.is-kill::before { background: var(--accent-2); }
+
+  .hiw-foot {
+    margin-top: var(--sp-8);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sp-3) var(--sp-6);
+  }
+
+  /* Legend */
+  .hiw-legend {
+    margin: var(--sp-5) 0 0;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-3) var(--sp-6);
+    font-size: var(--fs-small);
+    color: var(--text-muted);
+  }
+  .hiw-legend > span { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); }
+  .hiw-swatch { display: inline-block; width: 2.75rem; border-top: 3px solid var(--accent-text); }
+  .hiw-swatch-hook { border-top-style: dashed; border-top-color: var(--accent-2-text); }
+
+  /* Wide: the architecture becomes a grid, the talk, trigger and superpower cards get columns */
+  @container hiw (min-width: 36rem) {
+    .hiw-trigs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hiw-away { flex-direction: row; align-items: center; gap: var(--sp-10); padding: var(--sp-6) var(--sp-8); }
+    .hiw-def { border-left: 2px solid var(--line-strong); padding-left: var(--sp-10); }
+  }
+  @container hiw (min-width: 40rem) {
+    .hiw-talks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .hiw-supers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @container hiw (min-width: 52rem) {
+    .hiw-trigs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .hiw-arch {
+      grid-template-columns: minmax(0, 1fr) 5.5rem minmax(0, 1.15fr) 5.5rem minmax(0, 1fr);
+      grid-template-rows: auto auto auto;
+      align-items: center;
+      gap: 0;
+    }
+    .hiw-tg { grid-column: 1; grid-row: 1; order: 0; }
+    .hiw-dc { grid-column: 1; grid-row: 3; order: 0; }
+    .hiw-router { grid-column: 3; grid-row: 1 / span 3; order: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+    .hiw-l-tg { grid-column: 2; grid-row: 1; display: flex; order: 0; }
+    .hiw-h-svg { display: block; }
+    .hiw-v-svg { display: none; }
+    .hiw-mid-b { grid-column: 2; grid-row: 2; order: 0; }
+    .hiw-l-dc { grid-column: 2; grid-row: 3; display: flex; order: 0; }
+    .hiw-l-s1 { grid-column: 4; grid-row: 1; display: flex; }
+    .hiw-mid-s { grid-column: 4; grid-row: 2; order: 0; }
+    .hiw-l-s3 { grid-column: 4; grid-row: 3; display: flex; }
+    .hiw-s1 { grid-column: 5; grid-row: 1; order: 0; }
+    .hiw-s2 { grid-column: 5; grid-row: 2; order: 0; }
+    .hiw-s3 { grid-column: 5; grid-row: 3; order: 0; }
+    .hiw-note { margin-left: auto; }
+  }
+
+  /* Motion: the component has no animation. If one is added, gate it on no-preference. */
+  @media (prefers-reduced-motion: reduce) {
+    .hiw * { transition: none !important; animation: none !important; }
+  }
+</style>

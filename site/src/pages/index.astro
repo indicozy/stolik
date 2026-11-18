@@ -12,7 +12,7 @@ import FaqItem from '../components/FaqItem.astro';
 import Callout from '../components/Callout.astro';
 import Steps from '../components/Steps.astro';
 import FactList from '../components/FactList.astro';
-import howImg from '../assets/how-stolik-works.png';
+import HowItWorks from '../components/HowItWorks.astro';
 import Phone from '../components/mock/Phone.astro';
 import ChatHeader from '../components/mock/ChatHeader.astro';
 import TopicRow from '../components/mock/TopicRow.astro';
@@ -184,7 +184,7 @@ const architecture = `your phone ── Telegram or Discord ──▶ router (yo
     </Section>
 
     <Section id="how-it-works" index="03" eyebrow="how it works" title="Three parts, all on your machine." lede="stolik has no server and no account, and it opens no port. The router asks Telegram or Discord for new messages, so nothing calls in.">
-      <img src={howImg.src} width={howImg.width} height={howImg.height} alt="How stolik works" style="width:100%;height:auto;border-radius:12px;margin-bottom:var(--sp-8)" loading="lazy" />
+      <HowItWorks />
       <div class="hw">
         <CodeBlock label="architecture" prompt="" code={architecture} />
         <Steps>
