@@ -4,6 +4,8 @@
 
 stolik connects the Claude Code sessions on your machine to Telegram and Discord. Each project gets its own topic, so you can follow several sessions at once. From your phone, you can approve or deny tool calls, send voice notes, and answer questions Claude asks.
 
+One install uses one chat app: Telegram or Discord, chosen at setup with `--chat`.
+
 stolik runs as a router on your machine, next to your sessions. It does not run in the cloud.
 
 ## Requirements

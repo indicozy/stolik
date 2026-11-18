@@ -5,7 +5,7 @@ description: What stolik sends to your phone, when, and how approvals time out.
 
 ## Away and at the desk
 
-stolik sends to Telegram when you are **away**, and stays quiet when you are at the desk. You are away when any of these is true:
+stolik sends to your chat app (Telegram or Discord) when you are **away**, and stays quiet when you are at the desk. You are away when any of these is true:
 
 - the screen is locked
 - there has been no keyboard or mouse input for 5 minutes
@@ -41,7 +41,7 @@ While you are away, stolik forwards every Claude Code permission prompt to the s
 
 stolik never denies or allows for you on a timeout.
 
-If you answer **yes at the desk** first, the bot replaces the buttons in Telegram with "✅ Answered at the desk". A "no" at the desk leaves the buttons until they expire. A tap on them then does nothing.
+If you answer **yes at the desk** first, the bot replaces the buttons in the chat with "✅ Answered at the desk". A "no" at the desk leaves the buttons until they expire. A tap on them then does nothing.
 
 ## Muting
 

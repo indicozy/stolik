@@ -1,6 +1,6 @@
 ---
 title: Topics and sessions
-description: How stolik lays out your Telegram group, and where each message goes.
+description: How stolik lays out your Telegram group or Discord server, and where each message goes.
 ---
 
 ## The layout
@@ -47,3 +47,7 @@ stolik closes a session that sits idle for 60 minutes. It warns you 5 minutes be
 ## The chat log
 
 stolik writes every message in and out to plain files on your PC: `~/Documents/notes/telegram/log/YYYY-MM.jsonl` and a readable `YYYY-MM-DD.md` per day. Change the folder with `logRoot` in `config.json`.
+
+## On Discord
+
+On Discord, each folder is a channel instead of a topic. The lobby is the channel where you sent `!bind`. For the layout and its limits, see [Discord instead of Telegram](../install/#discord-instead-of-telegram).

@@ -51,7 +51,7 @@ A prefix is a word at the start of a message **in General**, followed by a colon
 
 | Command | Does |
 |---|---|
-| `stolik setup` | Pair the bot with your Telegram account. Write the config. Offer the model worker. `--pair` pairs again. `--owner-id <n>` sets the owner without pairing. `--chat telegram` is the default |
+| `stolik setup` | Pair the bot with your Telegram account. Write the config. Offer the model worker. `--pair` pairs again. `--owner-id <n>` sets the owner without pairing. `--chat telegram` is the default. `--chat discord` sets up Discord instead, see [Discord instead of Telegram](../install/#discord-instead-of-telegram) |
 | `stolik service install [--start] [--name N]` | Write the user service. `--start` starts or restarts it |
 | `stolik service status` | Show the service file and state |
 | `stolik service uninstall [--stop]` | Remove the service. `--stop` also stops it now |

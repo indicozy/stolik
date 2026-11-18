@@ -1,6 +1,6 @@
 ---
 title: Install
-description: Install stolik on Linux, pair it with a Telegram group and start your first session.
+description: Install stolik on Linux, pair it with a Telegram group or a Discord server, and start your first session.
 ---
 
 ![How stolik works](../../../assets/how-stolik-works.png)
@@ -11,10 +11,12 @@ stolik works, but it is young. Commands and file names may still change, and Cla
 
 :::note[Requirements]
 - Linux with a systemd user session, **Node 22.13 or newer**, **tmux** and **Claude Code**.
-- A Telegram account and a bot token from [@BotFather](https://t.me/BotFather).
+- A Telegram account and a bot token from [@BotFather](https://t.me/BotFather), or a Discord bot (see [Discord instead of Telegram](#discord-instead-of-telegram)).
 - Claude Code signed in with claude.ai or a Console API key. Channels do not work on Amazon Bedrock, Google Cloud or Microsoft Foundry.
 - Team and Enterprise plans: an org Owner must turn Channels on (Organization settings → Claude Code → Channels). Until then nothing can load a channel, and the flag does not get around it.
 :::
+
+This guide sets up Telegram. For Discord, see [Discord instead of Telegram](#discord-instead-of-telegram). One install uses one chat app.
 
 ## 1. Run setup
 
@@ -82,6 +84,63 @@ A topic named `orbit-api` appears in your group. Write in it from your phone.
 
 You can alias it: `alias claude=tg-claude`. Subcommands such as `claude mcp` and `claude -p` pass through unchanged.
 
+## Discord instead of Telegram
+
+Use this section in place of steps 1 and 2. Steps 3 to 5 of the Telegram guide stay the same. One install uses one chat app, so pick Telegram or Discord.
+
+You need a Discord account and a server where you have **Manage Server**. The [privacy check](#privacy-check) warns when someone else is in the server.
+
+### 1. Create the bot
+
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications). Choose **New Application**.
+2. Open **Bot**. Choose **Reset Token**, then copy the token. Discord shows it once. Setup asks for it next.
+3. Under **Bot**, turn on **Message Content Intent**. The bot cannot read messages without it.
+4. Keep **Public Bot** off. Then only the application's owner can add the bot.
+
+### 2. Run setup and pair
+
+```sh
+stolik setup --chat discord
+```
+
+Setup asks for the bot token. Typing is hidden. It then prints an invite link. Open the link and add the bot to your server. The invite needs Manage Server. It grants the rights stolik needs: view and send messages, read history, add reactions, attach files, manage channels and send voice messages.
+
+Setup then prints a six-digit code. Add the bot to your server before you send the code. Send the code to the bot in a direct message, not in a channel. The code works once, for 5 minutes. After five wrong codes it stops. Run `stolik setup --chat discord --pair` to get a new code.
+
+Setup shows the account that sent the code. Answer `y` to confirm it is you.
+
+Setup stores the token as `DISCORD_BOT_TOKEN` in the secrets file, which only your user can read. It sets `chat.app` to `discord` in the config file. Your user id goes to `chat.discord.ownerUserId`.
+
+### 3. Pick the lobby
+
+In a text channel of your server, send `!bind` or `/bind`. That channel becomes the lobby. The bot answers there, and stolik keeps the lobby where it is.
+
+Then follow steps 3 to 5 of the Telegram guide: start the router, add the plugin in Claude Code, and start a session.
+
+### How folders look on Discord
+
+Each project folder gets its own text channel, named after the folder. The channel sits under a category named `stolik`. The bot creates both.
+
+- **Private.** @everyone cannot view folder channels or the `stolik` categories. Only you and the bot can.
+- **Idle.** About 2 minutes after the last session in a folder ends, the channel moves to a category named `stolik-idle`. A session that starts again before then keeps the channel in `stolik`.
+- **More categories.** A category holds 50 channels. When one is full, stolik makes the next one: `stolik 2`, `stolik 3`, and so on. Idle folders use `stolik-idle 2` and up in the same way.
+- **Server limit.** Discord allows 500 channels per server. Past that, stolik cannot make a folder channel. It logs the error, and the session uses the lobby.
+
+### Commands on Discord
+
+Send commands as messages. Both `/` and `!` work, so `!bind` and `/bind` do the same thing. For the list, see [Commands](../commands/).
+
+### Privacy check
+
+`stolik doctor` runs privacy checks on the Discord server. The router runs the same checks at start and logs what it finds. The checks only warn. They never stop the router. They report:
+
+- Whether the bot is public. A public bot gets a warning.
+- Whether the Message Content intent is on.
+- How many members the server has. Expect two: you and the bot.
+- Whether @everyone can see the lobby, a `stolik` category or a folder channel. This check runs only when the server has more than two members.
+
+Invites are not checked, because listing them needs Manage Server. Check them yourself under Server Settings, then Invites. Remove any invite you do not know.
+
 ## Optional: voice and digest models
 
 Voice notes, voice cleanup and the digest use a local model worker: faster-whisper for speech and a small Qwen model for text. Models download on first use, load on demand and unload after 10 minutes idle.
@@ -107,3 +166,5 @@ stolik doctor
 ```
 
 Doctor checks Node, tmux and claude, the config and token file, the database, the addons and, with the token, the bot and its rights in the group. It names the check that fails.
+
+On Discord, doctor also checks the bot token, the lobby channel and the `stolik` categories. It runs the privacy checks described above.
