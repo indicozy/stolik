@@ -14,6 +14,7 @@ import Steps from '../components/Steps.astro';
 import FactList from '../components/FactList.astro';
 import HowItWorks from '../components/HowItWorks.astro';
 import Phone from '../components/mock/Phone.astro';
+import PhoneDemo from '../components/mock/PhoneDemo.astro';
 import ChatHeader from '../components/mock/ChatHeader.astro';
 import TopicRow from '../components/mock/TopicRow.astro';
 import Bubble from '../components/mock/Bubble.astro';
@@ -58,29 +59,11 @@ const architecture = `your phone ── Telegram or Discord ──▶ router (yo
           </div>
         </div>
         <div class="td-hero-visual td-rise" style="--i: 2">
-          <div class="td-hero-device">
-            <Phone glow listMode label="Telegram mock: three project topics, and a request to run npm test in orbit-api with Allow and Deny buttons">
-              <ChatHeader slot="header" title="stolik" subtitle="3 topics" kind="count" avatar=">_" tone={1} />
-              <ul class="tgm-list">
-                <TopicRow name="orbit-api" time="14:02" preview="Run npm test?" tag="oa" tone={2} state="needs-approval" pill="allow?" />
-                <TopicRow name="paper-kite" time="14:01" preview="Layout tests pass. 214 green." tag="pk" tone={3} state="unread" count={2} />
-                <TopicRow name="tide-cli" time="13:58" preview="Session resumed" tag="tc" tone={5} state="muted" />
-              </ul>
-              <ul class="tgm-chat">
-                <ServiceLine>Today</ServiceLine>
-                <Bubble side="in" sender="orbit-api" kind="code" time="14:02">Bash: npm test</Bubble>
-                <Keyboard>
-                  <Key variant="approve" state="chosen" decorative>Allow</Key>
-                  <Key variant="deny" state="sibling" decorative>Deny</Key>
-                </Keyboard>
-                <Bubble side="in" sender="orbit-api" time="14:04">All 214 tests pass. Want me to open the PR?</Bubble>
-                <Bubble side="out" time="14:05">yes, ship it</Bubble>
-              </ul>
-            </Phone>
-            <div class="td-hero-mascot">
+          <PhoneDemo>
+            <div slot="mascot" class="td-hero-mascot">
               <Mascot bob sizes="140px" />
             </div>
-          </div>
+          </PhoneDemo>
         </div>
       </div>
     </section>
@@ -277,15 +260,16 @@ const architecture = `your phone ── Telegram or Discord ──▶ router (yo
   .td-hero-ctas { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
   .td-hero-visual { min-width: 0; position: relative; }
   /* Phone column: mascot sits above the phone on mobile, left of its lower edge from 641px up. */
-  .td-hero-device { position: relative; width: min(100%, 320px); margin-inline: auto; display: flex; flex-direction: column; }
-  .td-hero-mascot { order: -1; align-self: center; width: 112px; margin-bottom: var(--sp-4); }
+  .td-hero-mascot { width: 112px; margin: 0 auto var(--sp-4); }
   @media (min-width: 40.0625em) {
-    .td-hero-device { display: block; }
     .td-hero-mascot { position: absolute; z-index: 2; right: calc(100% - 8px); bottom: var(--sp-10); width: 140px; margin: 0; }
   }
   @media (min-width: 64em) {
     .td-hero-grid { grid-template-columns: 1.1fr 0.9fr; }
-    .td-hero-device { margin-inline: auto 0; }
+  }
+  @media (min-width: 72em) {
+    .td-hero-grid { grid-template-columns: 1fr 1.2fr; }
+    .td-hero-mascot { bottom: var(--sp-4); }
   }
   .tgm-list { display: flex; flex-direction: column; }
   .tgm-chat { display: flex; flex-direction: column; gap: 4px; }

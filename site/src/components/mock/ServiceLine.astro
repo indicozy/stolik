@@ -1,4 +1,9 @@
-<li class="tgm-service"><slot /></li>
+---
+interface Props {
+  hidden?: boolean;
+}
+---
+<li class="tgm-service" {...Astro.props}><slot /></li>
 <style>
   .tgm-service {
     align-self: center;

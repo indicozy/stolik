@@ -1,3 +1,5 @@
+import { initPhoneDemo } from './phone-demo';
+
 const KEY = 'starlight-theme';
 const root = document.documentElement;
 
@@ -80,3 +82,6 @@ if (root.classList.contains('td-motion')) {
   }, { threshold: 0.15 });
   document.querySelectorAll('.td-rise').forEach((el) => io.observe(el));
 }
+
+// Hero phone demo.
+initPhoneDemo();

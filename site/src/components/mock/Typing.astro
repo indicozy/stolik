@@ -2,14 +2,15 @@
 interface Props {
   inline?: boolean;
   label?: string;
+  hidden?: boolean;
 }
 
-const { inline = false, label = 'stolik is typing' } = Astro.props;
+const { inline = false, label = 'stolik is typing', ...attrs } = Astro.props;
 ---
 {inline ? (
   <span class="tgm-typing-inline" role="img" aria-label={label}><span class="tgm-dots"><i></i><i></i><i></i></span></span>
 ) : (
-  <li class="tgm-bubble tgm-typing is-in" role="img" aria-label={label}>
+  <li class="tgm-bubble tgm-typing is-in" role="img" aria-label={label} {...attrs}>
     <span class="tgm-dots"><i></i><i></i><i></i></span>
   </li>
 )}

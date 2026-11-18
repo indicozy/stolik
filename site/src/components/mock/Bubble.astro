@@ -6,11 +6,12 @@ interface Props {
   kind?: 'text' | 'code';
   sender?: string;
   time?: string;
+  hidden?: boolean;
 }
 
-const { side = 'in', kind = 'text', sender, time = '14:02' } = Astro.props;
+const { side = 'in', kind = 'text', sender, time = '14:02', ...attrs } = Astro.props;
 ---
-<li class:list={['tgm-bubble', `is-${side}`, `is-${kind}`]}>
+<li class:list={['tgm-bubble', `is-${side}`, `is-${kind}`]} {...attrs}>
   {sender && side === 'in' && <span class="tgm-sender">{sender}</span>}
   {kind === 'code' ? (
     <pre class="tgm-code"><code><slot /></code></pre>

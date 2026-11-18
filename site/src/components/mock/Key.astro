@@ -7,7 +7,7 @@ interface Props {
   decorative?: boolean;
 }
 
-const { variant = 'neutral', state = 'default', decorative = false } = Astro.props;
+const { variant = 'neutral', state = 'default', decorative = false, ...attrs } = Astro.props;
 const Tag = decorative ? 'span' : 'button';
 const icon = variant === 'approve' ? 'check' : variant === 'deny' ? 'x' : undefined;
 ---
@@ -15,6 +15,7 @@ const icon = variant === 'approve' ? 'check' : variant === 'deny' ? 'x' : undefi
   class:list={['tgm-key', `is-${variant}`, `is-${state}`]}
   type={decorative ? undefined : 'button'}
   aria-hidden={decorative ? 'true' : undefined}
+  {...attrs}
 >
   {icon && <Icon name={icon} size={16} />}
   <slot />

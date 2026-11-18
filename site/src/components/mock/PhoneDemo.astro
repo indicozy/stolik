@@ -1,0 +1,194 @@
+---
+import Phone from './Phone.astro';
+import ChatHeader from './ChatHeader.astro';
+import TopicRow from './TopicRow.astro';
+import Bubble from './Bubble.astro';
+import Keyboard from './Keyboard.astro';
+import Key from './Key.astro';
+import ServiceLine from './ServiceLine.astro';
+import Typing from './Typing.astro';
+
+// Hero demo. Without JS the static phone (the old hero) shows. With JS, a scripted
+// chat plays once in view, stops at the permission prompt and waits for a tap.
+// Behaviour lives in site/src/scripts/phone-demo.ts.
+---
+<div class="pd" data-phone-demo>
+  <div class="pd-phone">
+    <slot name="mascot" />
+    <noscript>
+      <style>.pd-live, .pd-strip, .pd-controls { display: none !important; }</style>
+      <Phone glow listMode label="Telegram mock: three project topics, and a request to run npm test in orbit-api with Allow and Deny buttons">
+        <ChatHeader slot="header" title="stolik" subtitle="3 topics" kind="count" avatar=">_" tone={1} />
+        <ul class="tgm-list">
+          <TopicRow name="orbit-api" time="14:02" preview="Run npm test?" tag="oa" tone={2} state="needs-approval" pill="allow?" />
+          <TopicRow name="paper-kite" time="14:01" preview="Layout tests pass. 214 green." tag="pk" tone={3} state="unread" count={2} />
+          <TopicRow name="tide-cli" time="13:58" preview="Session resumed" tag="tc" tone={5} state="muted" />
+        </ul>
+        <ul class="tgm-chat">
+          <ServiceLine>Today</ServiceLine>
+          <Bubble side="in" sender="orbit-api" kind="code" time="14:02">Bash: npm test</Bubble>
+          <Keyboard>
+            <Key variant="approve" state="chosen" decorative>Allow</Key>
+            <Key variant="deny" state="sibling" decorative>Deny</Key>
+          </Keyboard>
+          <Bubble side="in" sender="orbit-api" time="14:04">All 214 tests pass. Want me to open the PR?</Bubble>
+          <Bubble side="out" time="14:05">yes, ship it</Bubble>
+        </ul>
+      </Phone>
+    </noscript>
+    <Phone class="pd-live" glow interactive label="Telegram demo: orbit-api asks to run npm test. Allow and Deny buttons are below the message.">
+      <ChatHeader slot="header" title="orbit-api" subtitle="Claude Code session" kind="topic" avatar="oa" tone={2} />
+      <ul class="tgm-chat">
+        <ServiceLine data-step="today" hidden>Today</ServiceLine>
+        <Typing data-step="typing-a" hidden />
+        <Bubble data-step="say" side="in" sender="orbit-api" time="14:02" hidden>I changed the login check. Next I'll run the test suite.</Bubble>
+        <Typing data-step="typing-b" hidden />
+        <Bubble data-step="prompt" side="in" sender="orbit-api" time="14:03" hidden>wants to run Bash: npm test</Bubble>
+        <li class="pd-answer" data-step="keys" hidden>
+          <div class="pd-keys is-waiting" role="group" aria-label="Answer the permission prompt" data-keys>
+            <Key variant="approve" data-answer="allow" aria-label="Allow Bash: npm test">Allow</Key>
+            <Key variant="deny" data-answer="deny" aria-label="Deny Bash: npm test">Deny</Key>
+          </div>
+          <p class="pd-hint" data-hint>Tap to answer</p>
+          <p class="pd-sent" data-sent hidden></p>
+        </li>
+        <Bubble data-step="after" data-outcome="allow" side="in" sender="orbit-api" time="14:04" hidden>All 214 tests pass. Want me to open the PR?</Bubble>
+        <Bubble data-step="after" data-outcome="deny" side="in" sender="orbit-api" time="14:04" hidden>OK, I won't run it. What next?</Bubble>
+      </ul>
+    </Phone>
+  </div>
+  <div class="pd-strip" data-strip>
+    <p class="pd-strip-head">Demo · your PC</p>
+    <p class="pd-status is-waiting" data-status>orbit-api · waiting for permission: Bash(npm test)</p>
+    <p class="pd-line" data-line="cmd" hidden>$ npm test</p>
+    <p class="pd-line" data-line="pass" hidden>214 passed</p>
+    <p class="pd-line" data-line="deny" hidden>denied from your phone</p>
+  </div>
+  <div class="pd-controls">
+    <span class="pd-tag">Demo</span>
+    <button type="button" class="pd-replay" data-replay aria-label="Replay the demo">Replay</button>
+  </div>
+  <p class="pd-sr" aria-live="polite" data-announce></p>
+</div>
+
+<style is:global>
+  .pd [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: no-preference) {
+    .pd [data-step]:not([hidden]) { animation: pd-in var(--dur-3) var(--ease-out) both; }
+    @keyframes pd-in { from { opacity: 0; transform: translateY(6px); } }
+  }
+</style>
+
+<style>
+  .pd { display: grid; gap: var(--sp-4); justify-items: center; min-width: 0; }
+  .pd-phone { position: relative; width: min(100%, 320px); }
+  .tgm-list { display: flex; flex-direction: column; }
+  .tgm-chat { display: flex; flex-direction: column; gap: 4px; list-style: none; margin: 0; padding: 0; }
+  .pd-answer { align-self: flex-start; width: min(82%, 22rem); margin-top: 4px; }
+  .pd-keys { position: relative; display: flex; gap: 4px; border-radius: calc(var(--radius-sm) + 4px); }
+  .pd-keys :global(.tgm-key) { flex: 1 1 0; height: 44px; }
+  .pd-keys.is-waiting::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--accent);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .pd-keys.is-waiting::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: inherit;
+      box-shadow: 0 0 0 2px var(--accent);
+      pointer-events: none;
+      animation: pd-pulse 1.8s var(--ease-out) infinite;
+    }
+    @keyframes pd-pulse {
+      0% { opacity: 0.8; transform: scale(1); }
+      70%, 100% { opacity: 0; transform: scale(1.12); }
+    }
+  }
+  .pd-hint { margin: 6px 0 0; padding-inline: 4px; font-size: 12.5px; font-weight: 600; color: var(--accent-text); }
+  .pd-sent { margin: 4px 0 0; padding-inline: 4px; font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .pd-sent:focus { outline: none; }
+
+  .pd-strip {
+    box-sizing: border-box;
+    width: min(100%, 320px);
+    height: 9.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--sp-3);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--code-bg);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .pd-strip-head { margin: 0 0 4px; font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--text-muted); }
+  .pd-status { margin: 0; color: var(--text-muted); overflow-wrap: anywhere; }
+  .pd-status.is-waiting::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    vertical-align: 1px;
+  }
+  .pd-line { margin: 0; overflow-wrap: anywhere; }
+
+  .pd-controls { display: flex; align-items: center; gap: var(--sp-3); }
+  .pd-tag {
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-2);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .pd-replay {
+    min-height: 44px;
+    padding-inline: var(--sp-4);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .pd-replay:hover { background: var(--hover-fill); }
+  .pd-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (min-width: 64em) {
+    .pd { justify-items: end; }
+  }
+  @media (min-width: 72em) {
+    .pd {
+      grid-template-columns: 320px minmax(0, 15rem);
+      column-gap: var(--sp-5);
+      justify-items: start;
+      align-items: center;
+    }
+    .pd-phone { grid-column: 1; grid-row: 1 / span 2; }
+    .pd-strip { grid-column: 2; grid-row: 1; width: 100%; align-self: end; }
+    .pd-controls { grid-column: 2; grid-row: 2; align-self: start; }
+  }
+</style>

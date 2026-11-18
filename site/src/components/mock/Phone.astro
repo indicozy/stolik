@@ -5,17 +5,18 @@ interface Props {
   bare?: boolean;
   glow?: boolean;
   listMode?: boolean;
+  interactive?: boolean;
   label?: string;
   theme?: 'light' | 'dark';
   class?: string;
 }
 
-const { bare = false, glow = false, listMode = false, label, theme, class: className } = Astro.props;
+const { bare = false, glow = false, listMode = false, interactive = false, label, theme, class: className } = Astro.props;
 ---
 <div
   class:list={['tgm-phone', className, { 'is-bare': bare, 'is-glow': glow, 'is-list': listMode }]}
   data-theme={theme}
-  role={label ? 'img' : undefined}
+  role={interactive ? 'group' : label ? 'img' : undefined}
   aria-label={label}
 >
   <div class="tgm-screen">
