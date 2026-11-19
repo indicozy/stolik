@@ -3,16 +3,17 @@
 import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { DELETE_AFTER_MS, DELETE_RETRY_BASE_MS } from '../src/brain/topics.ts'
 import { FakeConn, HOME, OWNER, flush, harness, textFrom } from './helpers/fakes.ts'
 import { tgChat, tgMsg, tgThread, tgUser } from '../src/adapters/chat/tg-ids.ts'
 import type { Inbound } from '../src/brain/chat-types.ts'
 import { ChatError } from '../src/brain/chat-types.ts'
+import { SWEEP_MS } from '../src/router/shared.ts'
 
 const PROJ = `${HOME}/proj`
 const GROUP = -1001234567890
 const GROUP_ID = tgChat(GROUP)
 const DAY = 24 * 60 * 60 * 1000
+const DELETE_AFTER_MS = 7 * DAY
 const GROUP_CHAT = { kind: 'home' as const, id: GROUP_ID, thread: null }
 const topicChat = (threadId: number) => ({ kind: 'home' as const, id: GROUP_ID, thread: tgThread(threadId) })
 
@@ -361,61 +362,6 @@ test('a topic whose session did not reconnect after a restart is closed once the
   assert.equal((JSON.parse(second.store.topicsJson) as Array<{ state: string }>)[0]?.state, 'closed')
 })
 
-// Review finding 10: a topic is marked deleted only when Telegram deletes it (or says it is already gone). A failed
-// delete leaves it closed, so the next sweep tries again.
-// A legacy record (one topic per session, from before the rollout): closed and due for deletion now.
-function pushLegacy(router: { topics: Array<Record<string, unknown>> }, clock: { now(): number }, threadId: number): void {
-  router.topics.push({ threadId: tgThread(threadId), name: 'old', project: 'old', cwd: null, sessionKey: null, backendSessionId: null, state: 'closed', endedAt: clock.now(), deleteAt: clock.now() })
-}
-const stateOf = (router: { topics: Array<{ threadId: number; state: string }> }, threadId: number) => router.topics.find((r) => r.threadId === tgThread(threadId))?.state
-
-test('a legacy topic whose delete fails stays closed, and the next sweep after its backoff tries again', async () => {
-  const { chat, clock, router } = await groupWithSession()
-  pushLegacy(router, clock, 900)
-  chat.failTopicOps.add('delete')
-  clock.advance(60_000)
-  await flush()
-  assert.equal(stateOf(router, 900), 'closed', 'not deleted after a failed delete')
-  chat.failTopicOps.delete('delete')
-  clock.advance(60_000)
-  await flush()
-  assert.equal(stateOf(router, 900), 'closed', 'the first retry waits an hour (backoff)')
-  clock.advance(DELETE_RETRY_BASE_MS)
-  await flush()
-  assert.equal(stateOf(router, 900), 'deleted')
-  assert.deepEqual(chat.topicOps.filter((o) => o.op === 'delete'), [{ op: 'delete', threadId: tgThread(900) }])
-})
-
-test('a legacy topic that Telegram says is already gone is marked deleted', async () => {
-  const { chat, clock, router } = await groupWithSession()
-  pushLegacy(router, clock, 900)
-  chat.deleteThread = async () => {
-    throw new ChatError('thread-closed', 'Bad Request: message thread not found')
-  }
-  clock.advance(60_000)
-  await flush()
-  assert.equal(stateOf(router, 900), 'deleted')
-})
-
-test('a legacy topic sweep that is still running is not started again', async () => {
-  const { chat, clock, router } = await groupWithSession()
-  pushLegacy(router, clock, 900)
-  let calls = 0
-  let release: () => void = () => {}
-  const gate = new Promise<void>((resolve) => {
-    release = resolve
-  })
-  chat.deleteThread = async () => {
-    calls++
-    await gate
-  }
-  clock.advance(10 * 60_000)
-  await flush()
-  assert.equal(calls, 1, 'one delete in flight, not one per sweep')
-  release()
-  await flush()
-})
-
 // ---------- ticket 22: folder routing, /new, the rollout ----------
 
 // The live session with this pid.
@@ -626,38 +572,7 @@ test('two sends into a gone folder topic make one new topic for the folder', asy
   assert.equal(chat.sent.filter((s) => s.text.endsWith('one') || s.text.endsWith('two')).length, 2, 'both sent, into the new topic')
 })
 
-test('at start, legacy per-session topics are deleted in Telegram and their records removed; folder records stay', async () => {
-  const h = harness({ groupId: tgChat(GROUP) })
-  h.store.topicsJson = JSON.stringify([
-    { threadId: 77, name: 'old', project: 'old', sessionKey: '1:x', backendSessionId: null, state: 'open', endedAt: null, deleteAt: null },
-    { threadId: 78, name: 'older', project: 'older', sessionKey: null, backendSessionId: null, state: 'closed', endedAt: 1, deleteAt: 2 },
-    { threadId: 79, name: 'proj', project: 'proj', cwd: PROJ, sessionKey: null, backendSessionId: null, state: 'closed', endedAt: 1, deleteAt: null },
-  ])
-  await h.router.start()
-  await flush()
-  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'delete').map((o) => o.threadId).sort(), [tgThread(77), tgThread(78)])
-  assert.deepEqual(h.router.topics.map((t) => t.threadId), [tgThread(79)])
-  assert.deepEqual((JSON.parse(h.store.topicsJson) as Array<{ threadId: string }>).map((t) => t.threadId), [tgThread(79)])
-})
-
-test('at start, a legacy topic whose delete fails or is gone is still removed from the records', async () => {
-  const h = harness({ groupId: tgChat(GROUP) })
-  h.store.topicsJson = JSON.stringify([
-    { threadId: 77, name: 'old', project: 'old', sessionKey: '1:x', backendSessionId: null, state: 'open', endedAt: null, deleteAt: null },
-    { threadId: 78, name: 'older', project: 'older', sessionKey: null, backendSessionId: null, state: 'closed', endedAt: 1, deleteAt: 2 },
-  ])
-  h.chat.deleteThread = async (threadId: number) => {
-    if (threadId === tgThread(77)) throw new ChatError('thread-closed', 'Bad Request: message thread not found')
-    throw new ChatError('access-lost', 'Forbidden: bot has no rights', { status: 403, description: 'Forbidden: bot has no rights' })
-  }
-  await h.router.start()
-  await flush()
-  assert.deepEqual(h.router.topics, [])
-  assert.ok(h.logger.lines.some((l) => l.includes('old topic older not deleted')), 'the other failure is logged')
-  assert.ok(!h.logger.lines.some((l) => l.includes('old topic old not deleted')), 'a gone topic is not logged as a failure')
-})
-
-test('at start, a folder topic named parent/basename while a legacy topic held the basename is renamed to the basename', async () => {
+test('at start, a folder topic keeps parent/basename while a legacy record still holds the basename: no rename', async () => {
   const h = harness({ groupId: tgChat(GROUP) })
   h.store.topicsJson = JSON.stringify([
     { threadId: 77, name: 'proga', project: 'proga', sessionKey: '1:x', backendSessionId: null, state: 'open', endedAt: null, deleteAt: null },
@@ -665,9 +580,23 @@ test('at start, a folder topic named parent/basename while a legacy topic held t
   ])
   await h.router.start()
   await flush()
-  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'edit'), [{ op: 'edit', threadId: tgThread(50), name: 'proga' }])
-  assert.equal(h.router.topics.find((r) => r.threadId === tgThread(50))?.name, 'proga')
-  assert.equal((JSON.parse(h.store.topicsJson) as Array<{ threadId: string; name: string }>).find((t) => t.threadId === tgThread(50))?.name, 'proga')
+  // Legacy records are kept, so their name stays taken and the folder topic keeps its parent/basename.
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'edit'), [])
+  assert.equal(h.router.topics.find((r) => r.threadId === tgThread(50))?.name, 'projects/proga')
+})
+
+test('no sweep deletes a topic: a legacy closed record stays, and the periodic sweep sends Telegram no topic call', async () => {
+  const h = harness({ groupId: tgChat(GROUP) })
+  h.store.topicsJson = JSON.stringify([
+    { threadId: 60, name: 'old', project: 'old', cwd: null, sessionKey: null, backendSessionId: null, state: 'closed', endedAt: 1, deleteAt: 2 },
+  ])
+  await h.router.start()
+  await flush()
+  h.clock.advance(30 * DAY)
+  h.clock.advance(SWEEP_MS)
+  await flush()
+  assert.equal(h.router.topics.find((r) => r.threadId === tgThread(60))?.state, 'closed')
+  assert.deepEqual(h.chat.topicOps, [], 'no topic call at all')
 })
 
 test('at start, two folders with the same basename keep basename and parent/basename, with no rename', async () => {
@@ -680,19 +609,6 @@ test('at start, two folders with the same basename keep basename and parent/base
   await flush()
   assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'edit'), [])
   assert.deepEqual(h.router.topics.map((t) => t.name), ['proj', 'work/proj'])
-})
-
-test('at start, a folder topic whose rename fails keeps its old name', async () => {
-  const h = harness({ groupId: tgChat(GROUP) })
-  h.store.topicsJson = JSON.stringify([
-    { threadId: 77, name: 'proga', project: 'proga', sessionKey: '1:x', backendSessionId: null, state: 'open', endedAt: null, deleteAt: null },
-    { threadId: 50, name: 'projects/proga', project: 'proga', cwd: `${HOME}/projects/proga`, sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null },
-  ])
-  h.chat.failTopicOps.add('edit')
-  await h.router.start()
-  await flush()
-  assert.equal(h.router.topics.find((r) => r.threadId === tgThread(50))?.name, 'projects/proga', 'the record keeps the old name')
-  assert.ok(h.logger.lines.some((l) => l.includes('topic projects/proga not renamed to proga')), 'the failure is logged')
 })
 
 // ---------- startWhenNoSession in a folder topic ----------

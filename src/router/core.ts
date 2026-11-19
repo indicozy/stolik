@@ -25,7 +25,7 @@ import { onChatEvent } from './handlers/group.ts'
 import { announceBoot, stripStaleKeyboards, sweep } from './handlers/timers.ts'
 import { onAccessLost } from './handlers/group.ts'
 import { offerBuiltins } from './handlers/builtins.ts'
-import { TOPIC_RECONNECT_GRACE_MS, closeOrphanTopics, deleteLegacyTopics } from './topics.ts'
+import { TOPIC_RECONNECT_GRACE_MS, closeOrphanTopics } from './topics.ts'
 import { attachLedger, saveNow } from './send.ts'
 import { startLedgerPrune } from './outbound.ts'
 import { errMsg } from './log.ts'
@@ -196,8 +196,6 @@ export class Router {
   saveTimer: unknown = null
   sweepTimer: unknown = null
   orphanTimer: unknown = null
-  // True while a topic sweep is deleting (see sweepTopics): a second sweep waits for the first.
-  topicSweepRunning = false
   // Whether the bot can run the bound group. False after it was removed, left, demoted or lost Manage Topics: session
   // output then goes to the DM (see groupMode in topics.ts).
   groupAccess = true
@@ -205,8 +203,6 @@ export class Router {
   anonymousNoticed = false
   // Set once the reconnect grace is over: the periodic sweep checks for orphan topics from then on.
   orphanChecksOn = false
-  // Failed topic deletes: failure count, next try (epoch ms), and whether it was given up (see sweepTopics).
-  readonly deleteFailures = new Map<ThreadId, { failures: number; nextAt: number; gaveUp: boolean }>()
   // Edits already answered with "edits are not forwarded" (by message id).
   readonly noticedEdits = new Set<MessageId>()
   bootStarted = false
@@ -300,8 +296,6 @@ export class Router {
     await this.agent.start(socket)
     await this.addons?.start()
     this.chat.start()
-    // One topic per folder (ticket 22): the per-session topics of earlier runs are deleted once, here (group mode only).
-    void deleteLegacyTopics(this)
     // The built-ins offer on the first start in DM mode (once; not when the owner chose an addon before).
     if (this.groupId === null) await offerBuiltins(this, { dmStart: true })
     this.orphanTimer = this.clock.setTimer(() => void closeOrphanTopics(this), TOPIC_RECONNECT_GRACE_MS)

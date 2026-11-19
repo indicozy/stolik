@@ -810,7 +810,7 @@ export class SqliteStore implements StorePort, DbStorePort {
 
   listTopics(): TopicRec[] {
     return this.db
-      .prepare('SELECT thread_id, name, project, cwd, session_key, backend_session_id, state, ended_at, delete_at FROM topics ORDER BY rowid')
+      .prepare('SELECT thread_id, name, project, cwd, session_key, backend_session_id, state, ended_at FROM topics ORDER BY rowid')
       .all()
       .map((r) => ({
         threadId: String(r.thread_id) as ThreadId,
@@ -821,7 +821,8 @@ export class SqliteStore implements StorePort, DbStorePort {
         backendSessionId: r.backend_session_id === null ? null : String(r.backend_session_id),
         state: String(r.state) as TopicState,
         endedAt: r.ended_at === null ? null : Number(r.ended_at),
-        deleteAt: r.delete_at === null ? null : Number(r.delete_at),
+        // No topic has a deadline any more (delete_at is kept in the schema, always null): read as null.
+        deleteAt: null,
       }))
   }
 

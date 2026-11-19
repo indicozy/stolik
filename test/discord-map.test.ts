@@ -102,7 +102,7 @@ test('capabilities: Discord values and limits (decision 4, batch D4: folder chan
   const c = DISCORD_CAPABILITIES
   assert.equal(c.platform, 'dc')
   assert.equal(c.names.thread, 'channel')
-  assert.deepEqual(c.threads, { kind: 'channel', maxNameChars: 100, rename: true, close: true, delete: true })
+  assert.deepEqual(c.threads, { kind: 'channel', maxNameChars: 100, rename: true, close: true })
   assert.equal(c.text.maxChars, 2000)
   assert.equal(c.files.maxUploadBytes, 20 * 1024 * 1024)
   assert.equal(c.forwardMarker, true)

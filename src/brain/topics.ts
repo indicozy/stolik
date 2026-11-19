@@ -5,15 +5,13 @@
 //   (none) --connect--> open --last session in the folder ends--> closed --next session in the folder (reopen)--> open
 //
 // A folder topic is never deleted: its closed topic keeps the history and the next session there reopens it.
-// Records from before one topic per folder have no cwd (legacy). The router deletes them at start (router/topics.ts),
-// and the 7-day sweep (dueDeletes) only ever sees legacy records.
+// Records from before one topic per folder have no cwd (legacy). The router leaves them as they are: nothing deletes a
+// topic on the bot's own initiative.
 import { basename, dirname } from 'node:path'
 import { assignName, type SessionKey } from './sessions.ts'
 import { chatErrorOf, type ThreadId } from './chat-types.ts'
 import { legacyMsgId, storedId } from '../adapters/legacy-ids.ts'
 import { parseCommandWord } from './commands.ts'
-
-export const DELETE_AFTER_MS = 7 * 24 * 60 * 60 * 1000
 
 export type TopicState = 'open' | 'closed' | 'deleted'
 
@@ -32,26 +30,23 @@ export type TopicRec = {
   deleteAt: number | null
 }
 
-export type TopicEvent = { type: 'end'; now: number } | { type: 'reopen'; now: number } | { type: 'sweep'; now: number }
+export type TopicEvent = { type: 'end'; now: number } | { type: 'reopen'; now: number }
 
-export type TopicEffect = 'none' | 'close' | 'reopen' | 'delete'
+export type TopicEffect = 'none' | 'close' | 'reopen'
 
 // One transition. Events that do not apply in the current state return the record unchanged with effect 'none'.
-// A folder topic that closes has no deadline (deleteAt null), so the sweep never deletes it.
+// No deadline is set: deleteAt stays null.
 export function step(rec: TopicRec, ev: TopicEvent): { rec: TopicRec; effect: TopicEffect } {
   switch (ev.type) {
     case 'end':
       if (rec.state !== 'open') return { rec, effect: 'none' }
       return {
-        rec: { ...rec, state: 'closed', sessionKey: null, endedAt: ev.now, deleteAt: rec.cwd === null ? ev.now + DELETE_AFTER_MS : null },
+        rec: { ...rec, state: 'closed', sessionKey: null, endedAt: ev.now, deleteAt: null },
         effect: 'close',
       }
     case 'reopen':
       if (rec.state !== 'closed') return { rec, effect: 'none' }
       return { rec: { ...rec, state: 'open', endedAt: null, deleteAt: null }, effect: 'reopen' }
-    case 'sweep':
-      if (rec.state !== 'closed' || rec.deleteAt === null || ev.now < rec.deleteAt) return { rec, effect: 'none' }
-      return { rec: { ...rec, state: 'deleted', sessionKey: null, deleteAt: null }, effect: 'delete' }
   }
 }
 
@@ -88,11 +83,6 @@ export function openTopicOfDir(recs: readonly TopicRec[], cwd: string): TopicRec
   return recs.find((r) => r.state === 'open' && r.cwd === cwd)
 }
 
-// Legacy closed topics whose deadline has passed. Folder topics have no deadline and never come due.
-export function dueDeletes(recs: readonly TopicRec[], now: number): TopicRec[] {
-  return recs.filter((r) => r.cwd === null && r.state === 'closed' && r.deleteAt !== null && now >= r.deleteAt)
-}
-
 // A message in a folder topic that starts a new session: `/new` or `/new <text>` (also `/new@<botname>`). Returns the text
 // after it (trimmed, '' when there is none), or null for any other message.
 export function parseNewCommand(text: string): { body: string } | null {
@@ -114,7 +104,7 @@ export function parseTopics(json: string): TopicRec[] {
   if (!Array.isArray(raw)) return []
   return raw.filter(isTopicRec).flatMap((r) => {
     const threadId = storedId(r.threadId, legacyMsgId)
-    return threadId === null ? [] : [{ ...r, threadId: threadId as ThreadId, cwd: r.cwd ?? null }]
+    return threadId === null ? [] : [{ ...r, threadId: threadId as ThreadId, cwd: r.cwd ?? null, deleteAt: null }]
   })
 }
 
@@ -155,13 +145,4 @@ export function isThreadGone(e: unknown): boolean {
 // adapter's ChatError 'not-modified'. That is success, not a failure: the state the caller wanted holds.
 export function isTopicNotModified(e: unknown): boolean {
   return chatErrorOf(e)?.kind === 'not-modified'
-}
-
-// A legacy topic whose delete keeps failing is retried with a growing delay: 1 h, 2 h, 4 h, 8 h. After DELETE_MAX_FAILURES
-// failures it is given up (the owner is told once).
-export const DELETE_RETRY_BASE_MS = 60 * 60 * 1000
-export const DELETE_MAX_FAILURES = 5
-
-export function deleteRetryDelay(failures: number): number {
-  return DELETE_RETRY_BASE_MS * 2 ** Math.max(0, failures - 1)
 }

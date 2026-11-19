@@ -232,10 +232,6 @@ export class QueuedChat implements ChatPort {
     return this.run({}, () => this.inner.reopenThread(threadId))
   }
 
-  deleteThread(threadId: ThreadId): Promise<void> {
-    return this.run({}, () => this.inner.deleteThread(threadId))
-  }
-
   // Edits go to the chat the message was sent to (the adapter remembers it).
   isDm(messageId: MessageId): boolean | undefined {
     return this.inner.isDm?.(messageId)

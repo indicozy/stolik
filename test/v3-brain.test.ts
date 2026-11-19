@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  DELETE_MAX_FAILURES, DELETE_RETRY_BASE_MS, deleteRetryDelay, errorText, isThreadGone, isTopicNotModified,
+  errorText, isThreadGone, isTopicNotModified,
 } from '../src/brain/topics.ts'
 import { fitText, questionText, type AskQuestion } from '../src/router/ask.ts'
 import { TG_TEXT_LIMIT } from '../src/router/state.ts'
@@ -25,13 +25,6 @@ test('TOPIC_NOT_MODIFIED is the state already asked for (success), not a failure
   assert.equal(isTopicNotModified(new ChatError('not-modified', 'Bad Request: TOPIC_NOT_MODIFIED')), true)
   assert.equal(isTopicNotModified(new ChatError('thread-closed', 'Bad Request: message thread not found')), false)
   assert.equal(errorText(42), '42')
-})
-
-test('delete backoff: 1 h, 2 h, 4 h, 8 h, and a limit of failures before giving up', () => {
-  assert.equal(deleteRetryDelay(1), DELETE_RETRY_BASE_MS)
-  assert.equal(deleteRetryDelay(2), 2 * DELETE_RETRY_BASE_MS)
-  assert.equal(deleteRetryDelay(4), 8 * DELETE_RETRY_BASE_MS)
-  assert.equal(DELETE_MAX_FAILURES, 5)
 })
 
 test('a long question is cut to one Telegram message (code points, never a split emoji)', () => {

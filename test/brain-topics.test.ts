@@ -1,10 +1,10 @@
 // Topic lifecycle (ticket 22, one topic per folder): naming, transitions, the folder's reopen on the next session, the
-// legacy 7-day deadline on a fake clock, the /new command, persistence.
+// the /new command, persistence.
 import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  DELETE_AFTER_MS, connectPlan, dueDeletes, folderTopicName, newTopic, openTopicOfDir, parseNewCommand, parseTopics, serializeTopics, step,
+  connectPlan, folderTopicName, newTopic, openTopicOfDir, parseNewCommand, parseTopics, serializeTopics, step,
   type TopicRec,
 } from '../src/brain/topics.ts'
 import { tgThread } from '../src/adapters/chat/tg-ids.ts'
@@ -48,35 +48,11 @@ test('transitions: a folder topic closes on end with no deadline, and reopens', 
   assert.equal(back.rec.endedAt, null)
 })
 
-test('transitions: a folder topic is never deleted by the sweep', () => {
-  const closed = step(open(), { type: 'end', now: T0 }).rec
-  assert.deepEqual(step(closed, { type: 'sweep', now: T0 + 1000 * DAY }), { rec: closed, effect: 'none' })
-  assert.deepEqual(dueDeletes([closed], T0 + 1000 * DAY), [])
-})
-
 test('transitions: nothing happens for events that do not apply', () => {
   const o = open()
   assert.deepEqual(step(o, { type: 'reopen', now: T0 }), { rec: o, effect: 'none' })
-  assert.deepEqual(step(o, { type: 'sweep', now: T0 + 100 * DAY }), { rec: o, effect: 'none' })
   const closed = step(o, { type: 'end', now: T0 }).rec
   assert.deepEqual(step(closed, { type: 'end', now: T0 + 1 }), { rec: closed, effect: 'none' })
-})
-
-test('legacy records keep the 7-day deadline: not deleted one ms early, deleted at ended + 7 days', () => {
-  const closed = step(legacy(), { type: 'end', now: T0 }).rec
-  assert.equal(closed.deleteAt, T0 + DELETE_AFTER_MS)
-  assert.deepEqual(dueDeletes([closed], T0 + DELETE_AFTER_MS - 1), [])
-  assert.equal(step(closed, { type: 'sweep', now: T0 + DELETE_AFTER_MS - 1 }).effect, 'none')
-
-  assert.equal(dueDeletes([closed], T0 + DELETE_AFTER_MS).length, 1)
-  const gone = step(closed, { type: 'sweep', now: T0 + DELETE_AFTER_MS })
-  assert.equal(gone.effect, 'delete')
-  assert.equal(gone.rec.state, 'deleted')
-  assert.deepEqual(dueDeletes([gone.rec], T0 + 100 * DAY), [], 'a deleted topic is not swept again')
-})
-
-test('dueDeletes: open topics never come due', () => {
-  assert.deepEqual(dueDeletes([open({ deleteAt: T0 })], T0 + DAY), [])
 })
 
 test('connectPlan: a folder with an open topic needs nothing, whichever session connects', () => {
@@ -140,5 +116,6 @@ test('parseTopics and serializeTopics round-trip; junk is dropped, not thrown', 
 
 test('parseTopics keeps old JSON without a cwd as a legacy record (cwd null)', () => {
   const old = { threadId: 5, name: 'old', project: 'old', sessionKey: 42, backendSessionId: 'sid', state: 'closed', endedAt: T0, deleteAt: T0 + DAY }
-  assert.deepEqual(parseTopics(JSON.stringify([old])), [{ ...old, threadId: tgThread(5), cwd: null }])
+  // A deadline from before (deleteAt) is no longer read: it comes back null.
+  assert.deepEqual(parseTopics(JSON.stringify([old])), [{ ...old, threadId: tgThread(5), cwd: null, deleteAt: null }])
 })

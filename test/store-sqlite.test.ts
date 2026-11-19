@@ -346,7 +346,7 @@ test('sqlite: topic rows keep the brain record shape, including nulls and the se
   try {
     const store = open(b)
     const t1: TopicRec = { threadId: tgThread(11), name: 'stolik', project: 'stolik', cwd: '/w', sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null }
-    const t2: TopicRec = { threadId: tgThread(12), name: 'gone', project: 'p', cwd: null, sessionKey: 5, backendSessionId: 'x', state: 'deleted', endedAt: 1, deleteAt: 2 }
+    const t2: TopicRec = { threadId: tgThread(12), name: 'gone', project: 'p', cwd: null, sessionKey: 5, backendSessionId: 'x', state: 'deleted', endedAt: 1, deleteAt: null }
     store.upsertTopic(t1)
     store.upsertTopic(t2)
     assert.deepEqual(store.listTopics(), [t1, t2])

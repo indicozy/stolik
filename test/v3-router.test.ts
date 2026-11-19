@@ -4,7 +4,7 @@
 import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { DELETE_AFTER_MS, DELETE_RETRY_BASE_MS } from '../src/brain/topics.ts'
+const DAY = 24 * 60 * 60 * 1000
 import { FakeConn, HOME, OWNER, flush, harness, textFrom } from './helpers/fakes.ts'
 import { tgChat, tgMsg, tgThread } from '../src/adapters/chat/tg-ids.ts'
 import { parseCallbackData, permissionButtons } from '../src/router/state.ts'
@@ -13,6 +13,7 @@ const PROJ = `${HOME}/proj`
 const GROUP = -1001234567890
 const GROUP_ID = tgChat(GROUP)
 const HOUR = 60 * 60 * 1000
+const DELETE_AFTER_MS = 7 * DAY
 const GROUP_CHAT = { kind: 'home' as const, id: GROUP_ID, thread: null }
 
 async function groupWithSession(pid = 4242) {
@@ -124,25 +125,6 @@ test('a folder topic is never deleted, even long after its last session ended', 
   assert.equal(chat.topicOps.filter((o) => o.op === 'delete').length, 0)
   assert.equal(router.topics[0]?.state, 'closed')
   assert.equal(router.topics[0]?.deleteAt, null)
-})
-
-test('a legacy topic whose delete fails waits an hour, then 2, 4 and 8; after five failures it is given up and the owner told once', async () => {
-  const { chat, clock, router } = await groupWithSession()
-  router.topics.push({ threadId: tgThread(900), name: 'old', project: 'old', cwd: null, sessionKey: null, backendSessionId: null, state: 'closed', endedAt: clock.now(), deleteAt: clock.now() })
-  chat.failTopicOps.add('delete')
-  clock.advance(60_000)
-  await flush()
-  assert.equal(router.deleteFailures.get(tgThread(900))?.failures, 1)
-  for (const hours of [1, 2, 4, 8]) {
-    clock.advance(hours * HOUR)
-    await flush()
-  }
-  assert.equal(router.deleteFailures.get(tgThread(900))?.gaveUp, true)
-  assert.equal(router.deleteFailures.get(tgThread(900))?.failures, 5)
-  clock.advance(DELETE_RETRY_BASE_MS * 100)
-  await flush()
-  assert.equal(router.deleteFailures.get(tgThread(900))?.failures, 5, 'not tried again once given up')
-  assert.equal(chat.sent.filter((s) => s.text.includes('Could not delete the closed topic')).length, 1)
 })
 
 test('a folder topic closed that Telegram says is already closed is not a failure', async () => {

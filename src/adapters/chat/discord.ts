@@ -799,13 +799,6 @@ export class Discord implements ChatPort {
     await this.moveFolder(id, 'active')
   }
 
-  async deleteThread(threadId: ThreadId): Promise<void> {
-    const id = parseDcThread(threadId)
-    this.cancelIdle(id)
-    await boundary(this.client.rest.delete(`/channels/${id}`), true)
-    this.index.delete(id)
-  }
-
   async editText(messageId: MessageId, text: string, perm: PermKeyboard | null, _priority?: Priority): Promise<void> {
     await this.editWith(messageId, text, perm ? permRows(perm) : [])
     this.trackKeyboard(messageId, this.sentDm.get(messageId) ?? false, perm !== null)

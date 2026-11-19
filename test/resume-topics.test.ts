@@ -4,9 +4,8 @@
 import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { DELETE_AFTER_MS } from '../src/brain/topics.ts'
-
 const DAY = 24 * 60 * 60 * 1000
+const DELETE_AFTER_MS = 7 * DAY
 import { FakeConn, HOME, OWNER, flush, harness, textFrom } from './helpers/fakes.ts'
 import { tgChat, tgThread } from '../src/adapters/chat/tg-ids.ts'
 import type { ChatLogPort } from '../src/ports.ts'

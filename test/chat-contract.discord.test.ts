@@ -215,12 +215,6 @@ class FakeDiscord implements DiscordClient {
       }
       return c
     }
-    if (method === 'delete' && (m = route.match(/^\/channels\/(\d+)$/))) {
-      if (!this.channel(m[1]!)) this.unknownChannel()
-      this.channels.delete(m[1]!)
-      this.outs.push({ op: 'topic', action: 'delete', thread: dcThread(m[1]!) })
-      return undefined
-    }
     if (method === 'post' && (m = route.match(/^\/interactions\/(\d+)\/([^/]+)\/callback$/))) return undefined
     if (method === 'post' && (m = route.match(/^\/webhooks\/(\d+)\/([^/]+)$/))) {
       this.outs.push({ op: 'ack', id: this.tokens.get(m[2]!) ?? m[2]!, text: body.content })

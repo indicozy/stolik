@@ -26,7 +26,7 @@ export function sandboxPaths(prefix: string): { root: string; paths: StorePaths;
 const TOPIC_A: TopicRec = { threadId: tgThread(101), name: 'stolik', project: 'stolik', cwd: '/p/stolik', sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null }
 const TOPIC_B: TopicRec = {
   threadId: tgThread(7), name: 'old', project: 'proga', cwd: null, sessionKey: 'cwd:/p/proga', backendSessionId: '6d727728-f50d-46d9-83b5-b3e4f9e5a0a8',
-  state: 'closed', endedAt: 1_700_000_000_000, deleteAt: 1_700_086_400_000,
+  state: 'closed', endedAt: 1_700_000_000_000, deleteAt: null,
 }
 
 export function storeContract(name: string, make: () => ContractHarness): void {

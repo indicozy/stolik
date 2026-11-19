@@ -114,7 +114,7 @@ export const TELEGRAM_CAPABILITIES: Capabilities = {
   names: { home: 'group', lobby: 'General', thread: 'topic' },
   commandSigil: '/',
   text: { maxChars: TG_MAX_TEXT, format: 'html' },
-  threads: { kind: 'forum-topic', maxNameChars: 128, rename: true, close: true, delete: true },
+  threads: { kind: 'forum-topic', maxNameChars: 128, rename: true, close: true },
   buttons: { kind: 'inline', payloadBytes: 64, maxRows: 100, maxPerRow: 8, labelChars: 60, toast: true, editable: true },
   replies: true,
   edits: { own: true, seesOwnerEdits: true },
@@ -650,10 +650,6 @@ export class Telegram implements ChatPort {
 
   async reopenThread(threadId: ThreadId): Promise<void> {
     await boundary(this.bot.api.reopenForumTopic(this.topicChat(), tgNum(threadId)))
-  }
-
-  async deleteThread(threadId: ThreadId): Promise<void> {
-    await boundary(this.bot.api.deleteForumTopic(this.topicChat(), tgNum(threadId)))
   }
 
   // Edits a message; perm null removes any inline keyboard. The edit goes to the message's own chat. `priority` is

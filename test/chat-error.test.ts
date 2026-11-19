@@ -138,7 +138,7 @@ test('Telegram capabilities: the values the adapter has always used', () => {
   assert.equal(TELEGRAM_CAPABILITIES.platform, 'tg')
   assert.equal(TELEGRAM_CAPABILITIES.text.maxChars, 4096)
   assert.equal(TELEGRAM_CAPABILITIES.text.format, 'html')
-  assert.deepEqual(TELEGRAM_CAPABILITIES.threads, { kind: 'forum-topic', maxNameChars: 128, rename: true, close: true, delete: true })
+  assert.deepEqual(TELEGRAM_CAPABILITIES.threads, { kind: 'forum-topic', maxNameChars: 128, rename: true, close: true })
   assert.equal(TELEGRAM_CAPABILITIES.buttons.kind === 'inline' && TELEGRAM_CAPABILITIES.buttons.payloadBytes, 64)
   assert.deepEqual(TELEGRAM_CAPABILITIES.rate, { perChatPerMin: 15, burst: 5, scope: 'chat', sharedPause: true })
   assert.deepEqual(TELEGRAM_CAPABILITIES.files, { inbound: true, outbound: true, maxUploadBytes: 50 * 1024 * 1024, maxDownloadBytes: 20 * 1024 * 1024, image: true })

@@ -5,7 +5,7 @@ import { ASK_TTL_MS } from '../ask.ts'
 import { releaseAsk } from './ask.ts'
 import { legacyMsgId, storedId } from '../../adapters/legacy-ids.ts'
 import type { MessageId } from '../../brain/chat-types.ts'
-import { announceTerminated, closeOrphanTopics, inTopic, onSessionEnded, sendTarget, sweepTopics } from '../topics.ts'
+import { announceTerminated, closeOrphanTopics, inTopic, onSessionEnded, sendTarget } from '../topics.ts'
 import type { Session } from '../state.ts'
 import { expireRoute } from './route.ts'
 import { errMsg } from '../log.ts'
@@ -129,7 +129,6 @@ export function sweep(router: Router): void {
   }
   // After the registry sweep, so a session that just died is not warned or closed.
   sweepIdle(router, now)
-  void sweepTopics(router, now)
   void checkIdleSource(router)
   // Orphan topics (a router restart left them open) are checked on the sweep too, once the reconnect grace is over.
   if (router.orphanChecksOn) void closeOrphanTopics(router)

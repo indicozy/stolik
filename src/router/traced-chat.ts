@@ -144,10 +144,6 @@ export class TracedChat implements ChatPort {
     return this.inner.reopenThread(threadId)
   }
 
-  deleteThread(threadId: ThreadId): Promise<void> {
-    return this.inner.deleteThread(threadId)
-  }
-
   ackButton(id: string, text?: string): Promise<void> {
     return this.inner.ackButton(id, text)
   }

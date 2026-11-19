@@ -6,7 +6,7 @@ import { basename } from 'node:path'
 import type { Inbound } from '../brain/chat-types.ts'
 import type { MessageId, SendTarget, ThreadId } from '../brain/chat-types.ts'
 import {
-  connectPlan, deleteRetryDelay, dueDeletes, DELETE_MAX_FAILURES, folderTopicName, isThreadGone, isTopicNotModified, newTopic,
+  connectPlan, folderTopicName, isThreadGone, isTopicNotModified, newTopic,
   openTopicOfDir, serializeTopics, step, type TopicRec,
 } from '../brain/topics.ts'
 import { destinationFor, type Destination, type OutKind } from '../brain/destinations.ts'
@@ -230,29 +230,6 @@ export async function tidyTopicNames(router: Router): Promise<void> {
   if (changed) persistTopics(router)
 }
 
-// Rollout of one topic per folder: the per-session topics of earlier runs are deleted in Telegram once, at start, and their
-// records are dropped. A delete that fails (other than "thread gone") is logged and the record is dropped anyway, so it is
-// not retried forever. Group mode only. The Logs topic and the mode threads are not in router.topics (they are stored
-// elsewhere), so they are not touched.
-export async function deleteLegacyTopics(router: Router): Promise<void> {
-  if (!groupMode(router)) return
-  const legacy = router.topics.filter((r) => r.cwd === null)
-  if (legacy.length === 0) return
-  for (const rec of legacy) {
-    if (rec.state !== 'deleted') {
-      try {
-        await router.chat.deleteThread(rec.threadId)
-      } catch (e) {
-        if (!isThreadGone(e)) router.logger.log(`old topic ${rec.name} not deleted: ${errMsg(e)}`)
-      }
-    }
-    router.topics = router.topics.filter((r) => r !== rec)
-  }
-  persistTopics(router)
-  router.logger.log(`removed ${legacy.length} topic record(s) from before one topic per folder`)
-  await tidyTopicNames(router)
-}
-
 // The session a plain message in a folder topic goes to (ticket 22), among the live sessions of the folder `live`:
 // (a) a reply to a session message that is live here; (b) else the session that wrote the last message in the topic
 // before this one (by Telegram message id, so a message the session posts while the user types does not count); (c) else
@@ -314,48 +291,4 @@ export function recoverTopic(router: Router, s: Session, staleThread: ThreadId):
       return null
     }
   })
-}
-
-// Deletes the legacy closed topics whose 7-day deadline has passed (folder topics have no deadline). A record is marked
-// deleted only when Telegram deletes the topic, or says it is already gone. Any other failure leaves it closed, and the
-// next sweep tries again. A sweep that is still running is not started again (a slow delete would otherwise be sent twice).
-export async function sweepTopics(router: Router, now: number): Promise<void> {
-  if (router.topicSweepRunning) return
-  // A topic whose delete failed waits for its backoff; one given up is not tried again (the owner was told).
-  const due = dueDeletes(router.topics, now).filter((r) => {
-    const f = router.deleteFailures.get(r.threadId)
-    return !f || (!f.gaveUp && now >= f.nextAt)
-  })
-  if (due.length === 0) return
-  router.topicSweepRunning = true
-  try {
-    for (const rec of due) {
-      try {
-        await router.chat.deleteThread(rec.threadId)
-      } catch (e) {
-        if (!isThreadGone(e)) {
-          const f = router.deleteFailures.get(rec.threadId) ?? { failures: 0, nextAt: 0, gaveUp: false }
-          f.failures++
-          if (f.failures >= DELETE_MAX_FAILURES) {
-            f.gaveUp = true
-            router.logger.log(`topic ${rec.name} not deleted after ${f.failures} tries: ${errMsg(e)}`)
-            await say(router, `Could not delete the closed topic "${rec.name}" after ${f.failures} tries. Delete it by hand in the group.`)
-          } else {
-            f.nextAt = now + deleteRetryDelay(f.failures)
-            router.logger.log(`topic delete failed, retry in ${Math.round(deleteRetryDelay(f.failures) / 60_000)} min: ${errMsg(e)}`)
-          }
-          router.deleteFailures.set(rec.threadId, f)
-          continue
-        }
-      }
-      router.deleteFailures.delete(rec.threadId)
-      const cur = router.topics.find((r) => r.threadId === rec.threadId)
-      if (!cur || cur.state !== 'closed') continue
-      replaceTopic(router, step(cur, { type: 'sweep', now }).rec)
-      router.audit.event({ event: 'topic', action: 'delete', project: rec.project })
-    }
-  } finally {
-    router.topicSweepRunning = false
-    persistTopics(router)
-  }
 }

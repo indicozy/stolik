@@ -55,7 +55,7 @@ export const DISCORD_FAKE_CAPABILITIES: Capabilities = {
   names: { home: 'server', lobby: '#general', thread: 'post' },
   commandSigil: '/',
   text: { maxChars: 2000, format: 'markdown' },
-  threads: { kind: 'channel', maxNameChars: 100, rename: true, close: true, delete: true },
+  threads: { kind: 'channel', maxNameChars: 100, rename: true, close: true },
   buttons: { kind: 'inline', payloadBytes: 100, maxRows: 5, maxPerRow: 5, labelChars: 80, toast: true, editable: true },
   rate: { perChatPerMin: 30, burst: 5, scope: 'thread', sharedPause: false },
 }
@@ -230,10 +230,6 @@ export class FakeChat implements ChatPort {
 
   async reopenThread(threadId: ThreadId): Promise<void> {
     this.topicOp({ op: 'reopen', threadId })
-  }
-
-  async deleteThread(threadId: ThreadId): Promise<void> {
-    this.topicOp({ op: 'delete', threadId })
   }
 
   // Every editText call, with its keyboard (null removes it).
