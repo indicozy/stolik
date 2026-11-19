@@ -4,7 +4,8 @@
 import { execFile } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { STATE_DIR } from '../../config.ts'
+import { STATE_DIR, type TgConfig } from '../../config.ts'
+import { haikuCommand } from '../haiku.ts'
 import { nextAfter, parseCron, type Schedule } from './cron.ts'
 
 export type Parsed = { text: string; schedule: Schedule; project: string | null }
@@ -91,22 +92,21 @@ export function checkParse(raw: string, now: number, projects: string[]): Parsed
   return { text, schedule, project }
 }
 
-// One non-interactive Haiku call: no tools, no MCP, no session file. Same argv as the workers summary. Null on any failure.
-export function runHaiku(prompt: string): Promise<string | null> {
+// One non-interactive Haiku call: no tools, no MCP, no session file, pinned by the machine config (src/addons/haiku.ts).
+// Null on any failure, and never a rejection.
+export function runHaiku(prompt: string, cfg: Pick<TgConfig, 'nice' | 'cpuAffinity'>): Promise<string | null> {
   return new Promise((resolve) => {
+    let cmd: { file: string; args: string[] }
     try {
       mkdirSync(REMIND_DIR, { recursive: true, mode: 0o700 })
+      cmd = haikuCommand(cfg)
     } catch {
       resolve(null)
       return
     }
     const child = execFile(
-      'nice',
-      [
-        '-n', '19', 'taskset', '-c', '8-19', 'claude',
-        '-p', '--model', 'haiku', '--output-format', 'text', '--max-turns', '1',
-        '--tools', '', '--strict-mcp-config', '--no-session-persistence',
-      ],
+      cmd.file,
+      cmd.args,
       { cwd: REMIND_DIR, timeout: PARSE_TIMEOUT_MS, killSignal: 'SIGKILL', maxBuffer: 256 * 1024 },
       (err, stdout) => resolve(err ? null : String(stdout)),
     )

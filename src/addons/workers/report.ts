@@ -6,7 +6,8 @@ import { execFile } from 'node:child_process'
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, statSync, type Dirent } from 'node:fs'
 import { homedir, loadavg } from 'node:os'
 import { basename, dirname, join } from 'node:path'
-import { OLD_STATE_DIR, REPO_DIR, STATE_DIR, loadConfig } from '../../config.ts'
+import { OLD_STATE_DIR, REPO_DIR, STATE_DIR, loadConfig, type TgConfig } from '../../config.ts'
+import { haikuCommand, haikuPinning } from '../haiku.ts'
 import { redact } from '../../brain/common.ts'
 
 export const MESSAGE_LIMIT = 3500
@@ -764,22 +765,20 @@ export function parseSummaryOutput(out: string, items: ReadonlyMap<string, strin
   return result
 }
 
-export function runClaudeSummary(prompt: string): Promise<string | null> {
+// Same non-interactive Haiku call as the routing classifier (src/addons/haiku.ts), pinned by the machine config.
+export function runClaudeSummary(prompt: string, cfg: Pick<TgConfig, 'nice' | 'cpuAffinity'> = haikuPinning()): Promise<string | null> {
   return new Promise((resolve) => {
+    let cmd: { file: string; args: string[] }
     try {
       mkdirSync(WORKERS_DIR, { recursive: true, mode: 0o700 })
+      cmd = haikuCommand(cfg)
     } catch {
       resolve(null)
       return
     }
-    // Same non-interactive Haiku call as the routing classifier: no tools, no MCP, no session file.
     const child = execFile(
-      'nice',
-      [
-        '-n', '19', 'taskset', '-c', '8-19', 'claude',
-        '-p', '--model', 'haiku', '--output-format', 'text', '--max-turns', '1',
-        '--tools', '', '--strict-mcp-config', '--no-session-persistence',
-      ],
+      cmd.file,
+      cmd.args,
       { cwd: WORKERS_DIR, timeout: SUMMARY_TIMEOUT_MS, killSignal: 'SIGKILL', maxBuffer: 256 * 1024 },
       (err, stdout) => resolve(err ? null : String(stdout)),
     )
