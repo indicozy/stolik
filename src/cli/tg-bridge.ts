@@ -38,6 +38,7 @@ async function cmdSetup(args: string[]): Promise<number> {
   const { makeTelegramPairing } = await import('../adapters/chat/telegram-setup.ts')
   const { systemMlDeps } = await import('./ml-setup.ts')
   const { createPrompter } = await import('./prompt.ts')
+  const { isNpxInstall } = await import('./install-location.ts')
   const options = parseSetupArgs(args)
   if (typeof options === 'string') {
     out(`error: ${options}`)
@@ -56,6 +57,7 @@ async function cmdSetup(args: string[]): Promise<number> {
         configFile: tgConfigPath(),
         pluginDir: join(REPO_DIR, 'plugin'),
         nodePath: process.execPath,
+        npxInstall: isNpxInstall(REPO_DIR),
       },
       // The ML step pins its commands with the same CPU and nice settings as the services (config cpuAffinity, nice).
       ml: systemMlDeps(REPO_DIR, process.env.PATH, (file, args) => pinned(currentTgConfig(), file, args)),

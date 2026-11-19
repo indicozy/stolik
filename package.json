@@ -1,18 +1,48 @@
 {
-  "name": "tg-bridge",
+  "name": "stolik",
   "version": "0.1.0",
+  "description": "stolik connects the Claude Code sessions on your machine to Telegram and Discord.",
+  "keywords": [
+    "claude-code",
+    "telegram",
+    "discord",
+    "mcp",
+    "channel"
+  ],
+  "homepage": "https://indicozy.github.io/stolik/",
+  "bugs": {
+    "url": "https://github.com/indicozy/stolik/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/indicozy/stolik.git"
+  },
   "license": "Apache-2.0",
-  "private": true,
   "type": "module",
   "bin": {
-    "tg-bridge": "dist/cli/tg-bridge.js"
+    "stolik": "dist/cli/tg-bridge.js",
+    "tg-bridge": "dist/cli/tg-bridge.js",
+    "tg-claude": "bin/tg-claude"
   },
+  "files": [
+    "dist/",
+    "bin/",
+    "plugin/",
+    "ml/worker.py",
+    "ml/requirements.txt",
+    "stt/worker.py",
+    "stt/requirements.txt",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
     "build": "tsc -p . && for a in modes notes ml-worker voice voice-cleanup digest router usage-watch cost-guard workers; do cp src/addons/$a/tg-bridge-addon.json dist/addons/$a/; done && cp src/addons/usage-watch/check.py dist/addons/usage-watch/",
-    "test": "node --test --experimental-strip-types test/*.test.ts && python3 -I -m unittest discover -s ml -p 'test_*.py' && python3 -I -m unittest discover -s test -p 'test_usage_*.py'"
+    "test": "node --test --experimental-strip-types test/*.test.ts && python3 -I -m unittest discover -s ml -p 'test_*.py' && python3 -I -m unittest discover -s test -p 'test_usage_*.py'",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

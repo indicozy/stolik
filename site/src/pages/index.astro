@@ -50,7 +50,7 @@ const architecture = `your phone ── Telegram or Discord ──▶ router (yo
             project: read answers, allow or deny tool calls, and start or resume sessions from your phone.
           </p>
           <div class="td-hero-install td-rise" style="--i: 3">
-            <CodeBlock variant="inline" code="npx stolik setup" prompt="$" />
+            <CodeBlock variant="inline" code="npm install -g stolik && stolik setup" prompt="$" />
           </div>
           <p class="td-micro td-muted td-rise" style="--i: 3">Linux · Node 22.13+ · tmux · Claude Code. Free and Apache-2.0 licensed.</p>
           <div class="td-hero-ctas td-rise" style="--i: 4">
@@ -78,17 +78,17 @@ const architecture = `your phone ── Telegram or Discord ──▶ router (yo
             <li>On a Team or Enterprise plan, an org Owner must turn Channels on first. Without that, the flag does not help.</li>
           </ul>
         </Callout>
-        <CodeBlock label="terminal" code={'npx stolik setup\ntg-claude   # claude, plus the dev-channels flag'} />
+        <CodeBlock label="terminal" code={'npm install -g stolik\nstolik setup\nTG_BRIDGE_PLUGIN=1 tg-claude   # claude, plus the dev-channels flag'} />
         <Steps>
           <li><strong>Run setup.</strong> It asks for the bot token (hidden), pairs the bot with your account, writes the config, and offers the optional voice models.</li>
           <li><strong>Make the group.</strong> Create a private group, turn Topics on, add your bot as admin, send <code>/bind</code>. The bot answers only you.</li>
           <li><strong>Start the router and add the plugin.</strong> <code>stolik service install --start</code>, then two <code>/plugin</code> lines inside Claude Code. Setup prints both.</li>
-          <li><strong>Start a session.</strong> Run <code>tg-claude</code> in a project. A topic with the folder's name appears. Say hi from the phone.</li>
+          <li><strong>Start a session.</strong> Run <code>TG_BRIDGE_PLUGIN=1 tg-claude</code> in a project. A topic with the folder's name appears. Say hi from the phone.</li>
         </Steps>
         <p class="td-small td-muted">
           <code>tg-claude</code> is <code>claude</code> plus <code>--dangerously-load-development-channels</code>. stolik is not on Anthropic's channel list, and it needs the flag until that changes. <a href={url('docs/why-the-flag/')}>Why the flag?</a>
         </p>
-        <p class="td-small">Using Discord? Run <code>npx stolik setup --chat discord</code>. <a href={url('docs/install/')}>Full install guide →</a></p>
+        <p class="td-small">Using Discord? Run <code>stolik setup --chat discord</code> after the install. <a href={url('docs/install/')}>Full install guide →</a></p>
       </div>
     </Section>
 
@@ -240,7 +240,7 @@ const architecture = `your phone ── Telegram or Discord ──▶ router (yo
 
     <Section id="cta" index="07" eyebrow="install" title="Leave the desk. Keep the session." lede="Free, Apache-2.0 licensed, and it runs on the machine you already have." align="center">
       <div class="cta">
-        <CodeBlock variant="inline" code="npx stolik setup" prompt="$" />
+        <CodeBlock variant="inline" code="npm install -g stolik && stolik setup" prompt="$" />
         <div class="cta-buttons">
           <Button variant="primary" size="lg" href={url('docs/install/')}>Read the install guide</Button>
           <Button variant="secondary" size="lg" href="https://github.com/indicozy/stolik" iconEnd="arrow-up-right">View on GitHub</Button>

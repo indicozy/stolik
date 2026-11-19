@@ -5,6 +5,7 @@
 import { mkdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { writeFileAtomic } from './setup.ts'
+import { NPX_SERVICE_MESSAGE, isNpxInstall } from './install-location.ts'
 
 export const DEFAULT_UNIT = 'tg-bridge'
 // macOS label is com.tg-bridge.<name>; the default name keeps the plist path com.tg-bridge.router.plist.
@@ -297,6 +298,10 @@ function macService(args: ServiceArgs, deps: ServiceDeps): number {
 
 // Runs one service action. Returns the exit code.
 export function runService(args: ServiceArgs, deps: ServiceDeps): number {
+  if (args.action === 'install' && isNpxInstall(deps.scriptPath)) {
+    deps.err(NPX_SERVICE_MESSAGE)
+    return 1
+  }
   if (deps.platform === 'linux') return linuxService(args, deps)
   if (deps.platform === 'darwin') return macService(args, deps)
   deps.err('tg-bridge service supports Linux (systemd --user) and macOS (LaunchAgent) only')

@@ -12,11 +12,20 @@ Plan and design: `docs/plan-v3.md` (P3, P4, P5), `docs/design-v3.md` (§5, §6.2
 `./install.sh` runs steps 1 and 2 (`npm ci`, `npm run build`, then `tg-bridge setup`) and prints the rest. It does not
 register an MCP server or touch `~/.claude/settings.json`; the plugin in step 5 does the Claude side.
 
-1. Get the code and build it:
+1. Install the package. The npm way, which puts the `stolik` command (and the `tg-bridge` alias) on your PATH:
 
    ```sh
-   git clone <repo> ~/Documents/projects/tg-bridge
-   cd ~/Documents/projects/tg-bridge
+   npm install -g stolik
+   ```
+
+   Do not use `npx` for this. npx runs from npm's cache, which can be cleaned, and the service must point at a copy
+   that stays put. `stolik service install` refuses to run from the cache.
+
+   From a checkout instead (for development):
+
+   ```sh
+   git clone https://github.com/indicozy/stolik.git ~/Documents/projects/stolik
+   cd ~/Documents/projects/stolik
    npm ci && npm run build && npm link
    ```
 
@@ -61,7 +70,9 @@ register an MCP server or touch `~/.claude/settings.json`; the plugin in step 5 
    ```
 
    Start Claude with the channel on: `claude --dangerously-load-development-channels plugin:tg-bridge@indicozy`.
-   Or use `TG_BRIDGE_PLUGIN=1 tg-claude`, which adds the same flag.
+   Or use `TG_BRIDGE_PLUGIN=1 tg-claude`, which adds the same flag. Without `TG_BRIDGE_PLUGIN=1`, `tg-claude` expects a
+   user-level MCP server named `tg-bridge`, which nothing creates now.
+   With the global install, the plugin folder is `$(npm root -g)/stolik/plugin`; `tg-bridge setup` prints the exact path.
 
 Idle and lock detection use logind (`loginctl`). For X11 without logind, set `"presence": "x11"` in `config.json`.
 

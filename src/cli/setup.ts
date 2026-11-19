@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path'
 import { TELEGRAM_GROUP_STEPS, type PairingDriver } from '../adapters/chat/telegram-setup.ts'
 import { DISCORD_BIND_STEPS, discordInviteUrl, fetchClientId } from '../adapters/chat/discord-setup.ts'
 import { formatMlPlan, llamaBuildPlan, mlInstallPlan, type MlSetupDeps } from './ml-setup.ts'
+import { NPX_SERVICE_MESSAGE } from './install-location.ts'
 
 // BotFather tokens: "<bot id>:<secret>". The secret is letters, digits, "_" and "-".
 export const TOKEN_RE = /^\d+:[A-Za-z0-9_-]{20,}$/
@@ -20,6 +21,8 @@ export type SetupPaths = {
   pluginDir: string
   // The node that runs setup. Recorded as nodePath so the plugin launcher uses the same node (bin/tg-plugin-node).
   nodePath: string
+  // True when this copy runs from the npx cache: the service step then says to install the package globally first.
+  npxInstall?: boolean
 }
 
 export type SetupDeps = {
@@ -290,6 +293,7 @@ export async function runSetup(deps: SetupDeps): Promise<number> {
   if (deps.ml) code = await mlStep(deps, deps.ml)
 
   out('')
+  if (paths.npxInstall) out('   ' + NPX_SERVICE_MESSAGE)
   out('6. Service. Run the router in your logon session with: tg-bridge service install --start')
   return code
 }
@@ -415,6 +419,7 @@ export async function runDiscordSetup(deps: SetupDeps): Promise<number> {
   if (deps.ml) code = await mlStep(deps, deps.ml, 6)
 
   out('')
+  if (paths.npxInstall) out('   ' + NPX_SERVICE_MESSAGE)
   out('7. Service. Run the router in your logon session with: tg-bridge service install --start')
   return code
 }

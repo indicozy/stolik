@@ -20,11 +20,14 @@ stolik works, but it is young. Commands and file names may still change, and Cla
 
 This guide sets up Telegram. For Discord, see [Discord instead of Telegram](#discord-instead-of-telegram). One install uses one chat app.
 
-## 1. Run setup
+## 1. Install and run setup
 
 ```sh
-npx stolik setup
+npm install -g stolik
+stolik setup
 ```
+
+Install it globally, as shown. Do not run setup with `npx`: npx runs the package from npm's cache, and npm can clean that cache at any time. The plugin and the router service would then point into the cache and break. `stolik service install` refuses to run from there.
 
 Setup asks for the bot token. Typing is hidden. Then it pairs the bot with your Telegram account.
 
@@ -38,8 +41,8 @@ You can keep the router running during pairing. Until you pair, the router answe
 
 Setup writes two files and prints the next steps:
 
-- `~/.config/stolik.env`: the bot token and the owner's chat id. Only your user can read it (mode 600).
-- `~/.config/stolik/config.json`: everything else. The owner is stored as `chat.telegram.ownerUserId`. A missing file means defaults.
+- `~/.config/tg-bridge.env`: the bot token and the owner's chat id. Only your user can read it (mode 600).
+- `~/.config/tg-bridge/config.json`: everything else. The owner is stored as `chat.telegram.ownerUserId`. A missing file means defaults.
 
 It also offers the optional model worker for voice notes and the digest. Say no for now. You can run setup again later.
 
@@ -60,15 +63,17 @@ stolik service install --start
 stolik service status
 ```
 
-This writes a systemd **user** unit and starts it. The router runs in your login session, not as root. A restart of the router leaves your tmux sessions, and the Claude Code sessions in them, running.
+This writes a systemd **user** unit named `tg-bridge` and starts it. The router runs in your login session, not as root. The unit runs the copy of stolik that wrote it, so keep the global install in place. Restarting the router leaves your tmux sessions and the Claude Code sessions in them running.
+
+If you change the Node version, run `stolik service install --start` again so the unit uses the new one. Logs: `journalctl --user -u tg-bridge -f`.
 
 ## 4. Add the plugin to Claude Code
 
-Inside Claude Code, once:
+Setup prints the plugin folder. It is inside the global npm folder (`npm root -g`, then `stolik/plugin`). In Claude Code, run this once:
 
 ```
-/plugin marketplace add indicozy/stolik
-/plugin install stolik@stolik
+/plugin marketplace add <the plugin folder that setup printed>
+/plugin install tg-bridge@indicozy
 ```
 
 The plugin holds the channel (how messages get into a session) and a few hooks (how answers and permission prompts get out).
@@ -77,14 +82,14 @@ The plugin holds the channel (how messages get into a session) and a few hooks (
 
 ```sh
 cd ~/code/orbit-api
-tg-claude
+TG_BRIDGE_PLUGIN=1 tg-claude
 ```
 
-`tg-claude` is `claude` with one extra flag: `--dangerously-load-development-channels plugin:stolik@stolik`. Claude Code shows a warning screen. Press Enter. For sessions that you start from Telegram, the router presses Enter on that screen for you. [Why the flag?](../why-the-flag/) explains what it does and why stolik needs it.
+`tg-claude` is `claude` with one extra flag: `--dangerously-load-development-channels plugin:tg-bridge@indicozy`. `TG_BRIDGE_PLUGIN=1` selects that plugin. Without it, `tg-claude` looks for a user-level MCP server named `tg-bridge`, and the plugin does not create one. Claude Code shows a warning screen. Press Enter. For sessions that you start from Telegram, the router presses Enter on that screen for you. [Why the flag?](../why-the-flag/) explains what it does and why stolik needs it.
 
 A topic named `orbit-api` appears in your group. Write in it from your phone.
 
-You can alias it: `alias claude=tg-claude`. Subcommands such as `claude mcp` and `claude -p` pass through unchanged.
+To keep the variable, add `export TG_BRIDGE_PLUGIN=1` to your shell profile. Then `alias claude=tg-claude` works too. Subcommands such as `claude mcp` and `claude -p` pass through unchanged.
 
 ## Discord instead of Telegram
 
@@ -147,7 +152,7 @@ Invites are not checked, because listing them needs Manage Server. Check them yo
 
 Voice notes, voice cleanup and the digest use a local model worker: faster-whisper for speech and a small Qwen model for text. Models download on first use, load on demand and unload after 10 minutes idle.
 
-Run `stolik setup` again and say yes at the model step. It needs:
+Run `stolik setup` again and say yes at the model step. The worker lives in the package folder (`ml/.venv`), so you must be able to write to the global npm folder. If you cannot, set a prefix you own first with `npm config set prefix ~/.local`, then reinstall. It needs:
 
 - [uv](https://docs.astral.sh/uv/), which creates a Python 3.12 environment
 - a C++ compiler and CMake (the install builds `llama-cpp-python` from source)
