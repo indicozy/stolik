@@ -13,7 +13,7 @@ const PROJ = `${HOME}/proj`
 const GROUP = -1001234567890
 const GROUP_ID = tgChat(GROUP)
 const HOUR = 60 * 60 * 1000
-const DELETE_AFTER_MS = 7 * DAY
+const WEEK = 7 * DAY
 const GROUP_CHAT = { kind: 'home' as const, id: GROUP_ID, thread: null }
 
 async function groupWithSession(pid = 4242) {
@@ -115,54 +115,16 @@ test('a permission tap is answered before its edit, even while the edit waits in
   assert.ok(chat.answers.some((a) => a.id === 'cb1'), 'the tap was answered without waiting for the edit')
 })
 
-test('a folder topic is never deleted, even long after its last session ended', async () => {
+test('a folder topic stays open long after its last session ended: no close, no delete', async () => {
   const { chat, platform, clock, router } = await groupWithSession()
   platform.dead.add(4242)
   clock.advance(60_000)
   await flush()
-  clock.advance(DELETE_AFTER_MS * 2)
+  clock.advance(WEEK * 2)
   await flush()
-  assert.equal(chat.topicOps.filter((o) => o.op === 'delete').length, 0)
-  assert.equal(router.topics[0]?.state, 'closed')
+  assert.deepEqual(chat.topicOps.filter((o) => o.op !== 'create'), [])
+  assert.equal(router.topics[0]?.state, 'open')
   assert.equal(router.topics[0]?.deleteAt, null)
-})
-
-test('a folder topic closed that Telegram says is already closed is not a failure', async () => {
-  const { chat, platform, clock, logger, router } = await groupWithSession()
-  chat.topicErrors.set('close', 'Bad Request: TOPIC_NOT_MODIFIED')
-  platform.dead.add(4242)
-  clock.advance(60_000)
-  await flush()
-  assert.equal(router.topics[0]?.state, 'closed')
-  assert.equal(logger.lines.filter((l) => l.includes('topic close failed')).length, 0)
-})
-
-test('a session that ends while its topic is being made: the new topic is closed at once', async () => {
-  const h = harness({ groupId: tgChat(GROUP) })
-  await h.router.start()
-  h.platform.dirs.add(PROJ)
-  let release!: () => void
-  h.chat.createGate = new Promise<void>((r) => (release = r))
-  const conn = new FakeConn()
-  h.agent.receive(conn, { t: 'register', claudePid: 4242, cwd: PROJ })
-  await flush()
-  const [s] = h.router.registry.list()
-  h.router.registry.remove(s.key)
-  h.chat.createGate = null
-  release()
-  await flush()
-  assert.ok(h.chat.topicOps.some((o) => o.op === 'close' && o.threadId === tgThread(100)), 'closed in Telegram')
-  assert.equal(h.router.topics[0]?.state, 'closed')
-})
-
-test('the periodic sweep closes an open topic whose folder has no live session, once the reconnect grace is over', async () => {
-  const { chat, router, clock } = await groupWithSession()
-  router.topics.push({ ...router.topics[0], threadId: tgThread(555), cwd: `${HOME}/gone`, name: 'orphan', state: 'open', endedAt: null, deleteAt: null })
-  router.orphanChecksOn = true
-  clock.advance(30_000)
-  await flush()
-  assert.ok(chat.topicOps.some((o) => o.op === 'close' && o.threadId === tgThread(555)))
-  assert.ok(chat.topicOps.every((o) => !(o.op === 'close' && o.threadId === tgThread(100))), 'the live folder stays open')
 })
 
 test('keyboards left from the last run are removed at start, and the stored list is cleared', async () => {
@@ -244,21 +206,6 @@ test('an album is one message to the session: every file is downloaded and named
   assert.equal((agent.sent[0].content.match(/file: /g) ?? []).length, 2)
   assert.equal(agent.sent[0].meta.album_count, '2')
   void conn
-})
-
-test('/resume of a closed topic that Telegram says is already open: the record is open again, no new topic', async () => {
-  const { chat, platform, clock, router, logger } = await groupWithSession()
-  const session = router.registry.list()[0]
-  platform.dead.add(4242)
-  clock.advance(60_000)
-  await flush()
-  assert.equal(router.topics[0]?.state, 'closed')
-  chat.topicErrors.set('reopen', 'Bad Request: TOPIC_NOT_MODIFIED')
-  const { onSessionRegistered } = await import('../src/router/topics.ts')
-  await onSessionRegistered(router, session)
-  assert.equal(router.topics[0]?.state, 'open')
-  assert.equal(chat.topicOps.filter((o) => o.op === 'create').length, 1, 'no second topic')
-  assert.equal(logger.lines.filter((l) => l.includes('reopen failed')).length, 0)
 })
 
 test('/bind: an approval still waiting in the DM is closed, since its answer belongs to the group now', async () => {

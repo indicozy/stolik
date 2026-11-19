@@ -5,7 +5,7 @@ import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 const DAY = 24 * 60 * 60 * 1000
-const DELETE_AFTER_MS = 7 * DAY
+const WEEK = 7 * DAY
 import { FakeConn, HOME, OWNER, flush, harness, textFrom } from './helpers/fakes.ts'
 import { tgChat, tgThread } from '../src/adapters/chat/tg-ids.ts'
 import type { ChatLogPort } from '../src/ports.ts'
@@ -78,36 +78,36 @@ test('the picker is a General message: no thread, and it is written to the chat 
   assert.equal(line.tg_message_id, list.id)
 })
 
-test('an ended session resumes in tmux, and its closed topic is reopened when it registers', async () => {
+test('an ended session resumes in tmux, into its folder topic: no close, no reopen, no new topic', async () => {
   const h = await groupWithSession()
   h.agent.transcripts = transcript(h.clock.now() - 60_000)
   h.platform.dead.add(4242)
   h.clock.advance(60_000)
   await flush()
-  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'close'), [{ op: 'close', threadId: tgThread(100) }])
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op !== 'create'), [])
 
   await resumeFirst(h)
   assert.deepEqual(h.agent.startedSessions.map((x) => x.extra), [['--resume', SID]])
   h.agent.receive(new FakeConn(), { t: 'register', claudePid: 5151, cwd: PROJ, spawnToken: h.agent.spawnTokens[0] })
   await flush()
-  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'reopen'), [{ op: 'reopen', threadId: tgThread(100) }])
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op !== 'create'), [])
   assert.equal(h.chat.topicOps.filter((o) => o.op === 'create').length, 1, 'no new topic')
 })
 
-test('the folder topic is never deleted: after 7 days, /resume still reopens it, with no new topic', async () => {
+test('the folder topic is never closed or deleted: after 7 days, /resume uses it, with no new topic', async () => {
   const h = await groupWithSession()
   h.agent.transcripts = transcript(h.clock.now() - 60_000)
   h.platform.dead.add(4242)
   h.clock.advance(60_000)
   await flush()
-  h.clock.advance(DELETE_AFTER_MS + DAY)
+  h.clock.advance(WEEK + DAY)
   await flush()
-  assert.equal(h.chat.topicOps.filter((o) => o.op === 'delete').length, 0, 'not deleted')
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op !== 'create'), [], 'not closed, not deleted')
 
   await resumeFirst(h)
   h.agent.receive(new FakeConn(), { t: 'register', claudePid: 5151, cwd: PROJ, spawnToken: h.agent.spawnTokens[0] })
   await flush()
-  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'reopen'), [{ op: 'reopen', threadId: tgThread(100) }])
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op !== 'create'), [])
   assert.equal(h.chat.topicOps.filter((o) => o.op === 'create').length, 1, 'no second topic')
 })
 

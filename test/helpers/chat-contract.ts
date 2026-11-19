@@ -23,7 +23,7 @@ export type Out =
   | { op: 'react'; chat: Where; id: MessageId; emoji: string }
   | { op: 'typing'; chat: Where; thread?: ThreadId }
   | { op: 'file'; chat: Where; path: string; asPhoto: boolean; id: MessageId }
-  | { op: 'topic'; action: 'create' | 'rename' | 'close' | 'reopen'; thread?: ThreadId; name?: string }
+  | { op: 'topic'; action: 'create' | 'rename' | 'reopen'; thread?: ThreadId; name?: string }
   | { op: 'ack'; id: string; text?: string }
 
 // Platform refusals a rig can provoke. Each one reaches the adapter as the platform would send it.
@@ -108,7 +108,7 @@ export function chatContract(name: string, make: () => Promise<Rig>, opts: Contr
     assert.ok(rig.home.startsWith(`${c.platform}:`), 'the home id carries the platform prefix')
     assert.ok(c.text.maxChars > 0, 'a text limit')
     assert.ok(c.names.home && c.names.lobby && c.names.thread, 'the platform words for home, lobby and thread')
-    for (const m of ['createThread', 'renameThread', 'closeThread', 'reopenThread'] as const) {
+    for (const m of ['createThread', 'renameThread', 'reopenThread'] as const) {
       assert.equal(typeof rig.chat[m], 'function', `${m} is part of the port`)
     }
     if (c.threads.kind !== 'none') assert.ok(c.threads.maxNameChars > 0, 'a thread name limit')
@@ -324,10 +324,8 @@ export function chatContract(name: string, make: () => Promise<Rig>, opts: Contr
     const created = of(rig, 'topic').find((o) => o.action === 'create')
     assert.ok((created?.name ?? '').length <= c.threads.maxNameChars, 'the name is cut to the limit')
     await chat.renameThread(thread, 'renamed')
-    if (c.threads.close) await chat.closeThread(thread)
-    await chat.reopenThread(thread)
     const acts = of(rig, 'topic').filter((o) => o.thread === thread).map((o) => o.action)
-    assert.deepEqual(acts, ['create', 'rename', ...(c.threads.close ? ['close'] : []), 'reopen'])
+    assert.deepEqual(acts, ['create', 'rename'])
     rig.goneThread(thread)
     const err = await chat.sendText('into a gone thread', { thread }).then(() => null, (e: unknown) => e)
     assert.ok(err instanceof ChatError && err.kind === 'thread-closed', `thread-closed, not ${String(err)}`)

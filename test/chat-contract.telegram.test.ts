@@ -106,9 +106,6 @@ async function telegramRig(): Promise<Rig> {
       case 'editForumTopic':
         calls.push({ op: 'topic', action: 'rename', thread: tgThread(payload.message_thread_id), name: payload.name })
         return ok(true)
-      case 'closeForumTopic':
-        calls.push({ op: 'topic', action: 'close', thread: tgThread(payload.message_thread_id) })
-        return ok(true)
       case 'reopenForumTopic':
         calls.push({ op: 'topic', action: 'reopen', thread: tgThread(payload.message_thread_id) })
         return ok(true)

@@ -38,7 +38,7 @@ export class FakeConn implements SocketConn {
 type SendOpts = { replyTo?: MessageId; perm?: PermKeyboard; rows?: Rows; silent?: boolean; thread?: ThreadId; dm?: boolean; format?: 'markdown' }
 // `chat` is where the send went: 'group' (the bound supergroup) or 'dm' (the owner's private chat).
 export type SentText = { id: MessageId; text: string; opts: SendOpts | undefined; chat: 'group' | 'dm' }
-export type TopicOp = { op: 'create' | 'edit' | 'close' | 'reopen' | 'delete'; threadId?: ThreadId; name?: string }
+export type TopicOp = { op: 'create' | 'edit' | 'reopen'; threadId?: ThreadId; name?: string }
 
 // The Discord-shaped profile of the fake (plan 23 §2.1 ids, decision 2 in research/d1-brief.md). Snowflakes are 19 digits
 // and differ by 1 from one message to the next, so a Number() on them would collapse two ids. The ids are these:
@@ -55,7 +55,7 @@ export const DISCORD_FAKE_CAPABILITIES: Capabilities = {
   names: { home: 'server', lobby: '#general', thread: 'post' },
   commandSigil: '/',
   text: { maxChars: 2000, format: 'markdown' },
-  threads: { kind: 'channel', maxNameChars: 100, rename: true, close: true },
+  threads: { kind: 'channel', maxNameChars: 100, rename: true },
   buttons: { kind: 'inline', payloadBytes: 100, maxRows: 5, maxPerRow: 5, labelChars: 80, toast: true, editable: true },
   rate: { perChatPerMin: 30, burst: 5, scope: 'thread', sharedPause: false },
 }
@@ -222,10 +222,6 @@ export class FakeChat implements ChatPort {
 
   async renameThread(threadId: ThreadId, name: string): Promise<void> {
     this.topicOp({ op: 'edit', threadId, name })
-  }
-
-  async closeThread(threadId: ThreadId): Promise<void> {
-    this.topicOp({ op: 'close', threadId })
   }
 
   async reopenThread(threadId: ThreadId): Promise<void> {

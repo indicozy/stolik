@@ -7,7 +7,7 @@ import type { Inbound } from '../brain/chat-types.ts'
 import type { MessageId, SendTarget, ThreadId } from '../brain/chat-types.ts'
 import {
   connectPlan, folderTopicName, isThreadGone, isTopicNotModified, newTopic,
-  openTopicOfDir, serializeTopics, step, type TopicRec,
+  openTopicOfDir, serializeTopics, type TopicRec, type TopicState,
 } from '../brain/topics.ts'
 import { destinationFor, type Destination, type OutKind } from '../brain/destinations.ts'
 import { errMsg } from './log.ts'
@@ -19,8 +19,8 @@ import type { Router } from './core.ts'
 import { MINUTE } from '../brain/common.ts'
 import { resolveMsgRef } from '../brain/msgmap.ts'
 
-// After a router start, a session that has not reconnected within this grace is taken as ended: its open topic is closed.
-export const TOPIC_RECONNECT_GRACE_MS = 2 * MINUTE
+// After a router start, the folder topic names are tidied once (tidyTopicNames). The wait keeps that work after the start-up.
+export const TOPIC_TIDY_DELAY_MS = 2 * MINUTE
 
 // Group mode: a group is bound and the bot can still run it (see Router.groupAccess). Otherwise output goes to the DM.
 export function groupMode(router: Router): boolean {
@@ -89,7 +89,7 @@ export function persistTopics(router: Router): void {
 }
 
 // Topic work of one folder runs one job at a time: a second session that registers in the folder while the first is
-// making its topic waits for it, then plans again and finds the topic open (no second topic). A job that fails does not
+// making its topic waits for it, then plans again and finds the folder's topic (no second topic). A job that fails does not
 // hold the next one back. The queue is kept per folder (router.topicsCreating).
 function inFolderLane<T>(router: Router, cwd: string, job: () => Promise<T>): Promise<T> {
   const prev = router.topicsCreating.get(cwd) ?? Promise.resolve()
@@ -102,104 +102,52 @@ function inFolderLane<T>(router: Router, cwd: string, job: () => Promise<T>): Pr
   return run
 }
 
-// A session registered over its channel: its folder gets a topic, unless the folder's topic is open (then nothing). A
-// closed topic of the folder is reopened.
+// A session registered over its channel: its folder gets a topic, unless the folder already has one that is not deleted. A
+// session ending never touches the topic (see the header of src/brain/topics.ts).
 export async function onSessionRegistered(router: Router, s: Session): Promise<void> {
   if (!groupMode(router)) return
   await inFolderLane(router, s.cwd, async () => {
     const plan = connectPlan(router.topics, { cwd: s.cwd })
     if (plan.effect === 'none') return
-    await openTopicFor(router, s, plan)
-  })
-}
-
-async function openTopicFor(router: Router, s: Session, plan: { effect: 'reopen'; threadId: ThreadId } | { effect: 'create'; name: string }): Promise<void> {
-  if (plan.effect === 'reopen') {
-    const old = router.topics.find((r) => r.threadId === plan.threadId)
-    if (old) {
-      let reopened = true
-      try {
-        await router.chat.reopenThread(old.threadId)
-      } catch (e) {
-        // Already open in Telegram: the record catches up, nothing failed.
-        if (!isTopicNotModified(e)) {
-          reopened = false
-          router.logger.log(`topic reopen failed, making a new one: ${errMsg(e)}`)
-          // Deleted by hand: the record is gone for good, so the folder gets a fresh topic.
-          if (isThreadGone(e)) replaceTopic(router, { ...old, state: 'deleted', sessionKey: null, deleteAt: null })
-        }
-      }
-      if (reopened) {
-        replaceTopic(router, step(old, { type: 'reopen', now: router.clock.now() }).rec)
-        persistTopics(router)
-        router.audit.event({ event: 'topic', action: 'reopen', session: s.name })
-        return
-      }
-    }
-  }
-  try {
-    const name = folderTopicName(s.cwd, router.topics)
-    const threadId = await router.chat.createThread(name)
-    const rec = newTopic(threadId, name, s.project, s.cwd)
-    if (!router.registry.list().some((x) => x.cwd === s.cwd)) {
-      // Every session in the folder ended while the topic was being made: the new topic is closed at once, not left open.
-      const { rec: closed } = step(rec, { type: 'end', now: router.clock.now() })
-      router.topics.push(closed)
+    try {
+      const threadId = await router.chat.createThread(plan.name)
+      router.topics.push(newTopic(threadId, plan.name, s.project, s.cwd))
       persistTopics(router)
-      await router.chat.closeThread(threadId).catch((e: unknown) => {
-        if (!isTopicNotModified(e)) router.logger.log(`topic close failed for ${s.name}: ${errMsg(e)}`)
-      })
       router.audit.event({ event: 'topic', action: 'create', session: s.name })
-      return
+    } catch (e) {
+      router.logger.log(`topic for ${s.name} not created: ${errMsg(e)}`)
     }
-    router.topics.push(rec)
-    persistTopics(router)
-    router.audit.event({ event: 'topic', action: 'create', session: s.name })
-  } catch (e) {
-    router.logger.log(`topic for ${s.name} not created: ${errMsg(e)}`)
-  }
-}
-
-// A session ended (its process is gone). Its folder's topic closes only when no other live session is in the folder. A
-// folder topic is never deleted: the next session there reopens it.
-export async function onSessionEnded(router: Router, s: Session): Promise<void> {
-  await inFolderLane(router, s.cwd, async () => {
-    if (router.registry.list().some((x) => x.key !== s.key && x.cwd === s.cwd)) return
-    const rec = openTopicOfDir(router.topics, s.cwd)
-    if (rec) await endTopic(router, rec, s.name)
   })
 }
 
-// The end of a topic: the record closes, then Telegram closes the thread.
-async function endTopic(router: Router, rec: TopicRec, label: string): Promise<void> {
-  const { rec: next, effect } = step(rec, { type: 'end', now: router.clock.now() })
-  replaceTopic(router, next)
-  persistTopics(router)
-  if (effect !== 'close') return
-  try {
-    await router.chat.closeThread(rec.threadId)
-    router.audit.event({ event: 'topic', action: 'close', session: label })
-  } catch (e) {
-    if (isTopicNotModified(e)) return
-    router.logger.log(`topic close failed for ${label}: ${errMsg(e)}`)
+// Start-up, once (group mode). A folder topic that an older build left closed is reopened in Telegram with one call, then
+// stored open. A topic that Telegram says is gone is stored deleted, and the folder's next session makes a new one. Any
+// other failure is logged, and the record is stored open anyway: it is not retried, so the owner may reopen that topic by
+// hand. Legacy records (no cwd) are left as they are.
+export async function reopenClosedTopics(router: Router): Promise<void> {
+  if (!groupMode(router)) return
+  const closed = router.topics.filter((r) => r.state === 'closed' && r.cwd !== null)
+  for (const rec of closed) {
+    await inFolderLane(router, rec.cwd as string, async () => {
+      const cur = router.topics.find((r) => r.threadId === rec.threadId)
+      if (!cur || cur.state !== 'closed') return
+      let state: TopicState = 'open'
+      try {
+        await router.chat.reopenThread(cur.threadId)
+      } catch (e) {
+        if (isThreadGone(e)) state = 'deleted'
+        else if (!isTopicNotModified(e)) router.logger.log(`topic ${cur.name} not reopened: ${errMsg(e)}`)
+      }
+      replaceTopic(router, { ...cur, state, endedAt: null, deleteAt: null })
+      persistTopics(router)
+      router.audit.event({ event: 'topic', action: 'reopen', project: cur.project })
+    })
   }
 }
 
-// Run once after the reconnect grace (see Router.start), and on each sweep after it. An open folder topic whose folder has
-// no live session is closed (a router restart can leave it open).
-export async function closeOrphanTopics(router: Router): Promise<void> {
-  // From here on the periodic sweep checks for orphans too (see sweep): the reconnect grace is over.
-  router.orphanChecksOn = true
-  const live = router.registry.list()
-  for (const rec of [...router.topics]) {
-    if (rec.state !== 'open' || rec.cwd === null || live.some((s) => s.cwd === rec.cwd)) continue
-    await endTopic(router, rec, rec.name)
-  }
-  await tidyTopicNames(router)
-}
-
-// A folder topic named while a legacy topic still held its basename got parent/basename. Once the legacy records are gone,
-// each folder topic is renamed to what the naming rule gives it now, but only when that is the plain basename (or shorter).
+// A folder topic named while a legacy topic still held its basename keeps parent/basename for as long as that legacy record
+// is there (legacy records are kept). Each folder topic is renamed to what the naming rule gives it now, but only when that
+// is the plain basename (or shorter).
 // Records go in threadId order, and each rename updates its record before the next one is worked out, so two topics never
 // swap names. Each rename runs in the folder's lane, so a create in flight for that folder finishes first.
 export async function tidyTopicNames(router: Router): Promise<void> {
@@ -272,7 +220,7 @@ export async function inTopic<T>(
 export function recoverTopic(router: Router, s: Session, staleThread: ThreadId): Promise<ThreadId | null> {
   return inFolderLane(router, s.cwd, async () => {
     const stale = router.topics.find((r) => r.threadId === staleThread && r.state !== 'deleted')
-    if (stale) replaceTopic(router, { ...stale, state: 'deleted', sessionKey: null, endedAt: stale.endedAt ?? router.clock.now(), deleteAt: null })
+    if (stale) replaceTopic(router, { ...stale, state: 'deleted', sessionKey: null })
     persistTopics(router)
     router.logger.log(`topic of ${s.name} is gone in Telegram; making a new one`)
     if (!router.registry.list().some((x) => x.cwd === s.cwd)) return null

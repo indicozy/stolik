@@ -136,10 +136,6 @@ export class TracedChat implements ChatPort {
     return this.inner.renameThread(threadId, name)
   }
 
-  closeThread(threadId: ThreadId): Promise<void> {
-    return this.inner.closeThread(threadId)
-  }
-
   reopenThread(threadId: ThreadId): Promise<void> {
     return this.inner.reopenThread(threadId)
   }

@@ -102,7 +102,7 @@ const TG_MAX_TEXT = 4096
 const ACCESS_LOST_RE = /bot was kicked|bot is not a member|not enough rights|have no rights|chat not found|bot was blocked|CHAT_WRITE_FORBIDDEN|forbidden/i
 // Telegram's answer when a topic is gone: deleted by hand, or never there. A send to it must not be retried there.
 const THREAD_GONE_RE = /thread not found|topic_id_invalid|topic not found|topic_deleted|message thread/i
-// Telegram's answer when a topic is already in the state asked for (reopen an open topic, close a closed one).
+// Telegram's answer when a topic is already in the state asked for (reopen an open topic).
 const NOT_MODIFIED_RE = /TOPIC_NOT_MODIFIED|topic.*not modified/i
 // Node error codes of a failed connection (a transient failure, see ChatError.transient).
 const NETWORK_CODES = new Set(['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EAI_AGAIN', 'EPIPE', 'ENOTFOUND', 'UND_ERR_SOCKET'])
@@ -114,7 +114,7 @@ export const TELEGRAM_CAPABILITIES: Capabilities = {
   names: { home: 'group', lobby: 'General', thread: 'topic' },
   commandSigil: '/',
   text: { maxChars: TG_MAX_TEXT, format: 'html' },
-  threads: { kind: 'forum-topic', maxNameChars: 128, rename: true, close: true },
+  threads: { kind: 'forum-topic', maxNameChars: 128, rename: true },
   buttons: { kind: 'inline', payloadBytes: 64, maxRows: 100, maxPerRow: 8, labelChars: 60, toast: true, editable: true },
   replies: true,
   edits: { own: true, seesOwnerEdits: true },
@@ -642,10 +642,6 @@ export class Telegram implements ChatPort {
 
   async renameThread(threadId: ThreadId, name: string): Promise<void> {
     await boundary(this.bot.api.editForumTopic(this.topicChat(), tgNum(threadId), { name: name.slice(0, 128) }))
-  }
-
-  async closeThread(threadId: ThreadId): Promise<void> {
-    await boundary(this.bot.api.closeForumTopic(this.topicChat(), tgNum(threadId)))
   }
 
   async reopenThread(threadId: ThreadId): Promise<void> {

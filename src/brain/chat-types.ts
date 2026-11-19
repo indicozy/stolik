@@ -33,7 +33,7 @@ export type Capabilities = {
   threads:
     | { kind: 'none' }
     | { kind: 'forum-topic' | 'forum-post' | 'channel' | 'room'
-        maxNameChars: number; rename: boolean; close: boolean }
+        maxNameChars: number; rename: boolean }
   buttons:
     | { kind: 'none' }
     | { kind: 'inline'; payloadBytes: number; maxRows: number; maxPerRow: number; labelChars: number
@@ -182,7 +182,6 @@ export interface ChatPort {
   // Forum topics in the bound group (plan 2.2). `createThread` returns the new topic's message_thread_id.
   createThread(name: string): Promise<ThreadId>
   renameThread(threadId: ThreadId, name: string): Promise<void>
-  closeThread(threadId: ThreadId): Promise<void>
   reopenThread(threadId: ThreadId): Promise<void>
   // Replaces a message's text. `perm: null` removes its keyboard. The edit goes to the chat the message was sent to
   // (the adapter remembers it). `priority: 'urgent'` for approval and question edits.

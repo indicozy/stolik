@@ -560,7 +560,7 @@ export function helpText(w: Words): string {
     `A plain message in a folder ${w.thread} goes to the session that wrote last there. Swipe-reply to a message to pick its session.`,
     `${s}new [text] in a folder ${w.thread} starts another session in that folder (the text is its first message). After a bare ${s}new, the next message there goes to the new session.`,
     `${s}silent [30m|2h|1d|1w|off|status] in a folder ${w.thread}: mute its answers and finished tasks (approvals and questions still ping).`,
-    `The ${w.thread} closes when the last session in its folder ends; the next session there reopens it.`,
+    `The ${w.thread} stays open: the bot never closes or deletes it. A session that ends changes nothing there.`,
     `A plain ${w.lobby} message goes to the session active in the last 30 minutes. Otherwise you get buttons: a session, New, quick, read or web.`,
     `DM: the private chat is a fallback only. Once the ${w.home} is set up, messages here are not routed; use the ${w.home}.`,
   ].join('\n')

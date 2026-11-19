@@ -1,5 +1,5 @@
 // Folder-topic mutes (spec 24 §4): `/silent` mutes the default-level sends of a folder topic. Keyed by the folder's cwd,
-// so the mute survives a restart and a topic close/reopen. Pure: no Telegram, no I/O. The router holds the map and saves
+// so the mute survives a restart. Pure: no Telegram, no I/O. The router holds the map and saves
 // it through the store (src/router/mute.ts).
 import { parseCommandWord } from './commands.ts'
 const MINUTE_MS = 60 * 1000

@@ -26,6 +26,6 @@ Topics: one topic per folder in the group, shared by the sessions in it. Each an
 A plain message in a folder topic goes to the session that wrote last there. Swipe-reply to a message to pick its session.
 /new [text] in a folder topic starts another session in that folder (the text is its first message). After a bare /new, the next message there goes to the new session.
 /silent [30m|2h|1d|1w|off|status] in a folder topic: mute its answers and finished tasks (approvals and questions still ping).
-The topic closes when the last session in its folder ends; the next session there reopens it.
+The topic stays open: the bot never closes or deletes it. A session that ends changes nothing there.
 A plain General message goes to the session active in the last 30 minutes. Otherwise you get buttons: a session, New, quick, read or web.
 DM: the private chat is a fallback only. Once the group is set up, messages here are not routed; use the group.

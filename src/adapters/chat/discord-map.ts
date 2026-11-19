@@ -52,7 +52,7 @@ export const DISCORD_CAPABILITIES: Capabilities = {
   names: { home: 'server', lobby: 'the lobby channel', thread: 'channel' },
   commandSigil: '/',
   text: { maxChars: DC_MAX_TEXT, format: 'markdown', measure: contentLength },
-  threads: { kind: 'channel', maxNameChars: DC_NAME_CHARS, rename: true, close: true },
+  threads: { kind: 'channel', maxNameChars: DC_NAME_CHARS, rename: true },
   buttons: { kind: 'inline', payloadBytes: DC_BUTTONS.payloadBytes, maxRows: DC_BUTTONS.maxRows, maxPerRow: DC_BUTTONS.maxPerRow, labelChars: DC_BUTTONS.labelChars, toast: true, editable: true },
   replies: true,
   // seesOwnerEdits is unverified until the live check (D3): the gateway sends MESSAGE_UPDATE, but this is not tested.

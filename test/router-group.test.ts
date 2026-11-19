@@ -13,7 +13,7 @@ const PROJ = `${HOME}/proj`
 const GROUP = -1001234567890
 const GROUP_ID = tgChat(GROUP)
 const DAY = 24 * 60 * 60 * 1000
-const DELETE_AFTER_MS = 7 * DAY
+const WEEK = 7 * DAY
 const GROUP_CHAT = { kind: 'home' as const, id: GROUP_ID, thread: null }
 const topicChat = (threadId: number) => ({ kind: 'home' as const, id: GROUP_ID, thread: tgThread(threadId) })
 
@@ -122,22 +122,20 @@ test('two sessions in one folder registering at once make one topic', async () =
   assert.equal(h.router.topics.length, 1)
 })
 
-test('the folder topic stays open while another session in the folder is live; the last one closes it', async () => {
+test('the folder topic stays open when its last session ends: no Telegram topic call, the record unchanged', async () => {
   const { chat, agent, platform, clock, router } = await groupWithSession()
   agent.receive(new FakeConn(), { t: 'register', claudePid: 4343, cwd: PROJ })
   await flush()
+  const before = JSON.stringify(router.topics)
   platform.dead.add(4242)
   clock.advance(60_000)
   await flush()
-  assert.equal(chat.topicOps.filter((o) => o.op === 'close').length, 0, 'the other session still works in it')
-  assert.equal(router.topics[0]?.state, 'open')
-
   platform.dead.add(4343)
   clock.advance(60_000)
   await flush()
-  assert.deepEqual(chat.topicOps.filter((o) => o.op === 'close'), [{ op: 'close', threadId: tgThread(100) }])
-  assert.equal(router.topics[0]?.state, 'closed')
-  assert.equal(router.topics[0]?.deleteAt, null)
+  assert.deepEqual(chat.topicOps.filter((o) => o.op !== 'create'), [], 'no close, no reopen, no delete')
+  assert.equal(JSON.stringify(router.topics), before)
+  assert.equal(router.topics[0]?.state, 'open')
 })
 
 test('two register messages for one session before its topic exists make one topic', async () => {
@@ -205,12 +203,12 @@ test('a message in General (group mode) keeps today\'s routing: commands still r
   assert.equal(list.opts?.thread, undefined)
 })
 
-test('a session ends: its topic closes; a message in it then says how to start one, in that topic', async () => {
+test('a session ends: its topic stays open; a message in it then says how to start one, in that topic', async () => {
   const { chat, platform, clock, agent } = await groupWithSession()
   platform.dead.add(4242)
   clock.advance(60_000)
   await flush()
-  assert.deepEqual(chat.topicOps.filter((o) => o.op === 'close'), [{ op: 'close', threadId: tgThread(100) }])
+  assert.deepEqual(chat.topicOps.filter((o) => o.op !== 'create'), [])
 
   await chat.inbound(textFrom('still there?', { chat: topicChat(100) }))
   assert.deepEqual(agent.sent, [])
@@ -219,26 +217,26 @@ test('a session ends: its topic closes; a message in it then says how to start o
   assert.equal(note.opts?.thread, tgThread(100))
 })
 
-test('a closed folder topic is never deleted: 7 days later it is still there, and the next session reopens it', async () => {
+test('a folder topic is never closed or deleted: 7 days later the next session uses the same topic, with no new topic', async () => {
   const { chat, platform, clock, store, agent } = await groupWithSession()
   platform.dead.add(4242)
   clock.advance(60_000)
   await flush()
 
-  clock.advance(DELETE_AFTER_MS + DAY)
+  clock.advance(WEEK + DAY)
   await flush()
-  assert.equal(chat.topicOps.filter((o) => o.op === 'delete').length, 0, 'never deleted')
+  assert.deepEqual(chat.topicOps.filter((o) => o.op !== 'create'), [], 'no close, reopen or delete')
   const saved = JSON.parse(store.topicsJson) as Array<{ state: string; deleteAt: number | null }>
-  assert.equal(saved[0]?.state, 'closed')
+  assert.equal(saved[0]?.state, 'open')
   assert.equal(saved[0]?.deleteAt, null)
 
   agent.receive(new FakeConn(), { t: 'register', claudePid: 4343, cwd: PROJ })
   await flush()
-  assert.deepEqual(chat.topicOps.filter((o) => o.op === 'reopen'), [{ op: 'reopen', threadId: tgThread(100) }])
+  assert.deepEqual(chat.topicOps.filter((o) => o.op !== 'create'), [], 'the topic is used as it is')
   assert.equal(createdThreads(chat).length, 1, 'no second topic')
 })
 
-test('/resume of a transcript reopens its closed topic instead of making a new one', async () => {
+test('/resume of a transcript uses its folder topic: no reopen, no new topic', async () => {
   const { chat, platform, clock, agent, conn } = await groupWithSession()
   const sid = '11111111-2222-4333-8444-555555555555'
   const transcript = `${HOME}/t.jsonl`
@@ -260,11 +258,11 @@ test('/resume of a transcript reopens its closed topic instead of making a new o
   await flush()
   assert.deepEqual(agent.startedSessions.map((x) => x.extra), [['--resume', sid]])
 
-  // The resumed process registers: its topic is the old one, reopened.
+  // The resumed process registers: its folder's topic is the one it uses.
   const newConn = new FakeConn()
   agent.receive(newConn, { t: 'register', claudePid: 5151, cwd: PROJ, spawnToken: agent.spawnTokens[0] })
   await flush()
-  assert.deepEqual(chat.topicOps.filter((o) => o.op === 'reopen'), [{ op: 'reopen', threadId: tgThread(100) }])
+  assert.deepEqual(chat.topicOps.filter((o) => o.op !== 'create'), [])
   assert.equal(createdThreads(chat).length, 1, 'no second topic was created')
 })
 
@@ -348,18 +346,98 @@ test('DM mode is unchanged: no group, no topics, sends carry no thread', async (
 
 // Review finding 6: a session that died while the router was down leaves its topic open. After start-up and a
 // reconnect grace (2 minutes), the open topics whose session is not live are closed.
-test('a topic whose session did not reconnect after a restart is closed once the grace has passed', async () => {
-  const first = await groupWithSession()
-  const second = harness({ groupId: tgChat(GROUP) })
-  second.store.topicsJson = first.store.topicsJson
-  await second.router.start()
-  second.clock.advance(2 * 60_000 - 1000)
+// A router started over a store holding one folder topic record in the given state.
+async function startOver(state: string, record: Record<string, unknown> = {}) {
+  const h = harness({ groupId: tgChat(GROUP) })
+  h.store.topicsJson = JSON.stringify([
+    { threadId: 100, name: 'proj', project: 'proj', cwd: PROJ, sessionKey: null, backendSessionId: null, state, endedAt: 1, deleteAt: null, ...record },
+  ])
+  return h
+}
+
+test('at start, a closed folder topic left by an older build is reopened once and stored open', async () => {
+  const h = await startOver('closed')
+  await h.router.start()
   await flush()
-  assert.equal(second.chat.topicOps.filter((o) => o.op === 'close').length, 0, 'still in the grace')
-  second.clock.advance(1000)
+  assert.deepEqual(h.chat.topicOps, [{ op: 'reopen', threadId: tgThread(100) }])
+  const saved = JSON.parse(h.store.topicsJson) as Array<{ state: string; endedAt: number | null }>
+  assert.equal(saved[0]?.state, 'open')
+  assert.equal(saved[0]?.endedAt, null)
+
+  // A later start reopens nothing: the record is open now.
+  const again = harness({ groupId: tgChat(GROUP) })
+  again.store.topicsJson = h.store.topicsJson
+  await again.router.start()
   await flush()
-  assert.deepEqual(second.chat.topicOps.filter((o) => o.op === 'close'), [{ op: 'close', threadId: tgThread(100) }])
-  assert.equal((JSON.parse(second.store.topicsJson) as Array<{ state: string }>)[0]?.state, 'closed')
+  assert.deepEqual(again.chat.topicOps, [])
+})
+
+test('at start, a closed folder topic that Telegram says is already open is stored open, with no failure logged', async () => {
+  const h = await startOver('closed')
+  h.chat.topicErrors.set('reopen', 'TOPIC_NOT_MODIFIED')
+  await h.router.start()
+  await flush()
+  assert.equal((JSON.parse(h.store.topicsJson) as Array<{ state: string }>)[0]?.state, 'open')
+  assert.ok(!h.logger.lines.some((l) => l.includes('not reopened')))
+})
+
+test('at start, a closed folder topic that Telegram says is gone is stored deleted, and the next session makes a new one', async () => {
+  const h = await startOver('closed')
+  h.chat.topicErrors.set('reopen', 'message thread not found')
+  await h.router.start()
+  await flush()
+  assert.equal((JSON.parse(h.store.topicsJson) as Array<{ state: string }>)[0]?.state, 'deleted')
+
+  h.agent.receive(new FakeConn(), { t: 'register', claudePid: 4242, cwd: PROJ })
+  await flush()
+  assert.equal(createdThreads(h.chat).length, 1, 'a new topic for the folder')
+})
+
+test('at start, a closed folder topic whose reopen fails for another reason is logged and stored open, not retried', async () => {
+  const h = await startOver('closed')
+  h.chat.failTopicOps.add('reopen')
+  await h.router.start()
+  await flush()
+  assert.ok(h.logger.lines.some((l) => l.includes('not reopened')), 'the failure is logged')
+  assert.equal((JSON.parse(h.store.topicsJson) as Array<{ state: string }>)[0]?.state, 'open')
+})
+
+test('at start, a legacy closed record (no cwd) is left as it is: no reopen call', async () => {
+  const h = harness({ groupId: tgChat(GROUP) })
+  h.store.topicsJson = JSON.stringify([
+    { threadId: 60, name: 'old', project: 'old', cwd: null, sessionKey: null, backendSessionId: null, state: 'closed', endedAt: 1, deleteAt: null },
+  ])
+  await h.router.start()
+  await flush()
+  assert.deepEqual(h.chat.topicOps, [])
+  assert.equal((JSON.parse(h.store.topicsJson) as Array<{ state: string }>)[0]?.state, 'closed')
+})
+
+test('after the start-up delay, a folder topic named parent/basename is renamed once no record holds the basename', async () => {
+  const h = harness({ groupId: tgChat(GROUP) })
+  h.store.topicsJson = JSON.stringify([
+    { threadId: 50, name: 'projects/proga', project: 'proga', cwd: `${HOME}/projects/proga`, sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null },
+  ])
+  await h.router.start()
+  await flush()
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'edit'), [], 'not at once')
+  h.clock.advance(2 * 60_000)
+  await flush()
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'edit'), [{ op: 'edit', threadId: tgThread(50), name: 'proga' }])
+  assert.equal(h.router.topics.find((r) => r.threadId === tgThread(50))?.name, 'proga')
+})
+
+test('after the start-up delay, a failed rename keeps the old name, and the failure is logged', async () => {
+  const h = harness({ groupId: tgChat(GROUP) })
+  h.store.topicsJson = JSON.stringify([
+    { threadId: 50, name: 'projects/proga', project: 'proga', cwd: `${HOME}/projects/proga`, sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null },
+  ])
+  h.chat.failTopicOps.add('edit')
+  await h.router.start()
+  h.clock.advance(2 * 60_000)
+  await flush()
+  assert.equal(h.router.topics.find((r) => r.threadId === tgThread(50))?.name, 'projects/proga', 'the record keeps the old name')
+  assert.ok(h.logger.lines.some((l) => l.includes('topic projects/proga not renamed to proga')), 'the failure is logged')
 })
 
 // ---------- ticket 22: folder routing, /new, the rollout ----------

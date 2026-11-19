@@ -47,8 +47,6 @@ import {
   type HomeBinding,
 } from './discord-map.ts'
 
-// A folder goes idle this long after its last session ends (decision 2 of the grill: not at once). Owner may veto.
-export const DISCORD_IDLE_DELAY_MS = 2 * 60 * 1000
 // The server's channel count at which the owner gets one warning, and the cap Discord enforces (error 30013).
 const FOLDER_WARN_CHANNELS = 450
 const GUILD_CHANNEL_CAP = 500
@@ -108,8 +106,6 @@ export type DiscordOptions = {
   // Strings never to show in a send (the bot token).
   secrets?: string[]
   now?: () => number
-  // The wait before a folder moves to idle (default DISCORD_IDLE_DELAY_MS; 0 moves at once).
-  idleDelayMs?: number
 }
 
 type SendOpts = { replyTo?: MessageId; perm?: PermKeyboard; rows?: Rows; silent?: boolean; format?: 'markdown' } & SendTarget
@@ -184,9 +180,6 @@ export class Discord implements ChatPort {
   private botLobbyPerms: bigint | null = null
   // One lock for "pick a category, then create or move a folder": two folders never pick the same full category.
   private folderLock: Promise<void> = Promise.resolve()
-  // Idle moves waiting for the delay (channel id -> timer): a reopen before it fires cancels the move.
-  private readonly idleTimers = new Map<string, ReturnType<typeof setTimeout>>()
-  private readonly idleDelayMs: number
   // Owner notices sent once per run (the channel cap, the warning).
   private readonly noticed = new Set<string>()
   // Channels the adapter has seen, by id (decision 3). Filled from gateway events and from GET /channels on a miss.
@@ -218,7 +211,6 @@ export class Discord implements ChatPort {
     this.secrets = (opts.secrets ?? []).filter((s) => s.length > 0)
     this.now = opts.now ?? Date.now
     this.clock = opts.clock ?? null
-    this.idleDelayMs = opts.idleDelayMs ?? DISCORD_IDLE_DELAY_MS
     this.setHome(opts.homeId ?? null)
     const g = client.gateway
     g.on('READY', (d) => {
@@ -758,12 +750,6 @@ export class Discord implements ChatPort {
     }
   }
 
-  private cancelIdle(channelId: string): void {
-    const t = this.idleTimers.get(channelId)
-    if (t !== undefined) clearTimeout(t)
-    this.idleTimers.delete(channelId)
-  }
-
   async createThread(name: string): Promise<ThreadId> {
     return dcThread(await this.createFolderChannel(name))
   }
@@ -774,28 +760,9 @@ export class Discord implements ChatPort {
     await boundary(this.client.rest.patch(`/channels/${id}`, { body: { name: folderChannelName(name) } }), true)
   }
 
-  // Closing a folder moves it to the idle category after the delay (decision 2 of the grill). A reopen before then
-  // cancels the move; a move already made is not repeated.
-  async closeThread(threadId: ThreadId): Promise<void> {
-    const id = parseDcThread(threadId)
-    await this.requireFolder(id)
-    this.cancelIdle(id)
-    if (this.idleDelayMs <= 0) {
-      await this.moveFolder(id, 'idle')
-      return
-    }
-    const t = setTimeout(() => {
-      this.idleTimers.delete(id)
-      this.moveFolder(id, 'idle').catch((e: unknown) => log(`folder move to idle failed: ${errMsg(e)}`))
-    }, this.idleDelayMs)
-    t.unref?.()
-    this.idleTimers.set(id, t)
-  }
-
   async reopenThread(threadId: ThreadId): Promise<void> {
     const id = parseDcThread(threadId)
     await this.requireFolder(id)
-    this.cancelIdle(id)
     await this.moveFolder(id, 'active')
   }
 
@@ -867,7 +834,6 @@ export class Discord implements ChatPort {
   }
 
   async stop(): Promise<void> {
-    for (const id of [...this.idleTimers.keys()]) this.cancelIdle(id)
     if (this.clock !== null && this.memberTimer !== null) this.clock.clearTimer(this.memberTimer)
     this.memberTimer = null
     await this.client.gateway.destroy()

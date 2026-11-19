@@ -28,7 +28,7 @@ export async function sendResumeList(router: Router, replyTo: MessageId): Promis
   const id = newRouteId()
   putResume(router, id, items, now)
   const rows = items.map((it, i) => [{ text: resumeLabel(it, now), data: resumeCallbackData(id, i) }])
-  // The picker is a General message (design §4.2); resuming it reopens the topic, not the picker.
+  // The picker is a General message (design §4.2); resuming it uses the folder's topic, not the picker.
   const to = sendTarget(router, 'resume-picker')
   const text = 'Pick a session. Ended ones resume here in tmux.'
   await router.chat

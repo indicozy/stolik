@@ -177,18 +177,19 @@ Attachments: files received or sent in chat go to `~/Documents/notes/telegram/at
 
 ### 4.1 Layout and topics
 
-- A **private supergroup**. The bot is admin with `can_manage_topics`, and `can_delete_messages` to delete topics.
+- A **private supergroup**. The bot is admin with `can_manage_topics`, and `can_delete_messages` (setup still checks it; the bot no longer deletes topics).
 - An admin bot sees every group message, so **every message and callback is checked against the owner's user id**
   (`from.id`). The chat id alone is not enough. Phase 1 already does this for callbacks and text verdicts.
 - Topic lifecycle:
 
 | Event | Topic |
 |---|---|
-| Any session connects (terminal or phone) | Created, named `project`, then `project#2` |
-| Session ends | Closed (still readable) |
-| `/resume` of that session | Reopened |
-| 7 days after the session ended | Deleted; a later `/resume` gets a fresh topic |
-| Idle 60 min (warned 5 min before, `[Keep open]` restarts the time), or the session calls `close_session` on the owner's request | Closed (still readable); its terminal closes too. The next message in the folder starts a fresh session; a Telegram reply quotes the replied-to text into its first prompt |
+| First session connects in a folder that has no topic | Created, named `project`, then `project#2` |
+| Another session connects in that folder | Uses the folder's topic; no new one |
+| Session ends (exit, idle close, or `close_session` on the owner's request) | Nothing. The topic stays open and is never closed |
+| `/resume` of a session in that folder | The folder's topic; no new one, no reopen |
+| Telegram says the topic is gone (deleted by hand) | Recorded as deleted; the folder's next session gets a new topic |
+| Idle 60 min (warned 5 min before, `[Keep open]` restarts the time) | The session closes and its terminal closes too; the topic stays open. The next message in the folder starts a fresh session; a Telegram reply quotes the replied-to text into its first prompt |
 
 Sessions without a channel (Remote Control) never register with the bot, so they get no topic. `/resume` shows them with the Remote Control hint (decided 2026-11-14, coordinator).
 
@@ -561,7 +562,7 @@ Out of scope: btw (forked side questions; ruled out by the owner, 2026-11-14); f
 | # | Decision | Ticket |
 |---|---|---|
 | 1 | Private supergroup, topic per folder (ticket 22); DM is fallback only | 06 |
-| 2 | Topic lifecycle: create on connect, close at end, reopen on `/resume`, delete after 7 days | 06 |
+| 2 | Topic lifecycle: create on connect, close at end, reopen on `/resume`, delete after 7 days (superseded by 43) | 06 |
 | 3 | Session output only in its topic; sessionless output in General | 06 |
 | 4 | Prefixes in General only; word table as listed; `to` kept | 07 |
 | 5 | No reranker, no Haiku classifier; last active session, else buttons | 12 |
@@ -602,3 +603,4 @@ Out of scope: btw (forked side questions; ruled out by the owner, 2026-11-14); f
 | 40 | Modes cost: estimate on timeout ($0.02/min quick, $0.25/min read and web); quota checked again after the wait; at most 10 waiting runs (§4.10) | security review 2026-11-14 (rates are estimates, open for veto) |
 | 41 | When the idle state is unknown, Stop summaries and Notifications still go to Telegram; asks go back to the terminal (`UNKNOWN_AWAY_NOTE`) | owner decision, 2026-11-14 |
 | 42 | Idle close for all sessions, desk terminals too: 60 min idle (`idleCloseMinutes`, 0 = off), warning 5 min before with `[Keep open]`; closed only when every busy check says idle, and a check that cannot run counts as busy; start fresh, not auto-resume; `close_session` tool ends a session on the owner's request; a reply starts a session with the quoted text | owner decision, 2026-11-18 |
+| 43 | One topic per folder, created when the first session there connects. The bot never closes or deletes it; a topic deleted by hand gets a new one at the folder's next session. Topics an older build left closed are reopened once at start. Owner, 2026-11-19 | 22 |

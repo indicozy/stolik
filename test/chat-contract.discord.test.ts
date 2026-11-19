@@ -248,7 +248,7 @@ async function discordRig(): Promise<Rig> {
   seedGuild(fake)
   const realFetch = globalThis.fetch
   globalThis.fetch = (async () => new Response('hello')) as unknown as typeof fetch
-  const chat = new Discord(fake, { ownerId: OWNER, dmChannelId: DM, secrets: [SECRET], idleDelayMs: 0 })
+  const chat = new Discord(fake, { ownerId: OWNER, dmChannelId: DM, secrets: [SECRET] })
   await openGuild(fake)
   const inject = {
     async message(o: { text?: string; kind?: 'text' | 'sticker' | 'photo'; from?: 'owner' | 'stranger'; chat?: 'dm' | 'home'; thread?: ThreadId; replyTo?: MessageId }) {
@@ -332,13 +332,13 @@ chatContract('Discord', discordRig, {
 
 // ---- Discord-specific cases ----
 
-function discordFake(): { fake: FakeDiscord; make: (over?: { pairing?: unknown; secrets?: string[]; idleDelayMs?: number }) => Promise<Discord> } {
+function discordFake(): { fake: FakeDiscord; make: (over?: { pairing?: unknown; secrets?: string[] }) => Promise<Discord> } {
   const fake = new FakeDiscord()
   seedGuild(fake)
   return {
     fake,
     make: async (over = {}) => {
-      const chat = new Discord(fake, { ownerId: OWNER, dmChannelId: DM, secrets: over.secrets ?? [], idleDelayMs: over.idleDelayMs ?? 0 })
+      const chat = new Discord(fake, { ownerId: OWNER, dmChannelId: DM, secrets: over.secrets ?? [] })
       if (over.pairing) chat.setPairing(over.pairing as never)
       return chat
     },
@@ -423,7 +423,6 @@ test('Discord folders: a stale forum-post id is thread-closed, never sent to; a 
   await openGuild(fake)
   const stale = dcThread('900000000000000007')
   await assert.rejects(chat.sendText('late', { thread: stale }), (e: unknown) => e instanceof ChatError && e.kind === 'thread-closed')
-  await assert.rejects(chat.closeThread(stale), (e: unknown) => e instanceof ChatError && e.kind === 'thread-closed')
   await assert.rejects(chat.reopenThread(stale), (e: unknown) => e instanceof ChatError && e.kind === 'thread-closed')
   assert.equal(fake.calls.filter((c) => c.method === 'post' && c.route.startsWith('/channels/900000000000000007')).length, 0, 'nothing reaches the old post')
   const id = await chat.sendText('in the folder', { thread: dcThread(FOLDER) })
@@ -617,23 +616,4 @@ test('Discord reactions: a folder channel takes the reaction with no unarchive o
   await chat.react(id, 'seen')
   assert.equal(fake.calls.filter((c) => c.method === 'patch').length, 0, 'no patch on a reaction')
   assert.equal(fake.calls.length, 1)
-})
-
-test('Discord folders: a close moves the folder to stolik-idle after the delay; a reopen before it cancels the move', async () => {
-  const { fake, make } = discordFake()
-  const chat = await make({ idleDelayMs: 30 })
-  await openGuild(fake)
-  chat.setHome(dcChat(GUILD, LOBBY))
-  const thread = await chat.createThread('topic')
-  const folder = parseDcThread(thread)
-  await chat.closeThread(thread)
-  assert.equal(fake.outs.filter((o) => o.op === 'topic').filter((o) => o.action === 'close').length, 0, 'not at once')
-  await chat.reopenThread(thread)
-  await new Promise((r) => setTimeout(r, 60))
-  assert.equal(fake.outs.filter((o) => o.op === 'topic').filter((o) => o.action === 'close').length, 0, 'the reopen cancelled the move')
-  await chat.closeThread(thread)
-  await new Promise((r) => setTimeout(r, 60))
-  assert.equal(fake.outs.filter((o) => o.op === 'topic').filter((o) => o.action === 'close' && o.thread === thread).length, 1, 'moved after the delay')
-  assert.equal(fake.channels.get(fake.channels.get(folder)?.parent_id)?.name, 'stolik-idle', 'the folder is under the idle category now')
-  await chat.stop()
 })

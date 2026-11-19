@@ -224,10 +224,6 @@ export class QueuedChat implements ChatPort {
     return this.run({}, () => this.inner.renameThread(threadId, name))
   }
 
-  closeThread(threadId: ThreadId): Promise<void> {
-    return this.run({}, () => this.inner.closeThread(threadId))
-  }
-
   reopenThread(threadId: ThreadId): Promise<void> {
     return this.run({}, () => this.inner.reopenThread(threadId))
   }

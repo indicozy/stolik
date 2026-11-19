@@ -25,7 +25,7 @@ import { onChatEvent } from './handlers/group.ts'
 import { announceBoot, stripStaleKeyboards, sweep } from './handlers/timers.ts'
 import { onAccessLost } from './handlers/group.ts'
 import { offerBuiltins } from './handlers/builtins.ts'
-import { TOPIC_RECONNECT_GRACE_MS, closeOrphanTopics } from './topics.ts'
+import { TOPIC_TIDY_DELAY_MS, reopenClosedTopics, tidyTopicNames } from './topics.ts'
 import { attachLedger, saveNow } from './send.ts'
 import { startLedgerPrune } from './outbound.ts'
 import { errMsg } from './log.ts'
@@ -195,14 +195,12 @@ export class Router {
   lockNotified = false
   saveTimer: unknown = null
   sweepTimer: unknown = null
-  orphanTimer: unknown = null
+  tidyTimer: unknown = null
   // Whether the bot can run the bound group. False after it was removed, left, demoted or lost Manage Topics: session
   // output then goes to the DM (see groupMode in topics.ts).
   groupAccess = true
   // The anonymous-admin notice was given (once per run).
   anonymousNoticed = false
-  // Set once the reconnect grace is over: the periodic sweep checks for orphan topics from then on.
-  orphanChecksOn = false
   // Edits already answered with "edits are not forwarded" (by message id).
   readonly noticedEdits = new Set<MessageId>()
   bootStarted = false
@@ -296,9 +294,11 @@ export class Router {
     await this.agent.start(socket)
     await this.addons?.start()
     this.chat.start()
+    // Folder topics an older build left closed are reopened once (group mode only; see reopenClosedTopics).
+    void reopenClosedTopics(this)
     // The built-ins offer on the first start in DM mode (once; not when the owner chose an addon before).
     if (this.groupId === null) await offerBuiltins(this, { dmStart: true })
-    this.orphanTimer = this.clock.setTimer(() => void closeOrphanTopics(this), TOPIC_RECONNECT_GRACE_MS)
+    this.tidyTimer = this.clock.setTimer(() => void tidyTopicNames(this), TOPIC_TIDY_DELAY_MS)
     this.sweepTimer = this.clock.setRepeating(() => sweep(this), SWEEP_MS)
     this.logger.log(`router ready, socket ${this.socketPath}${this.locked ? ' (LOCKED)' : ''}`)
     if (!this.paired) this.logger.log('not paired yet: run stolik setup; nothing is sent until the owner pairs')
@@ -386,7 +386,7 @@ export class Router {
     // next router instance receives them instead of them being lost during the restart.
     await this.chat.stop().catch((e: unknown) => this.logger.log(`telegram stop: ${errMsg(e)}`))
     if (this.sweepTimer) this.clock.clearTimer(this.sweepTimer)
-    if (this.orphanTimer) this.clock.clearTimer(this.orphanTimer)
+    if (this.tidyTimer) this.clock.clearTimer(this.tidyTimer)
     if (this.bootTimer) this.clock.clearTimer(this.bootTimer)
     for (const q of this.spawns.values()) this.clock.clearTimer(q.timer)
     try {

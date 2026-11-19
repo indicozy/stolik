@@ -38,9 +38,9 @@ Sessions started from the phone are ordinary tmux sessions: `tmux ls`, then `tmu
 
 ## Ending and resuming
 
-A topic closes when the last session in its folder ends, and it stays readable. The next session in that folder reopens it.
+A folder has one topic. It stays open. When a session ends, nothing changes in the topic, and stolik never closes or deletes it. The next session in that folder writes to the same topic. If you delete a topic by hand, the next session in that folder gets a new one.
 
-stolik closes a session that sits idle for 60 minutes. It warns you 5 minutes before, with a **Keep open** button. Its terminal closes too.
+stolik closes a session that sits idle for 60 minutes. It warns you 5 minutes before, with a **Keep open** button. The session's terminal closes too. The topic stays open.
 
 `/resume` lists ended sessions, newest first. Pick one and stolik runs `claude --resume` for it in tmux, in its original folder, with its history. stolik does not restore the flags that you launched it with. Live sessions appear in the list too. If you pick one, stolik routes to it.
 

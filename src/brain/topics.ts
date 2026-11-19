@@ -1,18 +1,19 @@
 // Forum topic lifecycle (ticket 22): one topic per folder in group mode. A folder topic belongs to the exact cwd; every
-// session in that folder writes into it. Pure: no Telegram, no I/O. The router makes the Telegram calls for the effect
-// each step returns, then stores the new record.
+// session in that folder writes into it. Pure: no Telegram, no I/O. The router makes the Telegram calls and stores the record.
 //
-//   (none) --connect--> open --last session in the folder ends--> closed --next session in the folder (reopen)--> open
+//   (none) --first session connects in the folder--> open, and it stays open
 //
-// A folder topic is never deleted: its closed topic keeps the history and the next session there reopens it.
-// Records from before one topic per folder have no cwd (legacy). The router leaves them as they are: nothing deletes a
-// topic on the bot's own initiative.
+// The bot never closes or deletes a folder topic: a session ending changes nothing. A topic that Telegram says is gone
+// becomes 'deleted', and the folder's next session gets a new topic. Records from before one topic per folder have no cwd
+// (legacy) and are kept as they are. 'closed' is never written: an older build's closed record is reopened once at start
+// (reopenClosedTopics in router/topics.ts).
 import { basename, dirname } from 'node:path'
 import { assignName, type SessionKey } from './sessions.ts'
 import { chatErrorOf, type ThreadId } from './chat-types.ts'
 import { legacyMsgId, storedId } from '../adapters/legacy-ids.ts'
 import { parseCommandWord } from './commands.ts'
 
+// 'closed' is read only from records an older build wrote (see the header). Nothing writes it now.
 export type TopicState = 'open' | 'closed' | 'deleted'
 
 export type TopicRec = {
@@ -26,28 +27,10 @@ export type TopicRec = {
   // Legacy only: the backend session id of a per-session topic. Folder topics keep null.
   backendSessionId: string | null
   state: TopicState
+  // Not set by new records (null). Kept in the store schema; an old value is read as it is.
   endedAt: number | null
+  // Always null: no topic has a deadline. Kept in the store schema.
   deleteAt: number | null
-}
-
-export type TopicEvent = { type: 'end'; now: number } | { type: 'reopen'; now: number }
-
-export type TopicEffect = 'none' | 'close' | 'reopen'
-
-// One transition. Events that do not apply in the current state return the record unchanged with effect 'none'.
-// No deadline is set: deleteAt stays null.
-export function step(rec: TopicRec, ev: TopicEvent): { rec: TopicRec; effect: TopicEffect } {
-  switch (ev.type) {
-    case 'end':
-      if (rec.state !== 'open') return { rec, effect: 'none' }
-      return {
-        rec: { ...rec, state: 'closed', sessionKey: null, endedAt: ev.now, deleteAt: null },
-        effect: 'close',
-      }
-    case 'reopen':
-      if (rec.state !== 'closed') return { rec, effect: 'none' }
-      return { rec: { ...rec, state: 'open', endedAt: null, deleteAt: null }, effect: 'reopen' }
-  }
 }
 
 // The name of a folder's topic: its basename. If a topic that still exists has that name, parent/basename; then #N.
@@ -62,19 +45,12 @@ export function newTopic(threadId: ThreadId, name: string, project: string, cwd:
   return { threadId, name, project, cwd, sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null }
 }
 
-// What a folder's session connecting needs: nothing (the folder's topic is open), a reopen of the folder's closed topic,
-// or a new topic with its name.
-export type ConnectPlan = { effect: 'none' } | { effect: 'reopen'; threadId: ThreadId } | { effect: 'create'; name: string }
+// What a folder's session connecting needs: nothing (the folder already has a topic that is not deleted), or a new topic
+// with its name. A closed record counts as a topic: it is reopened at start, never replaced.
+export type ConnectPlan = { effect: 'none' } | { effect: 'create'; name: string }
 
 export function connectPlan(recs: readonly TopicRec[], input: { cwd: string }): ConnectPlan {
-  if (recs.some((r) => r.state === 'open' && r.cwd === input.cwd)) return { effect: 'none' }
-  // The most recently ended closed topic of the folder (there is at most one in practice).
-  let old: TopicRec | undefined
-  for (const r of recs) {
-    if (r.state !== 'closed' || r.cwd !== input.cwd) continue
-    if (!old || (r.endedAt ?? 0) >= (old.endedAt ?? 0)) old = r
-  }
-  if (old) return { effect: 'reopen', threadId: old.threadId }
+  if (recs.some((r) => r.state !== 'deleted' && r.cwd === input.cwd)) return { effect: 'none' }
   return { effect: 'create', name: folderTopicName(input.cwd, recs) }
 }
 

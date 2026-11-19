@@ -12,7 +12,7 @@ const HOME = tgChat(-1001)
 const OTHER_HOME = tgChat(-1002)
 const OWNER = tgUser(111)
 
-const TOPIC_ACTION = { create: 'create', edit: 'rename', close: 'close', reopen: 'reopen', delete: 'delete' } as const
+const TOPIC_ACTION = { create: 'create', edit: 'rename', reopen: 'reopen' } as const
 
 async function fakeRig(): Promise<Rig> {
   const chat = new FakeChat()

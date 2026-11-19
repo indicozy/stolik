@@ -1,10 +1,9 @@
-// Topic lifecycle (ticket 22, one topic per folder): naming, transitions, the folder's reopen on the next session, the
-// the /new command, persistence.
+// Topic lifecycle (ticket 22, one topic per folder): naming, connect planning, the /new command, persistence.
 import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  connectPlan, folderTopicName, newTopic, openTopicOfDir, parseNewCommand, parseTopics, serializeTopics, step,
+  connectPlan, folderTopicName, newTopic, openTopicOfDir, parseNewCommand, parseTopics, serializeTopics,
   type TopicRec,
 } from '../src/brain/topics.ts'
 import { tgThread } from '../src/adapters/chat/tg-ids.ts'
@@ -35,28 +34,16 @@ test('folderTopicName: a deleted topic frees its name', () => {
   assert.equal(folderTopicName(CWD, [open({ state: 'deleted', name: 'proj' })]), 'proj')
 })
 
-test('transitions: a folder topic closes on end with no deadline, and reopens', () => {
-  const end = step(open(), { type: 'end', now: T0 })
-  assert.equal(end.effect, 'close')
-  assert.equal(end.rec.state, 'closed')
-  assert.equal(end.rec.endedAt, T0)
-  assert.equal(end.rec.deleteAt, null, 'a folder topic has no deadline')
-
-  const back = step(end.rec, { type: 'reopen', now: T0 + DAY })
-  assert.equal(back.effect, 'reopen')
-  assert.equal(back.rec.state, 'open')
-  assert.equal(back.rec.endedAt, null)
-})
-
-test('transitions: nothing happens for events that do not apply', () => {
-  const o = open()
-  assert.deepEqual(step(o, { type: 'reopen', now: T0 }), { rec: o, effect: 'none' })
-  const closed = step(o, { type: 'end', now: T0 }).rec
-  assert.deepEqual(step(closed, { type: 'end', now: T0 + 1 }), { rec: closed, effect: 'none' })
-})
-
 test('connectPlan: a folder with an open topic needs nothing, whichever session connects', () => {
   assert.deepEqual(connectPlan([open()], { cwd: CWD }), { effect: 'none' })
+})
+
+test('connectPlan: a folder with a closed record needs nothing: the record is reopened at start, never replaced', () => {
+  assert.deepEqual(connectPlan([open({ state: 'closed', endedAt: T0 })], { cwd: CWD }), { effect: 'none' })
+})
+
+test('the topic records of a folder never end: a new topic is open, with no end or deadline', () => {
+  assert.deepEqual(newTopic(tgThread(1), 'proj', 'proj', CWD), { threadId: tgThread(1), name: 'proj', project: 'proj', cwd: CWD, sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null })
 })
 
 test('connectPlan: a folder with no topic gets one named after the folder', () => {
@@ -65,17 +52,6 @@ test('connectPlan: a folder with no topic gets one named after the folder', () =
 
 test('connectPlan: another folder with the same basename gets parent/basename', () => {
   assert.deepEqual(connectPlan([open({ cwd: '/other/proj' })], { cwd: CWD }), { effect: 'create', name: 'projects/proj' })
-})
-
-test('connectPlan: the next session in a folder whose topic is closed reopens it, not a new topic', () => {
-  const closed = step(open(), { type: 'end', now: T0 }).rec
-  assert.deepEqual(connectPlan([closed], { cwd: CWD }), { effect: 'reopen', threadId: tgThread(101) })
-})
-
-test('connectPlan: a folder reopens its most recently ended closed topic', () => {
-  const older = step(open({ threadId: tgThread(110) }), { type: 'end', now: T0 }).rec
-  const newer = step(open({ threadId: tgThread(111) }), { type: 'end', now: T0 + DAY }).rec
-  assert.deepEqual(connectPlan([older, newer], { cwd: CWD }), { effect: 'reopen', threadId: tgThread(111) })
 })
 
 test('connectPlan: a legacy record never matches a folder (its name still counts as taken until start-up removes it)', () => {
@@ -88,7 +64,7 @@ test('connectPlan: a folder whose topic was deleted gets a fresh one', () => {
 })
 
 test('openTopicOfDir finds the open topic of a folder only', () => {
-  const closed = step(open(), { type: 'end', now: T0 }).rec
+  const closed = open({ state: 'closed', endedAt: T0 })
   assert.equal(openTopicOfDir([open()], CWD)?.threadId, tgThread(101))
   assert.equal(openTopicOfDir([closed], CWD), undefined)
   assert.equal(openTopicOfDir([open()], '/other'), undefined)
@@ -106,7 +82,7 @@ test('parseNewCommand: /new alone, /new with text, and /new@bot; other words are
 })
 
 test('parseTopics and serializeTopics round-trip; junk is dropped, not thrown', () => {
-  const recs = [open(), step(open({ threadId: tgThread(102), name: 'b', cwd: '/x/b' }), { type: 'end', now: T0 }).rec]
+  const recs = [open(), open({ threadId: tgThread(102), name: 'b', cwd: '/x/b', state: 'closed', endedAt: T0 })]
   assert.deepEqual(parseTopics(serializeTopics(recs)), recs)
   assert.deepEqual(parseTopics(''), [])
   assert.deepEqual(parseTopics('not json'), [])

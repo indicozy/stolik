@@ -5,7 +5,7 @@ import { ASK_TTL_MS } from '../ask.ts'
 import { releaseAsk } from './ask.ts'
 import { legacyMsgId, storedId } from '../../adapters/legacy-ids.ts'
 import type { MessageId } from '../../brain/chat-types.ts'
-import { announceTerminated, closeOrphanTopics, inTopic, onSessionEnded, sendTarget } from '../topics.ts'
+import { announceTerminated, inTopic, sendTarget } from '../topics.ts'
 import type { Session } from '../state.ts'
 import { expireRoute } from './route.ts'
 import { errMsg } from '../log.ts'
@@ -114,7 +114,6 @@ export function sweep(router: Router): void {
     router.registry.remove(s.key)
     router.agent.dropSession(s.key)
     for (const [conn, owner] of router.connSession) if (owner === s) router.connSession.delete(conn)
-    void onSessionEnded(router, s)
   }
   // A session lives while its pid runs with the same start time (a reused pid is a different process).
   const alive = (pid: number, start: string) => {
@@ -122,16 +121,10 @@ export function sweep(router: Router): void {
     const now = router.platform.processStart(pid)
     return start === '' || now === null || now === start
   }
-  for (const s of router.registry.sweep(now, alive)) {
-    // Before onSessionEnded, so the notice still has its topic to go to.
-    announceTerminated(router, s)
-    void onSessionEnded(router, s)
-  }
+  for (const s of router.registry.sweep(now, alive)) announceTerminated(router, s)
   // After the registry sweep, so a session that just died is not warned or closed.
   sweepIdle(router, now)
   void checkIdleSource(router)
-  // Orphan topics (a router restart left them open) are checked on the sweep too, once the reconnect grace is over.
-  if (router.orphanChecksOn) void closeOrphanTopics(router)
   const live = router.registry.list()
   for (const [id, p] of router.pending) {
     if (permissionExpired(p, now) || !live.includes(p.session)) {

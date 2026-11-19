@@ -133,22 +133,21 @@ test('a mute survives a router restart: the folder stays muted after the bot is 
   assert.equal(answer.opts?.silent, true, 'still muted')
 })
 
-test('a mute survives a topic close and reopen of the same folder', async () => {
+test('a mute survives a session ending and a new one in the same folder', async () => {
   const h = await groupWithSession()
   await h.chat.inbound(textFrom('/silent', { chat: topicChat(100) }))
   h.platform.dead.add(4242)
   h.clock.advance(60 * MINUTE)
   await flush()
-  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'close'), [{ op: 'close', threadId: tgThread(100) }])
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op !== 'create'), [], 'the topic is untouched')
 
   const conn2 = new FakeConn()
   h.agent.receive(conn2, { t: 'register', claudePid: 4343, cwd: PROJ })
   await flush()
-  assert.deepEqual(h.chat.topicOps.filter((o) => o.op === 'reopen'), [{ op: 'reopen', threadId: tgThread(100) }])
-  const answer = await reply(h, conn2, 'Reopened and muted.')
+  assert.deepEqual(h.chat.topicOps.filter((o) => o.op !== 'create'), [])
+  const answer = await reply(h, conn2, 'Muted and answering.')
   assert.equal(answer.opts?.thread, tgThread(100))
   assert.equal(answer.opts?.silent, true)
-  assert.equal(JSON.parse(h.store.mutesJson)[PROJ], null, 'the mute is kept by folder')
 })
 
 test('another folder topic is unaffected by the mute', async () => {

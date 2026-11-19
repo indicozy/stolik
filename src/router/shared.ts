@@ -85,7 +85,7 @@ export type SpawnQueue = {
   tmuxName: string
   items: Array<{ m: Inbound; content: string; prepared?: Prepared }>
   timer: unknown
-  // Set by /resume: the transcript id being resumed (its closed topic is reopened on registration).
+  // Set by /resume: the transcript id being resumed (it registers into its folder's topic).
   resumeOf?: string
   // The arguments the session was started with after the launcher (New with Read-only, /resume): for forensics.
   extraArgs?: readonly string[]
