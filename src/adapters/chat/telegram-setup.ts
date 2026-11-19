@@ -11,7 +11,7 @@ import { routerLockHeld } from '../instance-lock.ts'
 export const TELEGRAM_GROUP_STEPS = [
   'Group. The bot talks to you in a private supergroup with Topics: one topic per folder.',
   '  a. In Telegram, create a new group. Open its settings and turn Topics on (this makes it a supergroup).',
-  '  b. Add the bot to the group and make it an admin with "Manage topics" and "Delete messages".',
+  '  b. Add the bot to the group and make it an admin with "Manage topics" and "Pin messages".',
   '  c. In the group, send /bind. The bot checks that the sender is you and stores the group id.',
   '  Until /bind, the bot works in its private chat (DM mode).',
 ]

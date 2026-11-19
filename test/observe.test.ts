@@ -278,9 +278,9 @@ test('doctor: disk thresholds (warn below 1 GiB, fail below 200 MiB)', () => {
 
 test('doctor: missing group rights are named; a creator has all of them', () => {
   assert.deepEqual(missingRights({ status: 'creator' }), [])
-  assert.deepEqual(missingRights({ status: 'member' }), ['can_manage_topics', 'can_delete_messages', 'can_pin_messages'])
-  assert.deepEqual(missingRights({ status: 'administrator', can_manage_topics: true, can_delete_messages: true, can_pin_messages: false }), ['can_pin_messages'])
-  assert.deepEqual(missingRights({ status: 'administrator', can_manage_topics: true, can_delete_messages: true, can_pin_messages: true }), [])
+  assert.deepEqual(missingRights({ status: 'member' }), ['can_manage_topics', 'can_pin_messages'])
+  assert.deepEqual(missingRights({ status: 'administrator', can_manage_topics: true, can_pin_messages: false }), ['can_pin_messages'])
+  assert.deepEqual(missingRights({ status: 'administrator', can_manage_topics: true, can_pin_messages: true }), [])
 })
 
 test('warnOrLog: warns through a logger that can, logs otherwise', () => {

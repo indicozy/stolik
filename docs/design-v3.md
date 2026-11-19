@@ -177,7 +177,7 @@ Attachments: files received or sent in chat go to `~/Documents/notes/telegram/at
 
 ### 4.1 Layout and topics
 
-- A **private supergroup**. The bot is admin with `can_manage_topics`, and `can_delete_messages` (setup still checks it; the bot no longer deletes topics).
+- A **private supergroup**. The bot is admin with `can_manage_topics` and `can_pin_messages`.
 - An admin bot sees every group message, so **every message and callback is checked against the owner's user id**
   (`from.id`). The chat id alone is not enough. Phase 1 already does this for callbacks and text verdicts.
 - Topic lifecycle:
@@ -486,7 +486,7 @@ fakes. `startup` scope (run by the router at start, no network, no model): node,
 unit's PATH, `claude --version`, the socket path (writable, at most 107 bytes), the secrets file (mode 600, keys present),
 the config, disk space (warn below 1 GiB, fail below 200 MiB), the database integrity (`PRAGMA integrity_check`, read-only),
 the addon manifests and the requirements of enabled addons, the ML venv and the GPU's presence. `full` scope adds the
-token (`getMe`), the group (a forum; the bot an admin with can_manage_topics, can_delete_messages and can_pin_messages) and
+token (`getMe`), the group (a forum; the bot an admin with can_manage_topics and can_pin_messages) and
 CUDA as the ML venv sees it. Exit 1 when a check fails, 0 otherwise. Secrets are never printed. The CLI reads the store
 read-only (`ReadOnlyStore`): a doctor or `trace` run never migrates the database, so the running router's schema stays put.
 
@@ -523,7 +523,7 @@ In place, with no long side-by-side period:
 3. Run the one-shot migration script, which only reads the old files.
 4. Start v3.
 
-The bot learns the group id from `/bind`. `stolik setup` tells the owner to create the private supergroup with Topics on, add the bot as admin with "manage topics" and "delete messages", then send `/bind` in the group. The bot checks that the sender is the owner and stores the chat id in SQLite (decided 2026-11-14, coordinator).
+The bot learns the group id from `/bind`. `stolik setup` tells the owner to create the private supergroup with Topics on, add the bot as admin with "manage topics" and "pin messages", then send `/bind` in the group. The bot checks that the sender is the owner and stores the chat id in SQLite (decided 2026-11-14, coordinator).
 
 Sessions live during the switch: when v3 starts, live channel sessions reconnect to the socket and register. Each gets a topic on registration, like any new session. There is no special path.
 

@@ -15,7 +15,7 @@ import type { Router } from '../core.ts'
 
 export const BIND_TEXT =
   'Bound. This supergroup is the bot\'s home: each folder gets its own topic here. ' +
-  'The bot needs admin rights with Manage Topics and Delete Messages.'
+  'The bot needs admin rights with Manage Topics and Pin Messages.'
 // The bind reply, per chat app (the rights each app needs differ).
 export function bindText(chatApp: string): string {
   if (chatApp === 'discord') {
@@ -84,7 +84,7 @@ export function onAccessLost(router: Router, reason: string): void {
   router.groupAccess = false
   router.audit.event({ event: 'group_access', access: 'lost' })
   router.logger.log(`group access lost (${reason}); output goes to the DM`)
-  const fix = router.chatApp === 'discord' ? 'give the bot the permissions named above' : 'give the bot admin with Manage Topics and Delete Messages'
+  const fix = router.chatApp === 'discord' ? 'give the bot the permissions named above' : 'give the bot admin with Manage Topics and Pin Messages'
   say(router, `The bot can no longer run the group (${reason}). Session output goes to this chat until its rights return: ${fix}.`, undefined, { dm: true })
     .catch((e) => router.logger.log(`access notice failed: ${errMsg(e)}`))
 }

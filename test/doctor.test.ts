@@ -182,7 +182,7 @@ test('telegram: a bad token fails and stops; a DM-mode run warns; a non-forum gr
   const api = (over: Partial<DoctorApi> = {}): DoctorApi => ({
     getMe: async () => ({ id: 9, username: 'bridge_bot' }),
     getChat: async () => ({ type: 'supergroup', is_forum: true }),
-    getChatMember: async () => ({ status: 'administrator', can_manage_topics: true, can_delete_messages: true, can_pin_messages: true }),
+    getChatMember: async () => ({ status: 'administrator', can_manage_topics: true, can_pin_messages: true }),
     ...over,
   })
   const good = await checkTelegram({ api: api(), groupId: tgChat(-100) })
@@ -196,7 +196,7 @@ test('telegram: a bad token fails and stops; a DM-mode run warns; a non-forum gr
   assert.equal(notForum[1].status, 'fail')
   const noRights = await checkTelegram({ api: api({ getChatMember: async () => ({ status: 'administrator', can_manage_topics: true }) }), groupId: tgChat(-100) })
   assert.equal(noRights[1].status, 'fail')
-  assert.match(noRights[1].detail, /can_delete_messages, can_pin_messages/)
+  assert.match(noRights[1].detail, /can_pin_messages/)
   const boom = await checkTelegram({ api: api({ getChat: async () => { throw new Error('chat not found') } }), groupId: tgChat(-100) })
   assert.match(boom[1].detail, /chat not found/)
 })

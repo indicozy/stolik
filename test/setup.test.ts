@@ -50,7 +50,7 @@ test('token and owner: env file holds the token at mode 600, config holds ownerU
     assert.match(printed, /\/plugin install stolik@indicozy/)
     assert.match(printed, /\/bind/)
     assert.match(printed, /Manage topics/)
-    assert.match(printed, /Delete messages/)
+    assert.match(printed, /Pin messages/)
   })
 })
 

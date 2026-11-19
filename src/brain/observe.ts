@@ -475,7 +475,7 @@ export function diskStatus(freeBytes: number): CheckStatus {
 export const SOCKET_PATH_MAX_BYTES = 107
 
 // Telegram's answer for a bound group's rights: the rights the router needs, and the ones missing.
-export const REQUIRED_GROUP_RIGHTS = ['can_manage_topics', 'can_delete_messages', 'can_pin_messages'] as const
+export const REQUIRED_GROUP_RIGHTS = ['can_manage_topics', 'can_pin_messages'] as const
 
 export function missingRights(member: { status: string } & Record<string, unknown>): string[] {
   if (member.status === 'creator') return []
