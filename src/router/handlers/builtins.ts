@@ -19,6 +19,7 @@ export const BUILTIN_BLURBS: Readonly<Record<string, string>> = {
   router: 'picks the session or folder for a message that names none',
   'usage-watch': 'a daily check of your Claude usage, sent only when a limit is crossed',
   workers: '/workers: what your Claude sessions, subagents, heavy jobs and GPUs are doing now',
+  remind: '/remind, /task, /reminders: reminders and scheduled AI tasks',
 }
 
 // Access fields in a few words each, for one line per addon.

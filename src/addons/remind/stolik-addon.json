@@ -1,0 +1,13 @@
+{
+  "name": "remind",
+  "version": "1.0.0",
+  "protocol": 2,
+  "command": ["node", "main.js"],
+  "provides": [
+    { "point": "command", "name": "remind" },
+    { "point": "command", "name": "task" },
+    { "point": "command", "name": "reminders" },
+    { "point": "schedule", "everyMinutes": 1 }
+  ],
+  "access": ["message.text", "messages.send", "sessions.spawn", "usage.record"]
+}
