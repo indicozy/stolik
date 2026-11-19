@@ -89,11 +89,11 @@ test('manifest: access and requires default to empty', () => {
 })
 
 test('manifest: a protocol 1 manifest is refused with that one message', () => {
-  const msg = 'written for addon protocol 1; this tg-bridge speaks protocol 2 (ids are strings, point "thread" is now "reply"). Update the addon.'
+  const msg = 'written for addon protocol 1; this stolik speaks protocol 2 (ids are strings, point "thread" is now "reply"). Update the addon.'
   assert.throws(() => parseManifest({ ...GOOD, protocol: 1, provides: [{ point: 'thread' }] }), (e: Error) => e.message === msg)
   const dir = tmpDir('manifest-protocol-1')
   try {
-    writeFileSync(join(dir, 'tg-bridge-addon.json'), JSON.stringify({ ...GOOD, protocol: 1 }))
+    writeFileSync(join(dir, 'stolik-addon.json'), JSON.stringify({ ...GOOD, protocol: 1 }))
     assert.deepEqual(readManifest(dir), { error: msg })
   } finally {
     rmSync(dir, { recursive: true, force: true })
@@ -134,10 +134,10 @@ test('readManifest: missing file, invalid JSON and a good file', () => {
   try {
     assert.match(readManifest(join(dir, 'nope')).error ?? '', /not found/)
     mkdirSync(join(dir, 'bad'))
-    writeFileSync(join(dir, 'bad', 'tg-bridge-addon.json'), '{ nope')
+    writeFileSync(join(dir, 'bad', 'stolik-addon.json'), '{ nope')
     assert.match(readManifest(join(dir, 'bad')).error ?? '', /not valid JSON/)
     mkdirSync(join(dir, 'good'))
-    writeFileSync(join(dir, 'good', 'tg-bridge-addon.json'), JSON.stringify(GOOD))
+    writeFileSync(join(dir, 'good', 'stolik-addon.json'), JSON.stringify(GOOD))
     const r = readManifest(join(dir, 'good'))
     assert.ok('manifest' in r)
     assert.equal(r.manifest.version, '1.2.0')
@@ -258,7 +258,7 @@ test('addons menu: text, one on/off button per addon, and the callback round tri
 // Review finding 4: a dash directly after a word is not a prefix separator (points.ts), only a colon, a comma, or a
 // dash with spaces around it.
 test('points parsePrefix: a dash directly after the word is not a separator', () => {
-  for (const text of ['quick-fix the bug', 'read-only audit', 'web-based tool', 'tg-bridge: hi', 'note-to-self']) {
+  for (const text of ['quick-fix the bug', 'read-only audit', 'web-based tool', 'sto-lik: hi', 'note-to-self']) {
     assert.equal(parsePrefix(text), null, text)
   }
   assert.deepEqual(parsePrefix('note - buy milk'), { word: 'note', rest: 'buy milk' })

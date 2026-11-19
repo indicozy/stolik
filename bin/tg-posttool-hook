@@ -3,11 +3,11 @@
 # Claude session is pending: the router keeps a marker file named after the Claude pid in pending/, beside the router
 # socket (src/adapters/hooks/pending-marker.ts). Without a marker it exits at once. Usage in settings.json:
 # tg-posttool-hook <node> <repo>/dist/hook.js. Always exits 0.
-# The folder comes from the socket path: TG_BRIDGE_SOCKET (set by the router for its sessions), else the default socket
+# The folder comes from the socket path: STOLIK_SOCKET (set by the router for its sessions), else the default socket
 # in $XDG_RUNTIME_DIR. Keep this rule in step with pendingDir() in pending-marker.ts.
 node="$1"
 hook="$2"
-sock="${TG_BRIDGE_SOCKET:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/tg-bridge.sock}"
+sock="${STOLIK_SOCKET:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/stolik.sock}"
 dir="${sock%/*}/pending"
 [ -d "$dir" ] || exit 0
 [ -n "$node" ] && [ -n "$hook" ] || exit 0

@@ -1,4 +1,4 @@
-// `tg-bridge doctor` (design §Observability): checks the install and the running configuration, and says what is wrong.
+// `stolik doctor` (design §Observability): checks the install and the running configuration, and says what is wrong.
 // Each check is a function of its inputs, so it is tested without the machine (test/doctor.test.ts). The router runs the
 // checks that need no network at start-up (scope "startup") and posts failures to the Logs topic. Exit code 1 when a
 // check fails; warnings do not fail. Secrets are never printed: the env file is checked by its mode, not its contents.
@@ -162,7 +162,7 @@ export function checkSocket(d: Pick<DoctorDeps, 'socketPath' | 'dirWritable'>): 
 }
 
 // The env file exists and is readable by its owner only. Its contents are never read into the output.
-// The owner. A fresh install is pairing-only until `tg-bridge setup` pairs it: a warning, not a failure. Nothing is listed
+// The owner. A fresh install is pairing-only until `stolik setup` pairs it: a warning, not a failure. Nothing is listed
 // once paired, so a paired install's output does not change.
 // Whether the owner has paired. A Discord config keeps the owner in `discord.ownerUserId` (loadConfig leaves the top-level
 // ownerUserId null there), so the Discord field is read when the config has one.
@@ -172,7 +172,7 @@ export function configOwnerPaired(c: { ownerUserId: string | null; discord?: { o
 
 export function checkOwner(d: Pick<DoctorDeps, 'ownerPaired'>): Check[] {
   if (!d.ownerPaired || d.ownerPaired()) return []
-  return [{ id: 'owner', title: 'owner', status: 'warn', detail: 'not paired yet: run tg-bridge setup' }]
+  return [{ id: 'owner', title: 'owner', status: 'warn', detail: 'not paired yet: run stolik setup' }]
 }
 
 export function checkEnvFile(d: Pick<DoctorDeps, 'envFile' | 'envFileMode' | 'envSettings'>): Check[] {
@@ -584,13 +584,13 @@ export function storeFacts(): { facts: StoreFacts; close(): void } | null {
   }
 }
 
-// The CLI entry: `tg-bridge doctor [--json]`. Prints the report; returns the exit code. Secrets (the bot token) are
+// The CLI entry: `stolik doctor [--json]`. Prints the report; returns the exit code. Secrets (the bot token) are
 // redacted from the output; the env file's contents are never printed.
 export async function runDoctorCommand(args: string[], out: (s: string) => void, err: (s: string) => void): Promise<number> {
   const json = args.includes('--json')
   const unknown = args.filter((a) => a !== '--json')
   if (unknown.length > 0) {
-    err('usage: tg-bridge doctor [--json]')
+    err('usage: stolik doctor [--json]')
     return 2
   }
   const env = ((): { token?: string; oldToken?: string; ownerId: string | null } => {
@@ -617,7 +617,7 @@ export async function runDoctorCommand(args: string[], out: (s: string) => void,
         const dc = await discordFor(chat.token ?? undefined, discordHome(chat.homeId))
         d.chatDoctor = dc
           ? () => checkDiscord(dc)
-          : async () => [{ id: 'token', title: 'bot token', status: 'fail', detail: 'no DISCORD_BOT_TOKEN in the secrets file; run tg-bridge setup --chat discord' }]
+          : async () => [{ id: 'token', title: 'bot token', status: 'fail', detail: 'no DISCORD_BOT_TOKEN in the secrets file; run stolik setup --chat discord' }]
         if (dc) d.chatPrivacy = () => checkDiscordPrivacy(dc)
       } catch (e) {
         d.chatDoctor = async () => [{ id: 'token', title: 'bot token', status: 'fail', detail: `Discord library not loadable: ${(e as Error).message}` }]

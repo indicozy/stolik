@@ -74,7 +74,7 @@ export type HostOptions = {
   reservedCommands?: readonly string[]
   // Answers requests from addons (see REQUEST_ACCESS). Without it every request is refused.
   requests?: AddonRequestHandler
-  // A read-only folder of addons shipped with tg-bridge (`src/addons`). A folder of the same name under addonsDir wins.
+  // A read-only folder of addons shipped with stolik (`src/addons`). A folder of the same name under addonsDir wins.
   builtinDir?: string
   // Extra environment for every addon (GPU settings from the machine config).
   env?: Record<string, string>
@@ -102,13 +102,13 @@ type Entry = {
   stopping: boolean
   // Why the addon is not running, shown in /addons ("restarting in 5 s", "disabled after crashes").
   note: string
-  // Shipped with tg-bridge (the folder under builtinDir, not shadowed by a user folder of the same name).
+  // Shipped with stolik (the folder under builtinDir, not shadowed by a user folder of the same name).
   builtin: boolean
   // Restarts after crashes since the router started, and the reason of the last crash (for /debug).
   restarts: number
   lastError: string | null
   // A user addon whose manifest is not the one the owner allowed (or that has no allowance yet). It is stopped and
-  // cannot be enabled until `tg-bridge addon consent <name>` on the PC. Built-ins never need it.
+  // cannot be enabled until `stolik addon consent <name>` on the PC. Built-ins never need it.
   needsConsent: boolean
 }
 
@@ -116,7 +116,7 @@ type Entry = {
 type Shadow = { name: string; dir: string }
 
 // The status (and refusal) text of a user addon whose manifest is not the one the owner allowed.
-export const reconsentText = (name: string): string => `needs re-consent: run tg-bridge addon consent ${name} on the PC`
+export const reconsentText = (name: string): string => `needs re-consent: run stolik addon consent ${name} on the PC`
 
 // Keys of the parent environment an addon may inherit. Everything else (tokens included) is left behind.
 const BASE_ENV_KEYS = ['PATH', 'HOME', 'LANG', 'LC_ALL', 'USER', 'TMPDIR', 'HF_HOME'] as const
@@ -159,7 +159,7 @@ export class AddonHost implements AddonsPort {
 
   // Re-reads the addons folders. New folders join (disabled unless settings say on); removed folders stop. A built-in
   // wins over a user folder of the same name (the user folder is ignored and reported). A user addon whose manifest is
-  // not the one the owner allowed is stopped and disabled until it is allowed again (`tg-bridge addon consent`).
+  // not the one the owner allowed is stopped and disabled until it is allowed again (`stolik addon consent`).
   refresh(): void {
     const found = new Map<string, string>()
     this.shadows = []
@@ -235,7 +235,7 @@ export class AddonHost implements AddonsPort {
     e.needsConsent = this.opts.settings.consentHash(e.name) !== hash
     if (!e.needsConsent) return
     if (e.enabled) {
-      this.opts.logger.log(`addon ${e.name}: its manifest is not the one you allowed; stopped until tg-bridge addon consent ${e.name}`)
+      this.opts.logger.log(`addon ${e.name}: its manifest is not the one you allowed; stopped until stolik addon consent ${e.name}`)
       e.enabled = false
       e.note = ''
       this.opts.settings.setEnabled(e.name, false)
@@ -250,7 +250,7 @@ export class AddonHost implements AddonsPort {
       this.shadowReported.add(sh.name)
       this.opts.logger.log(`addon folder ${sh.dir} shadows the built-in ${sh.name}: ignored`)
       try {
-        this.opts.alert(`⚠️ A folder named ${sh.name} in your addons folder shadows the built-in addon ${sh.name}. It is ignored. Remove it with tg-bridge addon remove ${sh.name}.`)
+        this.opts.alert(`⚠️ A folder named ${sh.name} in your addons folder shadows the built-in addon ${sh.name}. It is ignored. Remove it with stolik addon remove ${sh.name}.`)
       } catch {
         // The alert is best effort.
       }
@@ -337,12 +337,12 @@ export class AddonHost implements AddonsPort {
     if (!e) return `No addon named ${name}.`
     if (!e.manifest) return `${name} has an invalid manifest: ${e.error}`
     if (on) {
-      // Only the owner, on the PC, can allow a changed manifest (tg-bridge addon consent). Nothing here can.
+      // Only the owner, on the PC, can allow a changed manifest (stolik addon consent). Nothing here can.
       if (e.needsConsent) return `${name} ${reconsentText(name)}.`
       const missing = this.missingRequirements(e)
       if (missing.length > 0) return `${name} needs ${missing.join(', ')} installed and enabled first.`
       const clash = e.manifest.provides.flatMap((p) => (p.point === 'command' ? [p.name] : [])).find((c) => this.reserved().includes(c))
-      if (clash) return `The command /${clash} is used by tg-bridge itself. ${name} cannot use it.`
+      if (clash) return `The command /${clash} is used by stolik itself. ${name} cannot use it.`
       e.enabled = true
       e.crashes = []
       e.note = ''
@@ -774,6 +774,6 @@ export class AddonHost implements AddonsPort {
       const v = process.env[k]
       if (v !== undefined) env[k] = v
     }
-    return { ...env, ...(this.opts.env ?? {}), TG_BRIDGE_ADDON: name }
+    return { ...env, ...(this.opts.env ?? {}), STOLIK_ADDON: name }
   }
 }

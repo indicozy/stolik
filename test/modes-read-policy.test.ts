@@ -27,7 +27,7 @@ import {
 
 const HOME = '/home/u'
 const CWD = modesCwd(HOME)
-const LOG = `${HOME}/.local/state/tg-bridge/log`
+const LOG = `${HOME}/.local/state/stolik/log`
 const NOTES = `${HOME}/Documents/notes`
 const HERE = dirname(fileURLToPath(import.meta.url))
 

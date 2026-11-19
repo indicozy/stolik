@@ -1,4 +1,4 @@
-// The Discord part of `tg-bridge setup --chat discord` (batch D2): the bind steps, the invite URL, the client id, and the
+// The Discord part of `stolik setup --chat discord` (batch D2): the bind steps, the invite URL, the client id, and the
 // pairing driver. Pairing reuses brain/pairing.ts. With a router running, the router owns the gateway and answers the
 // `pair` ctl command; with none, setup connects its own gateway and reads the owner's DM. Nothing here loads
 // discord-api-types: the gateway intents are numbers.

@@ -467,7 +467,7 @@ test('formatIdle and formatList', () => {
 
 test('formatList: startable folders are grouped by parent folder, sorted, with duplicate names qualified', () => {
   const dirs = [
-    `${H}/Documents/projects/tg-bridge`,
+    `${H}/Documents/projects/stolik`,
     `${H}/Documents/projects/bikerepair`,
     `${H}/Documents/projects/razdor`,
     `${H}/Documents/projects/bikerepair/cyclesync`,
@@ -478,7 +478,7 @@ test('formatList: startable folders are grouped by parent folder, sorted, with d
     'No live sessions.',
     '',
     'Can start with /to <name> <text>:',
-    '~/Documents/projects: bikerepair, razdor, tg-bridge',
+    '~/Documents/projects: bikerepair, razdor, stolik',
     '~/Documents/projects/bikerepair: cyclesync, generator',
     '~/Downloads/git: telegram-delete-all-messages',
     'New folder? Run claude there once at the desk to trust it.',
@@ -646,7 +646,7 @@ test('fileAllowed refuses credential dirs, exact credential files and secret-loo
   assert.equal(fileAllowed(`${HOME}/proj/server.pem`, HOME).ok, false)
   assert.equal(fileAllowed(`${HOME}/proj/a.KEY`, HOME).ok, false)
   assert.equal(fileAllowed(`${HOME}/proj/id_rsa.pub`, HOME).ok, false)
-  assert.equal(fileAllowed(`${HOME}/.config/tg-bridge.env`, HOME).ok, false)
+  assert.equal(fileAllowed(`${HOME}/.config/stolik.env`, HOME).ok, false)
   assert.equal(fileAllowed(`${HOME}/.config/telegram-notify.env`, HOME).ok, false)
   assert.equal(fileAllowed(`${HOME}/.sshx/file.txt`, HOME).ok, true)
 })
@@ -758,7 +758,7 @@ test('isInteractiveClaude is false for print mode and the stream formats, true o
   assert.equal(isInteractiveClaude(['claude', '--output-format', 'stream-json']), false)
   assert.equal(isInteractiveClaude(['claude', '--input-format', 'stream-json']), false)
   assert.equal(isInteractiveClaude(['claude', '--input-format=stream-json']), false)
-  assert.equal(isInteractiveClaude(['claude', '--dangerously-load-development-channels', 'server:tg-bridge']), true)
+  assert.equal(isInteractiveClaude(['claude', '--dangerously-load-development-channels', 'server:stolik']), true)
   assert.equal(isInteractiveClaude(['claude', '--dangerously-skip-permissions']), true)
   assert.equal(isInteractiveClaude(['claude', '--resume', 'abc']), true)
   assert.equal(isInteractiveClaude(['claude']), true)
@@ -828,7 +828,7 @@ test('trustedDirs: a missing projects value or non-object input gives no folders
 })
 
 test('resolveProject: a name matching one startable folder resolves to it; qualified form checks the parent', () => {
-  const dirs = [`${R1}/tg-bridge`, `${R2}/cat-garden`]
+  const dirs = [`${R1}/stolik`, `${R2}/cat-garden`]
   assert.deepEqual(resolveProject('cat-garden', dirs, H), { status: 'found', name: 'cat-garden', dir: `${R2}/cat-garden` })
   assert.deepEqual(resolveProject('proga/cat-garden', dirs, H), { status: 'found', name: 'cat-garden', dir: `${R2}/cat-garden` })
   assert.equal(resolveProject('projects/cat-garden', dirs, H).status, 'none')

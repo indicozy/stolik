@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Long-lived speech-to-text worker for tg-bridge.
+"""Long-lived speech-to-text worker for stolik.
 
 stdin : one JSON object per line  {"id": <any>, "path": "<audio file>"}
 stdout: one JSON object per line  {"id": <same>, "text": "..."}  or  {"id": <same>, "error": "..."}

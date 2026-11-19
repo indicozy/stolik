@@ -1,4 +1,4 @@
-// The Telegram part of `tg-bridge doctor` (plan 0e decision 7, inventory C): the bot's token and the bound group, checked
+// The Telegram part of `stolik doctor` (plan 0e decision 7, inventory C): the bot's token and the bound group, checked
 // through the Bot API. The doctor (cli/doctor.ts) runs it in the full scope only; the checks' ids and texts are the ones
 // the doctor always printed, so a Telegram install's report does not change.
 import { Bot } from 'grammy'

@@ -12,9 +12,9 @@ import type { Server } from 'node:net'
 
 // `ss -xpeH` lines as Linux prints them: a server-side socket with its path, and the client's unnamed end.
 const SS = [
-  'u_str ESTAB 0 0 /run/user/1000/tg-bridge.sock 6749074 * 6749073 users:(("node",pid=5000,fd=23))                      <-> ino:364587 dev:0/51',
+  'u_str ESTAB 0 0 /run/user/1000/stolik.sock 6749074 * 6749073 users:(("node",pid=5000,fd=23))                      <-> ino:364587 dev:0/51',
   'u_str ESTAB 0 0 * 6749073 * 6749074 users:(("node",pid=5100,fd=12))                                                  <-> ino:364588 dev:0/51',
-  'u_str LISTEN 0 511 /run/user/1000/tg-bridge.sock 6700000 * 0 users:(("node",pid=5000,fd=20))',
+  'u_str LISTEN 0 511 /run/user/1000/stolik.sock 6700000 * 0 users:(("node",pid=5000,fd=20))',
 ].join('\n')
 
 test('parseSsRows: local and peer inodes and the owner pid of each unix socket row', () => {
@@ -31,7 +31,7 @@ test('peerPidFromSs: the owner of the peer end, looked up from the accepted sock
 })
 
 test('peerPidFromSs: a peer that has already gone gives null', () => {
-  const gone = 'u_str ESTAB 0 0 /run/user/1000/tg-bridge.sock 6749074 * 6749073 users:(("node",pid=5000,fd=23))'
+  const gone = 'u_str ESTAB 0 0 /run/user/1000/stolik.sock 6749074 * 6749073 users:(("node",pid=5000,fd=23))'
   assert.equal(peerPidFromSs(gone, '6749074'), null)
 })
 

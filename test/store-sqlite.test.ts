@@ -106,11 +106,11 @@ storeContract('SqliteStore', () => {
   return { store, reopen: () => open(b), paths: b.paths, cleanup: b.cleanup }
 })
 
-test('sqlite: the database is tg-bridge.db in the state folder, created with private mode', () => {
+test('sqlite: the database is stolik.db in the state folder, created with private mode', () => {
   const b = box()
   try {
     open(b)
-    assert.equal(b.dbPath, join(b.paths.stateDir, 'tg-bridge.db'))
+    assert.equal(b.dbPath, join(b.paths.stateDir, 'stolik.db'))
     assert.ok(existsSync(b.dbPath))
   } finally {
     b.cleanup()
@@ -345,7 +345,7 @@ test('sqlite: topic rows keep the brain record shape, including nulls and the se
   const b = box()
   try {
     const store = open(b)
-    const t1: TopicRec = { threadId: tgThread(11), name: 'tg-bridge', project: 'tg-bridge', cwd: '/w', sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null }
+    const t1: TopicRec = { threadId: tgThread(11), name: 'stolik', project: 'stolik', cwd: '/w', sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null }
     const t2: TopicRec = { threadId: tgThread(12), name: 'gone', project: 'p', cwd: null, sessionKey: 5, backendSessionId: 'x', state: 'deleted', endedAt: 1, deleteAt: 2 }
     store.upsertTopic(t1)
     store.upsertTopic(t2)
@@ -523,7 +523,7 @@ test('sqlite: migrate false on an older file throws SchemaMismatchError and leav
     const before = hash(b.dbPath)
     assert.throws(
       () => openNoMigrate(b),
-      (e: unknown) => e instanceof SchemaMismatchError && /^tg-bridge\.db schema is v1, this build needs v6\. Restart the tg-bridge service/.test((e as Error).message),
+      (e: unknown) => e instanceof SchemaMismatchError && /^stolik\.db schema is v1, this build needs v6\. Restart the stolik service/.test((e as Error).message),
     )
     assert.equal(hash(b.dbPath), before)
   } finally {

@@ -1,4 +1,4 @@
-// `tg-bridge service install | uninstall | status` (plan P3, design §5.1). Writes the user-level service definition:
+// `stolik service install | uninstall | status` (plan P3, design §5.1). Writes the user-level service definition:
 // a systemd --user unit on Linux, a LaunchAgent plist on macOS (plan P4). The renderers are pure templates (unit tests
 // compare their output). Nothing is loaded or started unless --start is given. uninstall disables the unit (so it does
 // not come back at logon) and stops it only with --stop.
@@ -7,10 +7,10 @@ import { dirname, join } from 'node:path'
 import { writeFileAtomic } from './setup.ts'
 import { NPX_SERVICE_MESSAGE, isNpxInstall } from './install-location.ts'
 
-export const DEFAULT_UNIT = 'tg-bridge'
-// macOS label is com.tg-bridge.<name>; the default name keeps the plist path com.tg-bridge.router.plist.
+export const DEFAULT_UNIT = 'stolik'
+// macOS label is com.stolik.<name>; the default name keeps the plist path com.stolik.router.plist.
 export const DEFAULT_MAC_NAME = 'router'
-export const LABEL_PREFIX = 'com.tg-bridge.'
+export const LABEL_PREFIX = 'com.stolik.'
 
 export type Presence = 'x11' | 'logind'
 
@@ -39,11 +39,11 @@ export function systemdPathValue(nodePath: string): string {
   return entries.map((e) => (e.startsWith('%h') ? e : escapeSpecifiers(e))).join(':')
 }
 
-// The systemd --user unit (replaces systemd/tg-bridge.service, which keeps its values as the example).
+// The systemd --user unit (replaces systemd/stolik.service, which keeps its values as the example).
 export function renderSystemdUnit(i: ServiceInput): string {
   const lines = [
     '[Unit]',
-    'Description=tg-bridge Telegram router for Claude Code',
+    'Description=stolik Telegram router for Claude Code',
     // No After=: user units have no network-online.target, and the router retries its connections itself.
     'StartLimitIntervalSec=600',
     'StartLimitBurst=5',
@@ -133,7 +133,7 @@ export type ServiceArgs = { action: ServiceAction; name: string | null; start: b
 export function parseServiceArgs(args: string[]): ServiceArgs | string {
   const [action, ...rest] = args
   if (action !== 'install' && action !== 'uninstall' && action !== 'status') {
-    return 'usage: tg-bridge service install [--name N] [--start] | uninstall [--name N] [--stop] | status [--name N]'
+    return 'usage: stolik service install [--name N] [--start] | uninstall [--name N] [--stop] | status [--name N]'
   }
   const out: ServiceArgs = { action, name: null, start: false, stop: false }
   for (let i = 0; i < rest.length; i++) {
@@ -142,7 +142,7 @@ export function parseServiceArgs(args: string[]): ServiceArgs | string {
     else if (a === '--stop') out.stop = true
     else if (a === '--name' || a.startsWith('--name=')) {
       const value = a === '--name' ? rest[++i] : a.slice('--name='.length)
-      if (!value || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value)) return '--name needs a plain name such as tg-bridge'
+      if (!value || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value)) return '--name needs a plain name such as stolik'
       out.name = value
     } else return `unknown option: ${a}`
   }
@@ -251,7 +251,7 @@ function macService(args: ServiceArgs, deps: ServiceDeps): number {
       nodePath: deps.nodePath,
       scriptPath: deps.scriptPath,
       pathValue: macPathValue(deps.nodePath, deps.home),
-      logPath: join(deps.home, 'Library', 'Logs', 'tg-bridge.log'),
+      logPath: join(deps.home, 'Library', 'Logs', 'stolik.log'),
       nice: deps.nice,
     })
     mkdirSync(join(deps.home, 'Library', 'Logs'), { recursive: true })
@@ -304,6 +304,6 @@ export function runService(args: ServiceArgs, deps: ServiceDeps): number {
   }
   if (deps.platform === 'linux') return linuxService(args, deps)
   if (deps.platform === 'darwin') return macService(args, deps)
-  deps.err('tg-bridge service supports Linux (systemd --user) and macOS (LaunchAgent) only')
+  deps.err('stolik service supports Linux (systemd --user) and macOS (LaunchAgent) only')
   return 1
 }

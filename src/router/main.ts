@@ -1,4 +1,4 @@
-// tg-bridge router: single Telegram poller plus the local socket that channel servers and hooks talk to.
+// stolik router: single Telegram poller plus the local socket that channel servers and hooks talk to.
 // Exit codes (the systemd unit relies on them, src/cli/service.ts): 78 config error, 75 another router holds the lock.
 export const EXIT_CONFIG = 78
 export const EXIT_ALREADY_RUNNING = 75
@@ -11,7 +11,7 @@ import type { Router } from './core.ts'
 // must fail inside the handler below (exit EXIT_CONFIG with the message), not as an import crash.
 const errText = (e: unknown): string => (e instanceof Error ? e.message : String(e))
 const stderr = (msg: string): void => {
-  process.stderr.write(`tg-bridge router: ${msg}\n`)
+  process.stderr.write(`stolik router: ${msg}\n`)
 }
 
 let cfg: Config
@@ -48,7 +48,7 @@ let router: Router | null = null
 // A fatal error: say what happened (with the stack), save what can be saved, release the lock, exit 1.
 function crash(label: string, e: unknown): void {
   const detail = e instanceof Error && e.stack ? e.stack : String(e)
-  process.stderr.write(`${new Date().toISOString()} tg-bridge router: ${label}: ${detail}\n`)
+  process.stderr.write(`${new Date().toISOString()} stolik router: ${label}: ${detail}\n`)
   try {
     if (router) saveNow(router)
   } catch {

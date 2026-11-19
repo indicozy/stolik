@@ -22,7 +22,7 @@ import {
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const NODE = '/home/u/.asdf/installs/nodejs/22.13.0/bin/node'
-const SCRIPT = '/home/u/Documents/projects/tg-bridge/dist/router/main.js'
+const SCRIPT = '/home/u/Documents/projects/stolik/dist/router/main.js'
 
 test('systemd unit: default config gives the base unit (no CPU or nice lines, logind has no DISPLAY)', () => {
   const text = renderSystemdUnit({ nodePath: NODE, scriptPath: SCRIPT, presence: 'logind', cpuAffinity: null, nice: null })
@@ -30,7 +30,7 @@ test('systemd unit: default config gives the base unit (no CPU or nice lines, lo
     text,
     [
       '[Unit]',
-      'Description=tg-bridge Telegram router for Claude Code',
+      'Description=stolik Telegram router for Claude Code',
       'StartLimitIntervalSec=600',
       'StartLimitBurst=5',
       '',
@@ -74,14 +74,14 @@ test('LaunchAgent plist: program arguments, PATH, log file, KeepAlive; Nice only
   const base = {
     label: labelFor('router'),
     nodePath: '/opt/homebrew/bin/node',
-    scriptPath: '/Users/u/tg-bridge/dist/router/main.js',
+    scriptPath: '/Users/u/stolik/dist/router/main.js',
     pathValue: '/opt/homebrew/bin:/usr/bin',
-    logPath: '/Users/u/Library/Logs/tg-bridge.log',
+    logPath: '/Users/u/Library/Logs/stolik.log',
     nice: null,
   }
   const text = renderLaunchAgentPlist(base)
-  assert.match(text, /<key>Label<\/key>\n  <string>com\.tg-bridge\.router<\/string>/)
-  assert.match(text, /<key>ProgramArguments<\/key>\n  <array>\n    <string>\/opt\/homebrew\/bin\/node<\/string>\n    <string>\/Users\/u\/tg-bridge\/dist\/router\/main\.js<\/string>/)
+  assert.match(text, /<key>Label<\/key>\n  <string>com\.stolik\.router<\/string>/)
+  assert.match(text, /<key>ProgramArguments<\/key>\n  <array>\n    <string>\/opt\/homebrew\/bin\/node<\/string>\n    <string>\/Users\/u\/stolik\/dist\/router\/main\.js<\/string>/)
   assert.match(text, /<key>KeepAlive<\/key>\n  <true\/>/)
   assert.match(text, /<key>RunAtLoad<\/key>\n  <true\/>/)
   assert.equal(text.includes('<key>Nice</key>'), false)
@@ -93,7 +93,7 @@ test('LaunchAgent plist: program arguments, PATH, log file, KeepAlive; Nice only
 test('LaunchAgent plist parses as a property list (python3 plistlib), when python3 is present', (t) => {
   const py = spawnSync('python3', ['-c', 'import plistlib,sys; print(plistlib.loads(sys.stdin.buffer.read())["Label"])'], {
     input: renderLaunchAgentPlist({
-      label: 'com.tg-bridge.router',
+      label: 'com.stolik.router',
       nodePath: '/a&b/node',
       scriptPath: '/s/main.js',
       pathValue: '/bin',
@@ -104,12 +104,12 @@ test('LaunchAgent plist parses as a property list (python3 plistlib), when pytho
   })
   if (py.error) return t.skip('python3 not available')
   assert.equal(py.status, 0, py.stderr)
-  assert.equal(py.stdout.trim(), 'com.tg-bridge.router')
+  assert.equal(py.stdout.trim(), 'com.stolik.router')
 })
 
 test('parseServiceArgs: actions, --name, --start and --stop only where they apply', () => {
   assert.deepEqual(parseServiceArgs(['install', '--start']), { action: 'install', name: null, start: true, stop: false })
-  assert.deepEqual(parseServiceArgs(['install', '--name', 'tg-bridge-v2']), { action: 'install', name: 'tg-bridge-v2', start: false, stop: false })
+  assert.deepEqual(parseServiceArgs(['install', '--name', 'stolik-v2']), { action: 'install', name: 'stolik-v2', start: false, stop: false })
   assert.deepEqual(parseServiceArgs(['uninstall', '--name=x', '--stop']), { action: 'uninstall', name: 'x', start: false, stop: true })
   assert.deepEqual(parseServiceArgs(['status']), { action: 'status', name: null, start: false, stop: false })
   assert.equal(typeof parseServiceArgs(['start']), 'string')
@@ -120,10 +120,10 @@ test('parseServiceArgs: actions, --name, --start and --stop only where they appl
 })
 
 test('path helpers: unit under XDG_CONFIG_HOME when absolute, else ~/.config; plist under ~/Library/LaunchAgents', () => {
-  assert.equal(unitFilePath('/h', 'tg-bridge'), '/h/.config/systemd/user/tg-bridge.service')
-  assert.equal(unitFilePath('/h', 'tg-bridge', '/x'), '/x/systemd/user/tg-bridge.service')
-  assert.equal(unitFilePath('/h', 'tg-bridge', 'rel'), '/h/.config/systemd/user/tg-bridge.service')
-  assert.equal(plistFilePath('/h', labelFor('router')), '/h/Library/LaunchAgents/com.tg-bridge.router.plist')
+  assert.equal(unitFilePath('/h', 'stolik'), '/h/.config/systemd/user/stolik.service')
+  assert.equal(unitFilePath('/h', 'stolik', '/x'), '/x/systemd/user/stolik.service')
+  assert.equal(unitFilePath('/h', 'stolik', 'rel'), '/h/.config/systemd/user/stolik.service')
+  assert.equal(plistFilePath('/h', labelFor('router')), '/h/Library/LaunchAgents/com.stolik.router.plist')
 })
 
 // ---- runService with a fake run ----
@@ -168,7 +168,7 @@ test('linux install without --start: writes the unit, runs no systemctl', () => 
   withHome((home, make, calls) => {
     const code = runService({ action: 'install', name: null, start: false, stop: false }, make({}))
     assert.equal(code, 0)
-    const file = join(home, '.config', 'systemd', 'user', 'tg-bridge.service')
+    const file = join(home, '.config', 'systemd', 'user', 'stolik.service')
     assert.equal(readFileSync(file, 'utf8').includes('CPUAffinity=8-19'), true)
     assert.equal(calls.length, 0)
   })
@@ -181,12 +181,12 @@ test('linux install --start on a stopped unit: daemon-reload, then enable --now 
       calls.push({ file, args })
       return { status: args[1] === 'is-active' ? 3 : 0, stdout: '', stderr: '' }
     }
-    assert.equal(runService({ action: 'install', name: 'tg-bridge-v3', start: true, stop: false }, make({ run })), 0)
-    assert.ok(existsSync(join(home, '.config', 'systemd', 'user', 'tg-bridge-v3.service')))
+    assert.equal(runService({ action: 'install', name: 'stolik', start: true, stop: false }, make({ run })), 0)
+    assert.ok(existsSync(join(home, '.config', 'systemd', 'user', 'stolik.service')))
     assert.deepEqual(calls, [
       { file: 'systemctl', args: ['--user', 'daemon-reload'] },
-      { file: 'systemctl', args: ['--user', 'is-active', '--quiet', 'tg-bridge-v3.service'] },
-      { file: 'systemctl', args: ['--user', 'enable', '--now', 'tg-bridge-v3.service'] },
+      { file: 'systemctl', args: ['--user', 'is-active', '--quiet', 'stolik.service'] },
+      { file: 'systemctl', args: ['--user', 'enable', '--now', 'stolik.service'] },
     ])
   })
 })
@@ -196,8 +196,8 @@ test('linux install --start on a running unit: daemon-reload, then restart so th
     assert.equal(runService({ action: 'install', name: null, start: true, stop: false }, make({})), 0)
     assert.deepEqual(calls, [
       { file: 'systemctl', args: ['--user', 'daemon-reload'] },
-      { file: 'systemctl', args: ['--user', 'is-active', '--quiet', 'tg-bridge.service'] },
-      { file: 'systemctl', args: ['--user', 'restart', 'tg-bridge.service'] },
+      { file: 'systemctl', args: ['--user', 'is-active', '--quiet', 'stolik.service'] },
+      { file: 'systemctl', args: ['--user', 'restart', 'stolik.service'] },
     ])
   })
 })
@@ -224,18 +224,18 @@ test('linux install refuses when the router is not built, and writes nothing', (
 test('linux uninstall: plain disables and reloads (running unit keeps running); --stop uses disable --now', () => {
   withHome((home, make, calls) => {
     runService({ action: 'install', name: null, start: false, stop: false }, make({}))
-    const file = join(home, '.config', 'systemd', 'user', 'tg-bridge.service')
+    const file = join(home, '.config', 'systemd', 'user', 'stolik.service')
     assert.equal(runService({ action: 'uninstall', name: null, start: false, stop: false }, make({})), 0)
     assert.equal(existsSync(file), false)
     assert.deepEqual(calls, [
-      { file: 'systemctl', args: ['--user', 'disable', 'tg-bridge.service'] },
+      { file: 'systemctl', args: ['--user', 'disable', 'stolik.service'] },
       { file: 'systemctl', args: ['--user', 'daemon-reload'] },
     ])
     runService({ action: 'install', name: null, start: false, stop: false }, make({}))
     calls.length = 0
     assert.equal(runService({ action: 'uninstall', name: null, start: false, stop: true }, make({})), 0)
     assert.deepEqual(calls, [
-      { file: 'systemctl', args: ['--user', 'disable', '--now', 'tg-bridge.service'] },
+      { file: 'systemctl', args: ['--user', 'disable', '--now', 'stolik.service'] },
       { file: 'systemctl', args: ['--user', 'daemon-reload'] },
     ])
   })
@@ -246,7 +246,7 @@ test('linux uninstall still removes the file when disable fails (unit not loaded
     runService({ action: 'install', name: null, start: false, stop: false }, make({}))
     const run = (): RunResult => ({ status: 1, stdout: '', stderr: 'No such file' })
     assert.equal(runService({ action: 'uninstall', name: null, start: false, stop: false }, make({ run })), 0)
-    assert.equal(existsSync(join(home, '.config', 'systemd', 'user', 'tg-bridge.service')), false)
+    assert.equal(existsSync(join(home, '.config', 'systemd', 'user', 'stolik.service')), false)
     assert.ok(out.some((l) => /note: No such file/.test(l)))
   })
 })
@@ -263,15 +263,15 @@ test('macOS install --start on a loaded agent: print, bootout, enable, then boot
   withHome((home, make, calls) => {
     const deps = make({ platform: 'darwin', uid: 501 })
     assert.equal(runService({ action: 'install', name: null, start: true, stop: false }, deps), 0)
-    const plist = join(home, 'Library', 'LaunchAgents', 'com.tg-bridge.router.plist')
+    const plist = join(home, 'Library', 'LaunchAgents', 'com.stolik.router.plist')
     assert.ok(existsSync(plist))
     const text = readFileSync(plist, 'utf8')
     assert.ok(text.includes(`<string>${NODE}</string>`))
     assert.ok(text.includes('<key>Nice</key>'))
     assert.deepEqual(calls, [
-      { file: 'launchctl', args: ['print', 'gui/501/com.tg-bridge.router'] },
-      { file: 'launchctl', args: ['bootout', 'gui/501/com.tg-bridge.router'] },
-      { file: 'launchctl', args: ['enable', 'gui/501/com.tg-bridge.router'] },
+      { file: 'launchctl', args: ['print', 'gui/501/com.stolik.router'] },
+      { file: 'launchctl', args: ['bootout', 'gui/501/com.stolik.router'] },
+      { file: 'launchctl', args: ['enable', 'gui/501/com.stolik.router'] },
       { file: 'launchctl', args: ['bootstrap', 'gui/501', plist] },
     ])
   })
@@ -296,18 +296,18 @@ test('macOS install without --start only writes the plist; uninstall disables, -
   withHome((home, make, calls) => {
     runService({ action: 'install', name: null, start: false, stop: false }, make({ platform: 'darwin' }))
     assert.equal(calls.length, 0)
-    const plist = join(home, 'Library', 'LaunchAgents', 'com.tg-bridge.router.plist')
+    const plist = join(home, 'Library', 'LaunchAgents', 'com.stolik.router.plist')
     assert.ok(existsSync(plist))
     assert.equal(runService({ action: 'uninstall', name: null, start: false, stop: false }, make({ platform: 'darwin' })), 0)
     assert.equal(existsSync(plist), false)
-    assert.deepEqual(calls, [{ file: 'launchctl', args: ['disable', 'gui/501/com.tg-bridge.router'] }])
+    assert.deepEqual(calls, [{ file: 'launchctl', args: ['disable', 'gui/501/com.stolik.router'] }])
     calls.length = 0
     runService({ action: 'install', name: null, start: false, stop: false }, make({ platform: 'darwin' }))
     calls.length = 0
     assert.equal(runService({ action: 'uninstall', name: null, start: false, stop: true }, make({ platform: 'darwin' })), 0)
     assert.deepEqual(calls, [
-      { file: 'launchctl', args: ['bootout', 'gui/501/com.tg-bridge.router'] },
-      { file: 'launchctl', args: ['disable', 'gui/501/com.tg-bridge.router'] },
+      { file: 'launchctl', args: ['bootout', 'gui/501/com.stolik.router'] },
+      { file: 'launchctl', args: ['disable', 'gui/501/com.stolik.router'] },
     ])
   })
 })

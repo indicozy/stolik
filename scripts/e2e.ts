@@ -1,6 +1,6 @@
-// tg-bridge E2E driver CLI (docs/e2e.md). Drives a router started with TG_BRIDGE_E2E=1 through its socket, so a run can
+// stolik E2E driver CLI (docs/e2e.md). Drives a router started with STOLIK_E2E=1 through its socket, so a run can
 // send messages, tap buttons and read the replies without a person typing. Only node built-ins; run with:
-//   TG_BRIDGE_SOCKET=<router socket> node --experimental-strip-types scripts/e2e.ts <command> [args]
+//   STOLIK_SOCKET=<router socket> node --experimental-strip-types scripts/e2e.ts <command> [args]
 import { createConnection } from 'node:net'
 import { pathToFileURL } from 'node:url'
 
@@ -12,7 +12,7 @@ export const USAGE = `usage: e2e <command>
   tap <messageId> <button text or index>             tap a button of a sent message (index is 0-based)
   sent [n] [--json]                                  the last n outbound messages (default 20)
   wait <regex> [--timeout <seconds>] [--json]        wait for a new outbound message whose text matches (default 60 s)
-TG_BRIDGE_SOCKET must name the router socket.`
+STOLIK_SOCKET must name the router socket.`
 
 export type Sent = { messageId: number; chat: { kind: string; id: string; threadId: number | null }; text: string; buttons: Array<Array<{ text: string; data: string }>> }
 
@@ -141,8 +141,8 @@ async function main(argv: string[]): Promise<number> {
     process.stdout.write(USAGE + '\n')
     return p.cmd === '' ? 2 : 0
   }
-  const socket = process.env.TG_BRIDGE_SOCKET
-  if (!socket) return fail('TG_BRIDGE_SOCKET is not set (the router socket)', 2)
+  const socket = process.env.STOLIK_SOCKET
+  if (!socket) return fail('STOLIK_SOCKET is not set (the router socket)', 2)
   const topic = typeof p.flags.topic === 'string' ? p.flags.topic : undefined
   const reply = typeof p.flags.reply === 'string' ? Number(p.flags.reply) : undefined
   if (reply !== undefined && !Number.isInteger(reply)) return fail('--reply needs a message id', 2)

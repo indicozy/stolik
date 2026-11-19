@@ -20,8 +20,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "stolik": "dist/cli/tg-bridge.js",
-    "tg-bridge": "dist/cli/tg-bridge.js",
+    "stolik": "dist/cli/stolik.js",
     "tg-claude": "bin/tg-claude"
   },
   "files": [
@@ -40,7 +39,7 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "build": "tsc -p . && for a in modes notes ml-worker voice voice-cleanup digest router usage-watch cost-guard workers; do cp src/addons/$a/tg-bridge-addon.json dist/addons/$a/; done && cp src/addons/usage-watch/check.py dist/addons/usage-watch/",
+    "build": "tsc -p . && for a in modes notes ml-worker voice voice-cleanup digest router usage-watch cost-guard workers; do cp src/addons/$a/stolik-addon.json dist/addons/$a/; done && cp src/addons/usage-watch/check.py dist/addons/usage-watch/",
     "test": "node --test --experimental-strip-types test/*.test.ts && python3 -I -m unittest discover -s ml -p 'test_*.py' && python3 -I -m unittest discover -s test -p 'test_usage_*.py'",
     "prepack": "npm run build"
   },

@@ -12,27 +12,27 @@ const PLUGIN = join(REPO, 'plugin')
 const readJson = (path: string): any => JSON.parse(readFileSync(path, 'utf8'))
 const installSh = readFileSync(join(REPO, 'install.sh'), 'utf8')
 
-test('plugin manifest: name tg-bridge, version and description present, no reserved name', () => {
+test('plugin manifest: name stolik, version and description present, no reserved name', () => {
   const m = readJson(join(PLUGIN, '.claude-plugin', 'plugin.json'))
-  assert.equal(m.name, 'tg-bridge')
+  assert.equal(m.name, 'stolik')
   assert.match(m.version, /^\d+\.\d+\.\d+$/)
   assert.ok(m.description)
   // Anthropic's reserved prefixes (plugins-reference, "name").
   assert.doesNotMatch(m.name, /^(claude-|anthropic-|anthropics-|cc-plugin-)/)
 })
 
-test('local marketplace indicozy lists tg-bridge at the marketplace root', () => {
+test('local marketplace indicozy lists stolik at the marketplace root', () => {
   const mk = readJson(join(PLUGIN, '.claude-plugin', 'marketplace.json'))
   assert.equal(mk.name, 'indicozy')
   assert.ok(mk.owner?.name)
   assert.equal(mk.plugins.length, 1)
-  assert.equal(mk.plugins[0].name, 'tg-bridge')
+  assert.equal(mk.plugins[0].name, 'stolik')
   assert.equal(mk.plugins[0].source, './')
 })
 
 test('.mcp.json: the channel server runs dist/channel.js through the node launcher (never a bare node)', () => {
   const mcp = readJson(join(PLUGIN, '.mcp.json'))
-  const s = mcp.mcpServers['tg-bridge']
+  const s = mcp.mcpServers['stolik']
   assert.equal(s.command, '${CLAUDE_PLUGIN_ROOT}/../bin/tg-plugin-node')
   assert.deepEqual(s.args, ['${CLAUDE_PLUGIN_ROOT}/../dist/channel.js'])
   // The plugin's MCP entry carries the legacy protocol negotiation env that the server needs.
@@ -85,7 +85,7 @@ test('hook and server paths resolve to real files after build (dist/*.js, bin/tg
   const expand = (s: string) => s.replaceAll('${CLAUDE_PLUGIN_ROOT}', PLUGIN).replaceAll('"', '')
   const hooks = readJson(join(PLUGIN, 'hooks', 'hooks.json')).hooks as Record<string, any[]>
   const commands = Object.values(hooks).flatMap((g) => g.map((x: any) => expand(x.hooks[0].command)))
-  const mcpArg = expand(readJson(join(PLUGIN, '.mcp.json')).mcpServers['tg-bridge'].args[0])
+  const mcpArg = expand(readJson(join(PLUGIN, '.mcp.json')).mcpServers['stolik'].args[0])
   // Every token that climbs out of plugin/ (../dist/..., ../bin/...) is a repo file the plugin depends on.
   const targets = [mcpArg, ...commands.flatMap((c) => c.split(/\s+/).filter((tok) => tok.includes('/../')))]
   if (!existsSync(join(REPO, 'dist', 'channel.js'))) {
@@ -100,7 +100,7 @@ test('hook and server paths resolve to real files after build (dist/*.js, bin/tg
   assert.ok((statSync(join(REPO, 'bin', 'tg-plugin-node')).mode & 0o111) !== 0, 'bin/tg-plugin-node not executable')
 })
 
-test('tg-claude: default loads server:tg-bridge; TG_BRIDGE_PLUGIN=1 loads plugin:tg-bridge@indicozy', () => {
+test('tg-claude: default loads server:stolik; STOLIK_PLUGIN=1 loads plugin:stolik@indicozy', () => {
   const dir = join(dirname(fileURLToPath(import.meta.url)), '.tmp-plugin')
   rmSync(dir, { recursive: true, force: true })
   mkdirSync(dir, { recursive: true })
@@ -114,13 +114,13 @@ test('tg-claude: default loads server:tg-bridge; TG_BRIDGE_PLUGIN=1 loads plugin
         encoding: 'utf8',
       })
     const plain = run({})
-    assert.match(plain, /^--dangerously-load-development-channels\nserver:tg-bridge\n--model\nhaiku\n$/)
-    const plugin = run({ TG_BRIDGE_PLUGIN: '1' })
-    assert.match(plugin, /^--dangerously-load-development-channels\nplugin:tg-bridge@indicozy\n--model\nhaiku\n$/)
+    assert.match(plain, /^--dangerously-load-development-channels\nserver:stolik\n--model\nhaiku\n$/)
+    const plugin = run({ STOLIK_PLUGIN: '1' })
+    assert.match(plugin, /^--dangerously-load-development-channels\nplugin:stolik@indicozy\n--model\nhaiku\n$/)
     // Plain management subcommands still pass through unchanged.
-    assert.equal(run({ TG_BRIDGE_PLUGIN: '1' }).includes('server:'), false)
+    assert.equal(run({ STOLIK_PLUGIN: '1' }).includes('server:'), false)
     const mcp = execFileSync(join(REPO, 'bin', 'tg-claude'), ['mcp', 'list'], {
-      env: { PATH: `${dir}:/usr/bin:/bin`, HOME: dir, TG_BRIDGE_PLUGIN: '1' },
+      env: { PATH: `${dir}:/usr/bin:/bin`, HOME: dir, STOLIK_PLUGIN: '1' },
       encoding: 'utf8',
     })
     assert.equal(mcp, 'mcp\nlist\n')

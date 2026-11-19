@@ -1,4 +1,4 @@
-// `tg-bridge logs` and `tg-bridge trace` (src/cli/logs.ts): option parsing, filtering, the follow reader across rotation,
+// `stolik logs` and `stolik trace` (src/cli/logs.ts): option parsing, filtering, the follow reader across rotation,
 // and the trace lookup by trace id and by Telegram message id. Files are under the isolated state folder.
 import './helpers/isolate.ts'
 import { test } from 'node:test'
@@ -102,7 +102,7 @@ test('trace: the timeline of one trace id, from the log files, in time order', (
 })
 
 test('trace: by trace id, and by a Telegram message id through the trace map', async () => {
-  const dbStore = new SqliteStore({ stateDir: join(ISOLATED_ROOT, 'state', 'tg-bridge-v3'), inboxDir: join(ISOLATED_ROOT, 'inbox'), notesDir: join(ISOLATED_ROOT, 'notes') })
+  const dbStore = new SqliteStore({ stateDir: join(ISOLATED_ROOT, 'state', 'stolik'), inboxDir: join(ISOLATED_ROOT, 'inbox'), notesDir: join(ISOLATED_ROOT, 'notes') })
   dbStore.recordTrace({ messageId: tgMsg(8123), dir: 'in', trace: '7ace0001', at: Date.now() })
   dbStore.close()
   const byId = collect()
@@ -126,5 +126,5 @@ test('trace: a trace with no lines says so and exits 1; an unknown id exits 1; w
   assert.match(word.err[0], /neither a trace id/)
   const usage = collect()
   assert.equal(await runTraceCommand([], usage.outFn, usage.errFn), 2)
-  assert.match(usage.err[0], /usage: tg-bridge trace/)
+  assert.match(usage.err[0], /usage: stolik trace/)
 })

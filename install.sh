@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tg-bridge install: a thin wrapper. It builds the repo and runs `tg-bridge setup`, which asks the questions (token,
+# stolik install: a thin wrapper. It builds the repo and runs `stolik setup`, which asks the questions (token,
 # owner id, optional ML worker). It makes no Claude Code changes: the plugin does the Claude side (docs/install.md step 5).
 set -euo pipefail
 
@@ -15,13 +15,13 @@ echo "==> build: npm ci and npm run build in $REPO"
 (cd "$REPO" && npm ci && npm run build)
 
 echo "==> setup"
-node "$REPO/dist/cli/tg-bridge.js" setup
+node "$REPO/dist/cli/stolik.js" setup
 
 cat <<EOM
 
 ==> next steps
-    - start the router: tg-bridge service install --start   (from $REPO/dist/cli/tg-bridge.js if tg-bridge is not on PATH: npm link)
+    - start the router: stolik service install --start   (from $REPO/dist/cli/stolik.js if stolik is not on PATH: npm link)
     - group: create a private supergroup with Topics, add the bot as admin, send /bind in it (docs/install.md step 3)
     - plugin, inside Claude Code: /plugin marketplace add $REPO/plugin
-                                  /plugin install tg-bridge@indicozy (docs/install.md step 5)
+                                  /plugin install stolik@indicozy (docs/install.md step 5)
 EOM

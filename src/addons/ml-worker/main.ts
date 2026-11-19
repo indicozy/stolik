@@ -7,10 +7,10 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 // The repo's ml folder, three levels up from this file (src/addons/ml-worker or dist/addons/ml-worker). An installed copy
-// needs TG_BRIDGE_ML_PYTHON and TG_BRIDGE_ML_WORKER instead (packaging, plan P).
+// needs STOLIK_ML_PYTHON and STOLIK_ML_WORKER instead (packaging, plan P).
 const ML_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'ml')
-const python = process.env.TG_BRIDGE_ML_PYTHON ?? join(ML_DIR, '.venv', 'bin', 'python')
-const worker = process.env.TG_BRIDGE_ML_WORKER ?? join(ML_DIR, 'worker.py')
+const python = process.env.STOLIK_ML_PYTHON ?? join(ML_DIR, '.venv', 'bin', 'python')
+const worker = process.env.STOLIK_ML_WORKER ?? join(ML_DIR, 'worker.py')
 
 const child = spawn(python, ['-I', worker], {
   stdio: 'inherit',

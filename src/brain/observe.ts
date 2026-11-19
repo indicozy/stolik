@@ -25,7 +25,7 @@ export function atLeast(level: Level, min: Level): boolean {
 
 // ---------- trace ids ----------
 
-// How long the trace map keeps a message's trace id (/trace and `tg-bridge trace` answer for that long).
+// How long the trace map keeps a message's trace id (/trace and `stolik trace` answer for that long).
 export const TRACE_KEEP_MS = 7 * 24 * 3_600_000
 
 const TRACE_RE = /^[0-9a-f]{8}$/
@@ -276,7 +276,7 @@ export type ForensicsInput = {
 // The forensics file for a failed start. Plain text, one section per item, so it reads well in any editor.
 export function buildForensics(i: ForensicsInput): string {
   const lines = [
-    'tg-bridge spawn forensics',
+    'stolik spawn forensics',
     `time: ${i.ts}`,
     `project: ${i.project}`,
     `reason: ${i.reason}`,
@@ -342,7 +342,7 @@ function ago(now: number, t: number): string {
 export function buildDebugReport(i: DebugInput): string {
   const out: string[] = []
   const up = i.uptimeSec === null ? 'unknown' : `${Math.floor(i.uptimeSec / 3600)}h ${Math.floor((i.uptimeSec % 3600) / 60)}m`
-  out.push(`tg-bridge ${i.version}${i.gitSha ? ` (${i.gitSha})` : ''}, up ${up}`)
+  out.push(`stolik ${i.version}${i.gitSha ? ` (${i.gitSha})` : ''}, up ${up}`)
   const dbg = i.debugUntil !== null && i.debugUntil > i.now
   out.push(`log level: ${i.level}${dbg ? ` (debug on until ${clockOf(new Date(i.debugUntil!).toISOString()).slice(0, 5)})` : ''}`)
   out.push(`logs topic: ${i.logsTopic}`)

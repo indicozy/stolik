@@ -122,7 +122,7 @@ test('parseNewCommand: /new alone, /new with text, and /new@bot; other words are
   assert.deepEqual(parseNewCommand('/new'), { body: '' })
   assert.deepEqual(parseNewCommand('/new  '), { body: '' })
   assert.deepEqual(parseNewCommand('/new hi there'), { body: 'hi there' })
-  assert.deepEqual(parseNewCommand('/new@tg_bridge_bot go'), { body: 'go' })
+  assert.deepEqual(parseNewCommand('/new@stolik_bot go'), { body: 'go' })
   assert.deepEqual(parseNewCommand('/new\nline two'), { body: 'line two' })
   assert.equal(parseNewCommand('/newfoo'), null)
   assert.equal(parseNewCommand('please /new'), null)

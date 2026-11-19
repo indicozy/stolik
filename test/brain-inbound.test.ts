@@ -83,7 +83,7 @@ test('decideInbound: a tap never binds (only a message does); an empty sender is
 test('isBindCommand: /bind with optional bot name, not /binding', () => {
   assert.equal(isBindCommand('/bind'), true)
   assert.equal(isBindCommand('  /bind  '), true)
-  assert.equal(isBindCommand('/bind@tg_bridge_bot'), true)
+  assert.equal(isBindCommand('/bind@stolik_bot'), true)
   assert.equal(isBindCommand('/binding'), false)
   assert.equal(isBindCommand('bind'), false)
   assert.equal(isBindCommand(undefined), false)

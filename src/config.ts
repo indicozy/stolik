@@ -54,13 +54,13 @@ export function expandHome(path: string, home: string = homedir()): string {
   return path.startsWith('~/') ? join(home, path.slice(2)) : path
 }
 
-// The secrets file. TG_BRIDGE_ENV_FILE (a trial instance beside the old bot) wins over ~/.config/tg-bridge.env.
+// The secrets file. STOLIK_ENV_FILE (a trial instance beside the old bot) wins over ~/.config/stolik.env.
 // The override must be an absolute path or start with ~/; anything else throws, naming the variable.
 export function envFilePath(env: NodeJS.ProcessEnv = process.env, home: string = homedir()): string {
-  const override = env.TG_BRIDGE_ENV_FILE
-  if (!override) return join(home, '.config', 'tg-bridge.env')
+  const override = env.STOLIK_ENV_FILE
+  if (!override) return join(home, '.config', 'stolik.env')
   if (!isAbsolute(override) && !override.startsWith('~/')) {
-    throw new ConfigError(`TG_BRIDGE_ENV_FILE must be an absolute path or start with ~/: ${override}`)
+    throw new ConfigError(`STOLIK_ENV_FILE must be an absolute path or start with ~/: ${override}`)
   }
   return expandHome(override, home)
 }
@@ -79,7 +79,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, home: string = 
   const bridge = parseEnvFile(envFile)
   const notifyPath = join(home, '.config', 'telegram-notify.env')
   const notify = parseEnvFile(notifyPath)
-  const token = bridge.TG_BRIDGE_TOKEN
+  const token = bridge.STOLIK_TOKEN
   const cfgPath = tgConfigPath(env, home)
   const tg = loadTgConfig(cfgPath)
   if (tg.chat?.app === 'discord') {
@@ -94,7 +94,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, home: string = 
   }
   const ownerUserId = resolveTelegramOwner(tg, bridge.TG_CHAT, notify.TG_CHAT)
   const chatId = bridge.TG_CHAT || notify.TG_CHAT || ownerUserId || ''
-  if (!token) throw new ConfigError(`TG_BRIDGE_TOKEN missing from ${envFile}`)
+  if (!token) throw new ConfigError(`STOLIK_TOKEN missing from ${envFile}`)
   const config: Config = { token, chatId, ownerUserId }
   if (notify.TG_TOKEN) config.oldToken = notify.TG_TOKEN
   return config
@@ -102,24 +102,43 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, home: string = 
 
 const uid = process.getuid?.() ?? 0
 
-// The v3 state folder: $XDG_STATE_HOME/tg-bridge-v3 (default ~/.local/state/tg-bridge-v3). The old v2 folder
+// The v3 state folder: $XDG_STATE_HOME/stolik (default ~/.local/state/stolik). The old v2 folder
 // (OLD_STATE_DIR) is never written by v3: the old bot and rollback use it.
 export function defaultStateDir(env: NodeJS.ProcessEnv = process.env, home: string = homedir()): string {
   const xdg = env.XDG_STATE_HOME
   const base = xdg && isAbsolute(xdg) ? xdg : join(home, '.local', 'state')
-  return join(base, 'tg-bridge-v3')
+  return join(base, 'stolik')
 }
 
+// legacy tg-bridge name, read only by the migration
 export const OLD_STATE_DIR = join(homedir(), '.local', 'state', 'tg-bridge')
+// legacy tg-bridge name, read only by the migration
+export const LEGACY_ENV_FILE = join(homedir(), '.config', 'tg-bridge.env')
+// legacy tg-bridge name, read only by the migration
+export const LEGACY_CONFIG_DIR = join(
+  process.env.XDG_CONFIG_HOME && isAbsolute(process.env.XDG_CONFIG_HOME) ? process.env.XDG_CONFIG_HOME : join(homedir(), '.config'),
+  'tg-bridge',
+)
+// legacy tg-bridge name, read only by the migration
+export const LEGACY_STATE_DIR = join(
+  process.env.XDG_STATE_HOME && isAbsolute(process.env.XDG_STATE_HOME) ? process.env.XDG_STATE_HOME : join(homedir(), '.local', 'state'),
+  'tg-bridge-v3',
+)
+// legacy tg-bridge name, read only by the migration
+export const LEGACY_DB_NAME = 'tg-bridge.db'
+// legacy tg-bridge name, read only by the migration
+export const LEGACY_ENV_PREFIX = 'TG_BRIDGE_'
+// legacy tg-bridge name, read only by the migration
+export const LEGACY_UNIT = 'tg-bridge.service'
 
-export const INBOX_DIR = join(homedir(), '.cache', 'tg-bridge', 'inbox')
+export const INBOX_DIR = join(homedir(), '.cache', 'stolik', 'inbox')
 // Notes saved from "note" messages (outside git, permanent). See router/notes.ts.
 export const NOTES_DIR = join(homedir(), 'Documents', 'notes')
 // Works from both src/config.ts and dist/config.js: the repo root is one level above either folder.
 export const REPO_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
 
-// ---------- optional machine config (~/.config/tg-bridge/config.json) ----------
-// Machine specifics only. Secrets stay in ~/.config/tg-bridge.env. The file is optional: a missing file, a missing key or
+// ---------- optional machine config (~/.config/stolik/config.json) ----------
+// Machine specifics only. Secrets stay in ~/.config/stolik.env. The file is optional: a missing file, a missing key or
 // null gives the neutral default. All keys (design §5.2, plan P1):
 //   groupId        number | null   private supergroup with Topics; null = DM mode (default null). /bind wins at run time.
 //   ownerUserId    "<digits>"|null Telegram user id of the owner; others are ignored (default null). Without TG_CHAT it is also the chat id.
@@ -138,10 +157,10 @@ export const REPO_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
 //                                  a folder topic with no live session in that folder starts one there (default true).
 //                                  false: the buttons and "No live session" text as before. routerAutoStart "off" wins.
 //   digestSchedule "request"|"daily"|"weekly"  when the digest is made and sent (default "request": only on /digest).
-//   nodePath       string | null   absolute path of the node that ran `tg-bridge setup`; the plugin launcher prefers it
+//   nodePath       string | null   absolute path of the node that ran `stolik setup`; the plugin launcher prefers it
 //                                  (plan P3). Null = use node from PATH.
-//   stateDir       string | null   v3 state folder, absolute or ~/ (default $XDG_STATE_HOME/tg-bridge-v3).
-//   socketPath     string | null   router socket, absolute or ~/ (default $XDG_RUNTIME_DIR/tg-bridge.sock).
+//   stateDir       string | null   v3 state folder, absolute or ~/ (default $XDG_STATE_HOME/stolik).
+//   socketPath     string | null   router socket, absolute or ~/ (default $XDG_RUNTIME_DIR/stolik.sock).
 //   logLevel       debug|info|warn|error  lowest level kept in the logs (default info; see docs/design-v3.md Observability).
 //   logsTopic      boolean         post warnings and errors to the "🛠 Logs" topic of the group (default true).
 //   socketPath     string | null   router socket, absolute or ~/ (default: defaultSocketPath).
@@ -233,7 +252,7 @@ export const TgConfigSchema = z
     startWhenNoSession: z.boolean().default(true),
     // Minutes a session may sit idle before the router closes it (idle close, docs/design-v3.md §4.1). 0 turns it off.
     idleCloseMinutes: z.number().int().min(0).max(1440).default(60),
-    // The node binary the plugin hooks and channel run with (bin/tg-plugin-node). Written by `tg-bridge setup`.
+    // The node binary the plugin hooks and channel run with (bin/tg-plugin-node). Written by `stolik setup`.
     nodePath: z
       .string()
       .min(1)
@@ -246,14 +265,14 @@ export const TgConfigSchema = z
       .min(1)
       .refine((s) => s.startsWith('/') || s.startsWith('~/'), 'must be an absolute path or start with ~/')
       .default(DEFAULT_LOG_ROOT),
-    // The v3 state folder (tg-bridge.db, audit.log). Absolute or ~/. Null: $XDG_STATE_HOME/tg-bridge-v3.
+    // The v3 state folder (stolik.db, audit.log). Absolute or ~/. Null: $XDG_STATE_HOME/stolik.
     stateDir: z
       .string()
       .min(1)
       .refine((s) => s.startsWith('/') || s.startsWith('~/'), 'must be an absolute path or start with ~/')
       .nullable()
       .default(null),
-    // The router's socket. Absolute or ~/. Null: defaultSocketPath(). TG_BRIDGE_SOCKET still wins.
+    // The router's socket. Absolute or ~/. Null: defaultSocketPath(). STOLIK_SOCKET still wins.
     socketPath: z
       .string()
       .min(1)
@@ -300,14 +319,14 @@ export function parseTgConfig(raw: unknown): TgConfig {
   throw new Error(r.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; '))
 }
 
-// $XDG_CONFIG_HOME/tg-bridge, or ~/.config/tg-bridge. A relative XDG_CONFIG_HOME is ignored.
+// $XDG_CONFIG_HOME/stolik, or ~/.config/stolik. A relative XDG_CONFIG_HOME is ignored.
 export function tgConfigDir(env: NodeJS.ProcessEnv = process.env, home: string = homedir()): string {
   const xdg = env.XDG_CONFIG_HOME
   const base = xdg && isAbsolute(xdg) ? xdg : join(home, '.config')
-  return join(base, 'tg-bridge')
+  return join(base, 'stolik')
 }
 
-// $XDG_CONFIG_HOME/tg-bridge/config.json, or ~/.config/tg-bridge/config.json. A relative XDG_CONFIG_HOME is ignored.
+// $XDG_CONFIG_HOME/stolik/config.json, or ~/.config/stolik/config.json. A relative XDG_CONFIG_HOME is ignored.
 export function tgConfigPath(env: NodeJS.ProcessEnv = process.env, home: string = homedir()): string {
   return join(tgConfigDir(env, home), 'config.json')
 }
@@ -342,18 +361,18 @@ export function currentTgConfig(): TgConfig {
   return cachedTgConfig
 }
 
-// The router socket when neither TG_BRIDGE_SOCKET nor config `socketPath` is set. The channel server and tg-claude apply
-// the same rule (keep them in step). Linux: $XDG_RUNTIME_DIR/tg-bridge.sock, or /run/user/<uid>/tg-bridge.sock without it.
+// The router socket when neither STOLIK_SOCKET nor config `socketPath` is set. The channel server and tg-claude apply
+// the same rule (keep them in step). Linux: $XDG_RUNTIME_DIR/stolik.sock, or /run/user/<uid>/stolik.sock without it.
 // Elsewhere with XDG_RUNTIME_DIR: the same file under it. Elsewhere without: <v3 state folder>/router.sock, unless that
-// path is over 100 bytes (macOS sun_path is 104 with the NUL); then $TMPDIR/tg-bridge-<uid>.sock (/tmp when TMPDIR is unset).
+// path is over 100 bytes (macOS sun_path is 104 with the NUL); then $TMPDIR/stolik-<uid>.sock (/tmp when TMPDIR is unset).
 export function defaultSocketPath(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform, home: string = homedir()): string {
   const xdg = env.XDG_RUNTIME_DIR
-  if (platform === 'linux') return join(xdg || `/run/user/${uid}`, 'tg-bridge.sock')
-  if (xdg) return join(xdg, 'tg-bridge.sock')
+  if (platform === 'linux') return join(xdg || `/run/user/${uid}`, 'stolik.sock')
+  if (xdg) return join(xdg, 'stolik.sock')
   const path = join(defaultStateDir(env, home), 'router.sock')
   if (Buffer.byteLength(path) <= 100) return path
   const tmp = (env.TMPDIR || '/tmp').replace(/\/+$/, '')
-  return `${tmp}/tg-bridge-${uid}.sock`
+  return `${tmp}/stolik-${uid}.sock`
 }
 
 // The path settings for STATE_DIR and SOCKET_PATH below, read when this module loads. A bad file must not crash every
@@ -370,9 +389,9 @@ const pathSettings = pathSettingsAtLoad()
 
 // Where the router keeps its database and audit log. Config `stateDir` wins over the XDG default.
 export const STATE_DIR: string = pathSettings.stateDir !== null ? expandHome(pathSettings.stateDir) : defaultStateDir()
-// The router socket. TG_BRIDGE_SOCKET (tests, a trial instance) wins over config `socketPath`, which wins over the default.
+// The router socket. STOLIK_SOCKET (tests, a trial instance) wins over config `socketPath`, which wins over the default.
 export const SOCKET_PATH: string =
-  process.env.TG_BRIDGE_SOCKET ?? (pathSettings.socketPath !== null ? expandHome(pathSettings.socketPath) : defaultSocketPath())
+  process.env.STOLIK_SOCKET ?? (pathSettings.socketPath !== null ? expandHome(pathSettings.socketPath) : defaultSocketPath())
 
 // argv prefix that pins heavy work (design §5.2): `nice -n N` and/or `taskset -c LIST`. Empty when neither is set.
 export function pinPrefix(cfg: Pick<TgConfig, 'nice' | 'cpuAffinity'>): string[] {

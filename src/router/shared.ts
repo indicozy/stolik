@@ -14,7 +14,7 @@ export const SWEEP_MS = 30_000
 export const MAX_INBOUND_BYTES = 20 * 1024 * 1024
 export const PENDING_CAP = 200
 export const TYPING_REFRESH_MS = 4_000
-export const LOCK_TEXT = '🔒 locked — unlock at the desk with `tg-bridge-ctl unlock`'
+export const LOCK_TEXT = '🔒 locked — unlock at the desk with `stolik-ctl unlock`'
 export const ASK_BACK_TEXT = '🖥 back at the desk — answer in the terminal'
 export const ASK_CANCELLED_TEXT = '✖ cancelled'
 // The idle close warning comes this long before the close (idle close: the session is closed at idleCloseMinutes).

@@ -20,22 +20,22 @@ const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts', 'm
 
 // Old msgmap: an entry with a numeric-string id (converted), two invalid ones (dropped), and a repeated id (last wins).
 const OLD_MSGMAP = JSON.stringify([
-  [3, { key: 758632, name: 'tg-bridge', cwd: '/home/u/p/tg-bridge' }],
+  [3, { key: 758632, name: 'stolik', cwd: '/home/u/p/stolik' }],
   [4, { key: 541878, name: 'proga', cwd: '/home/u/p/proga' }],
   ['5', { key: 541878, name: 'proga#2', cwd: '/home/u/p/proga' }],
   [6, { key: 'x-1', name: 's', cwd: '/c' }],
   [7, { name: 'no key' }],
   ['zz', { key: 1, name: 'n', cwd: '/d' }],
-  [3, { key: 758632, name: 'tg-bridge-again', cwd: '/home/u/p/tg-bridge' }],
+  [3, { key: 758632, name: 'stolik-again', cwd: '/home/u/p/stolik' }],
 ])
 const EXPECTED_MSGMAP = [
   ['tg:4', { key: 541878, name: 'proga', cwd: '/home/u/p/proga' }],
   ['tg:5', { key: 541878, name: 'proga#2', cwd: '/home/u/p/proga' }],
   ['tg:6', { key: 'x-1', name: 's', cwd: '/c' }],
-  ['tg:3', { key: 758632, name: 'tg-bridge-again', cwd: '/home/u/p/tg-bridge' }],
+  ['tg:3', { key: 758632, name: 'stolik-again', cwd: '/home/u/p/stolik' }],
 ]
 const BOOT = '4b1db4c4-d6b1-45cc-bb3d-a36dfb3dcc5d'
-const OLD_AUDIT = '{"ts":"2026-11-01T21:19:30.737Z","event":"register","session":"tg-bridge"}\n{"ts":"2026-11-13T23:14:07.162Z","event":"inbound","session":"proga","kind":"text","length":42,"forwarded":false}\n'
+const OLD_AUDIT = '{"ts":"2026-11-01T21:19:30.737Z","event":"register","session":"stolik"}\n{"ts":"2026-11-13T23:14:07.162Z","event":"inbound","session":"proga","kind":"text","length":42,"forwarded":false}\n'
 
 function makeOld(root: string): string {
   const old = join(root, 'old')
@@ -91,7 +91,7 @@ test('convertMsgMap: a file that is not a JSON array is an error, not an empty m
   assert.throws(() => convertMsgMap('not json'), MigrationError)
 })
 
-test('migration writes the msgmap and boot id rows into tg-bridge.db, and the audit log as a file', async () => {
+test('migration writes the msgmap and boot id rows into stolik.db, and the audit log as a file', async () => {
   const root = tmpDir('migrate-fresh')
   try {
     const old = makeOld(root)
@@ -152,7 +152,7 @@ test('dry run prints the plan and writes nothing (the target and the database ar
 
 test('the default target is the v3 state folder, never the old one', async () => {
   // helpers/isolate.ts points XDG_STATE_HOME and HOME at a temp folder, so STATE_DIR is never the owner's real folder.
-  assert.equal(STATE_DIR, join(ISOLATED_ROOT, 'state', 'tg-bridge-v3'))
+  assert.equal(STATE_DIR, join(ISOLATED_ROOT, 'state', 'stolik'))
   assert.notEqual(STATE_DIR, OLD_STATE_DIR)
   const root = tmpDir('migrate-default')
   try {

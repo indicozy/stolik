@@ -1,4 +1,4 @@
-// The router's own cgroup, for `tg-bridge doctor` and the router's start-up checks: which processes share it that the
+// The router's own cgroup, for `stolik doctor` and the router's start-up checks: which processes share it that the
 // router did not start. Under systemd, a tmux server or a session process left in the router's unit keeps the unit loaded
 // after a stop, so the next start fails ("already loaded"). The parsers are pure; `readRouterCgroup` takes its file source
 // as an argument, so tests pass a fake.
@@ -11,7 +11,7 @@ const MAX_DEPTH = 64
 export type CgroupIo = { readText(path: string): string | null }
 
 export type RouterCgroupFacts = {
-  // The cgroup v2 path of the router, e.g. /user.slice/.../tg-bridge.service.
+  // The cgroup v2 path of the router, e.g. /user.slice/.../stolik.service.
   path: string
   routerPid: number
   // Processes in the cgroup, the router included.

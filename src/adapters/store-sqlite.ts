@@ -1,4 +1,4 @@
-// The live store: StorePort and DbStorePort over SQLite (`tg-bridge.db` in the v3 state folder), via node:sqlite (no new
+// The live store: StorePort and DbStorePort over SQLite (`stolik.db` in the v3 state folder), via node:sqlite (no new
 // dependency; Node 22.13+). The message map, lock flag, boot id, group id and topics are kept here too, so the router
 // reads and writes one store. Files stay files for the chat log, attachments, notes inbox and audit log (store-files.ts).
 // Each public method is one logical write; a method that writes several rows runs them in one transaction.
@@ -16,7 +16,7 @@ import { StoreFiles, type StorePaths } from './store-files.ts'
 import type { ChatId, MessageId, ThreadId } from '../brain/chat-types.ts'
 import { legacyChatId, legacyMsgId, storedId } from './legacy-ids.ts'
 
-export const DB_FILE = 'tg-bridge.db'
+export const DB_FILE = 'stolik.db'
 
 // SQLite primary result codes (the low byte of an extended code, as node:sqlite reports it in `errcode`).
 const SQLITE_READONLY = 8
@@ -50,7 +50,7 @@ function isCorruption(err: unknown): boolean {
 export class SchemaMismatchError extends Error {
   constructor(found: number, needed: number) {
     super(
-      `tg-bridge.db schema is v${found}, this build needs v${needed}. Restart the tg-bridge service (it migrates on start) and retry.`,
+      `stolik.db schema is v${found}, this build needs v${needed}. Restart the stolik service (it migrates on start) and retry.`,
     )
     this.name = 'SchemaMismatchError'
   }
@@ -467,7 +467,7 @@ export function openDatabase(
     if (!memory) {
       const report = db.prepare('PRAGMA quick_check').all().map((r) => String(Object.values(r)[0]))
       if (report.length !== 1 || report[0] !== 'ok') {
-        throw Object.assign(new Error(`tg-bridge.db failed quick_check: ${report.join('; ')}`), { errcode: SQLITE_CORRUPT })
+        throw Object.assign(new Error(`stolik.db failed quick_check: ${report.join('; ')}`), { errcode: SQLITE_CORRUPT })
       }
     }
     if (migrating) {
@@ -619,7 +619,7 @@ export class SqliteStore implements StorePort, DbStorePort {
       if (!migrating || !isCorruption(e) || !existsSync(path) || routerLockHeld(paths.stateDir)) throw e
       const moved = quarantine(path)
       this.startupNotices.push(
-        `tg-bridge.db could not be read (${(e as Error).message}). It was moved aside to ${moved} and a new, empty database was started.`,
+        `stolik.db could not be read (${(e as Error).message}). It was moved aside to ${moved} and a new, empty database was started.`,
       )
       this.db = openDatabase(path, migrations, { migrate: true })
     }

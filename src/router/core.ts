@@ -70,7 +70,7 @@ export type RouterDeps = {
   addons?: AddonsPort
   // `/usage` text (plan 2.8). Optional: without it /usage says it is not set up.
   usage?: UsagePort
-  // The E2E driver (docs/e2e.md). Set only when the router runs with TG_BRIDGE_E2E=1; the socket refuses e2e messages otherwise.
+  // The E2E driver (docs/e2e.md). Set only when the router runs with STOLIK_E2E=1; the socket refuses e2e messages otherwise.
   e2e?: E2e
   // Observability (design §Observability). All optional: without them the router behaves as before.
   // The trace map (Telegram message id to trace id; kept 7 days).
@@ -307,7 +307,7 @@ export class Router {
     this.orphanTimer = this.clock.setTimer(() => void closeOrphanTopics(this), TOPIC_RECONNECT_GRACE_MS)
     this.sweepTimer = this.clock.setRepeating(() => sweep(this), SWEEP_MS)
     this.logger.log(`router ready, socket ${this.socketPath}${this.locked ? ' (LOCKED)' : ''}`)
-    if (!this.paired) this.logger.log('not paired yet: run tg-bridge setup; nothing is sent until the owner pairs')
+    if (!this.paired) this.logger.log('not paired yet: run stolik setup; nothing is sent until the owner pairs')
     void this.logsTopic?.ensure()
     void this.runStartupChecks()
   }
@@ -335,7 +335,7 @@ export class Router {
         else if (c.status === 'fail') this.logger.error ? this.logger.error(msg, 'doctor') : this.logger.log(msg)
         else warnOrLog(this.logger, msg, 'doctor')
       }
-      this.logger.log(bad === 0 ? 'doctor: start-up checks passed' : `doctor: ${bad} start-up check${bad === 1 ? '' : 's'} need attention (tg-bridge doctor for details)`)
+      this.logger.log(bad === 0 ? 'doctor: start-up checks passed' : `doctor: ${bad} start-up check${bad === 1 ? '' : 's'} need attention (stolik doctor for details)`)
       await this.reportPrivacy(checks.filter((c) => c.group === 'privacy'))
     } catch (e) {
       warnOrLog(this.logger, `doctor: start-up checks did not run: ${e instanceof Error ? e.message : String(e)}`, 'doctor')

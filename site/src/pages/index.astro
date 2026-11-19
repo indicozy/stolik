@@ -78,12 +78,12 @@ const architecture = `your phone ── Telegram or Discord ──▶ router (yo
             <li>On a Team or Enterprise plan, an org Owner must turn Channels on first. Without that, the flag does not help.</li>
           </ul>
         </Callout>
-        <CodeBlock label="terminal" code={'npm install -g stolik\nstolik setup\nTG_BRIDGE_PLUGIN=1 tg-claude   # claude, plus the dev-channels flag'} />
+        <CodeBlock label="terminal" code={'npm install -g stolik\nstolik setup\nSTOLIK_PLUGIN=1 tg-claude   # claude, plus the dev-channels flag'} />
         <Steps>
           <li><strong>Run setup.</strong> It asks for the bot token (hidden), pairs the bot with your account, writes the config, and offers the optional voice models.</li>
           <li><strong>Make the group.</strong> Create a private group, turn Topics on, add your bot as admin, send <code>/bind</code>. The bot answers only you.</li>
           <li><strong>Start the router and add the plugin.</strong> <code>stolik service install --start</code>, then two <code>/plugin</code> lines inside Claude Code. Setup prints both.</li>
-          <li><strong>Start a session.</strong> Run <code>TG_BRIDGE_PLUGIN=1 tg-claude</code> in a project. A topic with the folder's name appears. Say hi from the phone.</li>
+          <li><strong>Start a session.</strong> Run <code>STOLIK_PLUGIN=1 tg-claude</code> in a project. A topic with the folder's name appears. Say hi from the phone.</li>
         </Steps>
         <p class="td-small td-muted">
           <code>tg-claude</code> is <code>claude</code> plus <code>--dangerously-load-development-channels</code>. stolik is not on Anthropic's channel list, and it needs the flag until that changes. <a href={url('docs/why-the-flag/')}>Why the flag?</a>

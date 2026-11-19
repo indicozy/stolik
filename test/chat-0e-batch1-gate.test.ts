@@ -319,7 +319,7 @@ test('setup self-poll: the owner`s code in a private text pairs; the reply goes 
 
 test('pairing-only router start: no owner, so nothing is sent to a chat; one log line says why', async () => {
   const h = harness({ ownerUserId: '' })
-  ;(h.store as unknown as { startupNotices: string[] }).startupNotices = ['The database was damaged and was moved aside to tg-bridge.db.bad.']
+  ;(h.store as unknown as { startupNotices: string[] }).startupNotices = ['The database was damaged and was moved aside to stolik.db.bad.']
   await h.router.start()
   await new Promise((r) => setTimeout(r, 0))
   assert.equal(h.router.paired, false)
@@ -329,15 +329,15 @@ test('pairing-only router start: no owner, so nothing is sent to a chat; one log
 
 test('paired router start: the same notice is sent to the owner', async () => {
   const h = harness()
-  ;(h.store as unknown as { startupNotices: string[] }).startupNotices = ['The database was damaged and was moved aside to tg-bridge.db.bad.']
+  ;(h.store as unknown as { startupNotices: string[] }).startupNotices = ['The database was damaged and was moved aside to stolik.db.bad.']
   await h.router.start()
   assert.equal(h.router.paired, true)
   assert.equal(h.chat.texts().filter((t) => t.includes('moved aside')).length, 1)
   assert.ok(!h.logger.lines.some((l) => /not paired yet/.test(l)))
 })
 
-test('doctor: an unpaired install reports "not paired yet: run tg-bridge setup" as a warning; a paired one adds no line', () => {
-  assert.deepEqual(checkOwner({ ownerPaired: () => false }), [{ id: 'owner', title: 'owner', status: 'warn', detail: 'not paired yet: run tg-bridge setup' }])
+test('doctor: an unpaired install reports "not paired yet: run stolik setup" as a warning; a paired one adds no line', () => {
+  assert.deepEqual(checkOwner({ ownerPaired: () => false }), [{ id: 'owner', title: 'owner', status: 'warn', detail: 'not paired yet: run stolik setup' }])
   assert.deepEqual(checkOwner({ ownerPaired: () => true }), [])
   assert.deepEqual(checkOwner({}), [], 'absent: not checked')
 })

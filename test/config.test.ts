@@ -116,9 +116,9 @@ test('parseTgConfig: weeklyLimitPct defaults to 99 and accepts 1-100', () => {
 })
 
 test('tgConfigPath: XDG_CONFIG_HOME when absolute, else ~/.config; a relative XDG value is ignored', () => {
-  assert.equal(tgConfigPath({ XDG_CONFIG_HOME: '/srv/cfg' }, '/home/u'), '/srv/cfg/tg-bridge/config.json')
-  assert.equal(tgConfigPath({}, '/home/u'), '/home/u/.config/tg-bridge/config.json')
-  assert.equal(tgConfigPath({ XDG_CONFIG_HOME: 'rel' }, '/home/u'), '/home/u/.config/tg-bridge/config.json')
+  assert.equal(tgConfigPath({ XDG_CONFIG_HOME: '/srv/cfg' }, '/home/u'), '/srv/cfg/stolik/config.json')
+  assert.equal(tgConfigPath({}, '/home/u'), '/home/u/.config/stolik/config.json')
+  assert.equal(tgConfigPath({ XDG_CONFIG_HOME: 'rel' }, '/home/u'), '/home/u/.config/stolik/config.json')
 })
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), '.tmp-config')
@@ -172,10 +172,10 @@ test('stateDir and socketPath: absolute or ~/ paths parse; a relative path is re
   assert.throws(() => parseTgConfig({ socketPath: 'run.sock' }), /socketPath: must be an absolute path/)
 })
 
-test('defaultStateDir: $XDG_STATE_HOME/tg-bridge-v3 when absolute, else ~/.local/state/tg-bridge-v3; never the old folder', () => {
-  assert.equal(defaultStateDir({ XDG_STATE_HOME: '/x/state' }, '/home/u'), '/x/state/tg-bridge-v3')
-  assert.equal(defaultStateDir({ XDG_STATE_HOME: 'rel' }, '/home/u'), '/home/u/.local/state/tg-bridge-v3')
-  assert.equal(defaultStateDir({}, '/home/u'), '/home/u/.local/state/tg-bridge-v3')
+test('defaultStateDir: $XDG_STATE_HOME/stolik when absolute, else ~/.local/state/stolik; never the old folder', () => {
+  assert.equal(defaultStateDir({ XDG_STATE_HOME: '/x/state' }, '/home/u'), '/x/state/stolik')
+  assert.equal(defaultStateDir({ XDG_STATE_HOME: 'rel' }, '/home/u'), '/home/u/.local/state/stolik')
+  assert.equal(defaultStateDir({}, '/home/u'), '/home/u/.local/state/stolik')
   assert.notEqual(defaultStateDir({}, '/home/u'), OLD_STATE_DIR)
 })
 
@@ -184,31 +184,31 @@ test('expandHome: ~/ is the home folder; other paths are unchanged', () => {
   assert.equal(expandHome('/abs/c', '/home/u'), '/abs/c')
 })
 
-test('envFilePath: ~/.config/tg-bridge.env by default; TG_BRIDGE_ENV_FILE wins (absolute or ~/, expanded); anything else throws', () => {
-  assert.equal(envFilePath({}, '/home/u'), '/home/u/.config/tg-bridge.env')
-  assert.equal(envFilePath({ TG_BRIDGE_ENV_FILE: '' }, '/home/u'), '/home/u/.config/tg-bridge.env', 'an empty override is no override')
-  assert.equal(envFilePath({ TG_BRIDGE_ENV_FILE: '/srv/trial.env' }, '/home/u'), '/srv/trial.env')
-  assert.equal(envFilePath({ TG_BRIDGE_ENV_FILE: '~/trial/tg.env' }, '/home/u'), '/home/u/trial/tg.env')
-  assert.throws(() => envFilePath({ TG_BRIDGE_ENV_FILE: 'trial.env' }, '/home/u'), /TG_BRIDGE_ENV_FILE must be an absolute path or start with ~\/: trial\.env/)
+test('envFilePath: ~/.config/stolik.env by default; STOLIK_ENV_FILE wins (absolute or ~/, expanded); anything else throws', () => {
+  assert.equal(envFilePath({}, '/home/u'), '/home/u/.config/stolik.env')
+  assert.equal(envFilePath({ STOLIK_ENV_FILE: '' }, '/home/u'), '/home/u/.config/stolik.env', 'an empty override is no override')
+  assert.equal(envFilePath({ STOLIK_ENV_FILE: '/srv/trial.env' }, '/home/u'), '/srv/trial.env')
+  assert.equal(envFilePath({ STOLIK_ENV_FILE: '~/trial/tg.env' }, '/home/u'), '/home/u/trial/tg.env')
+  assert.throws(() => envFilePath({ STOLIK_ENV_FILE: 'trial.env' }, '/home/u'), /STOLIK_ENV_FILE must be an absolute path or start with ~\/: trial\.env/)
 })
 
-test('loadConfig: reads the token and chat from TG_BRIDGE_ENV_FILE; errors name the file actually read', () => {
+test('loadConfig: reads the token and chat from STOLIK_ENV_FILE; errors name the file actually read', () => {
   const home = mkdtempSync(join(HERE, '.tmp-config-'))
   try {
     mkdirSync(join(home, '.config'), { recursive: true })
     const trial = join(home, 'trial.env')
-    writeFileSync(trial, 'TG_BRIDGE_TOKEN=123:trialtokentrialtokenXX\nTG_CHAT=-100777\n')
+    writeFileSync(trial, 'STOLIK_TOKEN=123:trialtokentrialtokenXX\nTG_CHAT=-100777\n')
     // The default file holds a different token; the override must win.
-    writeFileSync(join(home, '.config', 'tg-bridge.env'), 'TG_BRIDGE_TOKEN=123:defaulttokendefaulttokX\nTG_CHAT=-100111\n')
-    const cfg = loadConfig({ TG_BRIDGE_ENV_FILE: '~/trial.env' }, home)
+    writeFileSync(join(home, '.config', 'stolik.env'), 'STOLIK_TOKEN=123:defaulttokendefaulttokX\nTG_CHAT=-100111\n')
+    const cfg = loadConfig({ STOLIK_ENV_FILE: '~/trial.env' }, home)
     assert.equal(cfg.token, '123:trialtokentrialtokenXX')
     assert.equal(cfg.chatId, '-100777')
 
     const missing = join(home, 'missing.env')
-    assert.throws(() => loadConfig({ TG_BRIDGE_ENV_FILE: missing }, home), (e: Error) => e.message === `config error: TG_BRIDGE_TOKEN missing from ${missing}`)
-    writeFileSync(join(home, 'nochat.env'), 'TG_BRIDGE_TOKEN=123:nochattokennochattokX\n')
+    assert.throws(() => loadConfig({ STOLIK_ENV_FILE: missing }, home), (e: Error) => e.message === `config error: STOLIK_TOKEN missing from ${missing}`)
+    writeFileSync(join(home, 'nochat.env'), 'STOLIK_TOKEN=123:nochattokennochattokX\n')
     // No TG_CHAT and no owner: pairing-only (plan 0e), not an error.
-    const noChat = loadConfig({ TG_BRIDGE_ENV_FILE: join(home, 'nochat.env') }, home)
+    const noChat = loadConfig({ STOLIK_ENV_FILE: join(home, 'nochat.env') }, home)
     assert.equal(noChat.ownerUserId, null)
     assert.equal(noChat.chatId, '')
   } finally {

@@ -1,7 +1,7 @@
 // One-shot migration from the old (v2) state dir to the v3 state dir (plan R1, design §6.4).
 //
 // Reads the old files only, never writes under the old dir. Writes into --to (default: the v3 state dir, STATE_DIR):
-//   tg-bridge.db  the SQLite store: `msgmap` (the message map in the v3 shape, brain/msgmap.ts) and `last-boot-id`
+//   stolik.db  the SQLite store: `msgmap` (the message map in the v3 shape, brain/msgmap.ts) and `last-boot-id`
 //                 (kv rows, the same keys SqliteStore reads). Entries that do not match are dropped and counted.
 //   audit.log     copied as it is (v3 keeps the field names); the router appends to it from there.
 // There is no session registry file in the old dir (sessions were never persisted there), so none is migrated.
@@ -240,8 +240,8 @@ export function applyPrivateUmask(): void {
 
 // The reason the migration must not write, or null. The router owns the target database while it runs.
 export async function routerRunningReason(stateDir: string, socketPath: string): Promise<string | null> {
-  if (routerLockHeld(stateDir)) return `a tg-bridge router holds the lock in ${stateDir}. Stop it first, then run again.`
-  if (await socketAnswers(socketPath)) return `a tg-bridge router answers on the socket ${socketPath}. Stop it first, then run again.`
+  if (routerLockHeld(stateDir)) return `a stolik router holds the lock in ${stateDir}. Stop it first, then run again.`
+  if (await socketAnswers(socketPath)) return `a stolik router answers on the socket ${socketPath}. Stop it first, then run again.`
   return null
 }
 

@@ -10,8 +10,8 @@ const PARSE: Array<[string, Prefix | null]> = [
   ['TO CAT: hi', { kind: 'to', name: 'CAT', body: 'hi' }],
   ['send to cat - hi', { kind: 'to', name: 'cat', body: 'hi' }],
   ['Send To cat — hi', { kind: 'to', name: 'cat', body: 'hi' }],
-  ['to tg-bridge: fix it', { kind: 'to', name: 'tg-bridge', body: 'fix it' }],
-  ['to tg-bridge - fix it', { kind: 'to', name: 'tg-bridge', body: 'fix it' }],
+  ['to stolik: fix it', { kind: 'to', name: 'stolik', body: 'fix it' }],
+  ['to stolik - fix it', { kind: 'to', name: 'stolik', body: 'fix it' }],
   ['to cat garden, look at this', { kind: 'to', name: 'cat garden', body: 'look at this' }],
   ['to cat  , hi', { kind: 'to', name: 'cat', body: 'hi' }],
   ['to: hello', { kind: 'to', body: 'hello' }],
@@ -48,7 +48,7 @@ const PARSE: Array<[string, Prefix | null]> = [
   ['note that the build failed', null],
   ['to cat hello', null],
   ['to hello there', null],
-  ['to tg bridge', null],
+  ['to sto lik', null],
   ['read this', null],
   ['quick question about the build: why', null],
   // A dash inside a word is not a separator, only a dash followed by a space is (the coordinator's rule).
@@ -102,10 +102,11 @@ test('parseNote (legacy reader for the notes inbox): space, newline or bare word
 })
 
 test('matchName: case, spaces, dashes and underscores do not count', () => {
-  const list = ['alpha', 'beta', 'tg-bridge']
-  assert.deepEqual(matchName('Tg Bridge', list), { match: 'tg-bridge' })
-  assert.deepEqual(matchName('tg_bridge', list), { match: 'tg-bridge' })
-  assert.deepEqual(matchName('TG-BRIDGE', list), { match: 'tg-bridge' })
+  const list = ['alpha', 'beta', 'stolik']
+  assert.deepEqual(matchName('Stolik', list), { match: 'stolik' })
+  assert.deepEqual(matchName('Sto lik', list), { match: 'stolik' })
+  assert.deepEqual(matchName('sto_lik', list), { match: 'stolik' })
+  assert.deepEqual(matchName('STO-LIK', list), { match: 'stolik' })
   assert.deepEqual(matchName('  beta ', list), { match: 'beta' })
 })
 

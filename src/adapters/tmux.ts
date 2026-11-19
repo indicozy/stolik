@@ -62,19 +62,19 @@ export function tmuxNameFor(project: string): string {
   return 'tg-' + project.replace(/[^A-Za-z0-9_-]/g, '_')
 }
 
-// The router socket when none is configured: $XDG_RUNTIME_DIR/tg-bridge.sock (the same rule as src/config.ts).
+// The router socket when none is configured: $XDG_RUNTIME_DIR/stolik.sock (the same rule as src/config.ts).
 export function defaultSocketPath(env: NodeJS.ProcessEnv = process.env): string {
   const uid = typeof process.getuid === 'function' ? process.getuid() : 0
-  return join(env.XDG_RUNTIME_DIR ?? `/run/user/${uid}`, 'tg-bridge.sock')
+  return join(env.XDG_RUNTIME_DIR ?? `/run/user/${uid}`, 'stolik.sock')
 }
 
 // argv for `tmux new-session`: the tg-claude launcher, then any extra arguments (e.g. --resume <id>). Passed as
 // separate argv, no shell, so the extra arguments are never interpreted.
 // The session gets the router's socket as its environment: the tmux server's environment would otherwise win over the
 // router's own, and a session would register with the wrong router. When the router uses a non-default socket (from
-// config or TG_BRIDGE_SOCKET), the session also gets TG_BRIDGE_CHANNEL=self, which makes bin/tg-claude load this
-// checkout's channel server instead of the user-scope "tg-bridge" one.
-// `spawnToken` (router-started sessions only) is passed as TG_BRIDGE_SPAWN_TOKEN; the channel echoes it in `register`, so
+// config or STOLIK_SOCKET), the session also gets STOLIK_CHANNEL=self, which makes bin/tg-claude load this
+// checkout's channel server instead of the user-scope "stolik" one.
+// `spawnToken` (router-started sessions only) is passed as STOLIK_SPAWN_TOKEN; the channel echoes it in `register`, so
 // the router can tell which spawn a registering session belongs to.
 export function tmuxNewSessionArgs(
   name: string,
@@ -83,12 +83,12 @@ export function tmuxNewSessionArgs(
   socket: string = SOCKET_PATH,
   spawnToken: string | null = null,
 ): string[] {
-  const env = ['-e', `TG_BRIDGE_SOCKET=${socket}`]
+  const env = ['-e', `STOLIK_SOCKET=${socket}`]
   if (socket !== defaultSocketPath()) {
-    env.push('-e', 'TG_BRIDGE_CHANNEL=self')
-    if (process.env.TG_BRIDGE_ENV_FILE) env.push('-e', `TG_BRIDGE_ENV_FILE=${process.env.TG_BRIDGE_ENV_FILE}`)
+    env.push('-e', 'STOLIK_CHANNEL=self')
+    if (process.env.STOLIK_ENV_FILE) env.push('-e', `STOLIK_ENV_FILE=${process.env.STOLIK_ENV_FILE}`)
   }
-  if (spawnToken !== null) env.push('-e', `TG_BRIDGE_SPAWN_TOKEN=${spawnToken}`)
+  if (spawnToken !== null) env.push('-e', `STOLIK_SPAWN_TOKEN=${spawnToken}`)
   return ['new-session', '-d', '-s', name, '-c', dir, ...env, join(REPO_DIR, 'bin', 'tg-claude'), ...extra]
 }
 

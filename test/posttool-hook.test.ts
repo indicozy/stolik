@@ -17,14 +17,14 @@ function tempDir(): string {
 }
 
 test('pendingDir: the pending/ folder beside the router socket', () => {
-  assert.equal(pendingDir('/run/user/1000/tg-bridge.sock'), '/run/user/1000/pending')
-  assert.equal(pendingDir('/home/u/.config/tg-bridge/sock'), '/home/u/.config/tg-bridge/pending')
+  assert.equal(pendingDir('/run/user/1000/stolik.sock'), '/run/user/1000/pending')
+  assert.equal(pendingDir('/home/u/.config/stolik/sock'), '/home/u/.config/stolik/pending')
 })
 
 test('marker lifecycle: set creates the folder (0700) and the marker; clear removes it; clearing twice is fine', () => {
   const root = tempDir()
   try {
-    const dir = join(root, 'tg-bridge', 'pending')
+    const dir = join(root, 'stolik', 'pending')
     setPendingMarker(4242, dir)
     assert.equal(existsSync(markerPath(4242, dir)), true)
     assert.equal(statSync(dir).mode & 0o777, 0o700)
@@ -60,10 +60,10 @@ function fakeNode(root: string): string {
   return path
 }
 
-// The guard finds the folder from the socket: TG_BRIDGE_SOCKET, here a socket inside `root`, so the folder is `root/pending`.
+// The guard finds the folder from the socket: STOLIK_SOCKET, here a socket inside `root`, so the folder is `root/pending`.
 function runGuard(root: string, env: Record<string, string>, node: string) {
   return spawnSync('sh', [GUARD, node, join(root, 'hook.js')], {
-    env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: root, TG_BRIDGE_SOCKET: join(root, 'tg-bridge.sock'), ...env },
+    env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: root, STOLIK_SOCKET: join(root, 'stolik.sock'), ...env },
     encoding: 'utf8',
   })
 }

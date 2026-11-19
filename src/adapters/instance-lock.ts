@@ -107,12 +107,12 @@ export async function acquireRouterLock(stateDir: string, socketPath: string): P
   if (!takeLockFile(path)) {
     const pid = readPid(path)
     if (pid !== null && pidAlive(pid)) {
-      throw new AlreadyRunningError(`another tg-bridge router is running (pid ${pid}, lock ${path}). Stop it first, then start this one.`)
+      throw new AlreadyRunningError(`another stolik router is running (pid ${pid}, lock ${path}). Stop it first, then start this one.`)
     }
     // Stale (dead pid, or no pid yet): remove and retry once.
     rmSync(path, { force: true })
     if (!takeLockFile(path)) {
-      throw new AlreadyRunningError(`another tg-bridge router took the lock ${path} while this one was starting. Stop it first, then start this one.`)
+      throw new AlreadyRunningError(`another stolik router took the lock ${path} while this one was starting. Stop it first, then start this one.`)
     }
   }
   let released = false
@@ -123,7 +123,7 @@ export async function acquireRouterLock(stateDir: string, socketPath: string): P
   }
   if (await socketAnswers(socketPath)) {
     release()
-    throw new AlreadyRunningError(`another tg-bridge router is answering on the socket ${socketPath}. Stop it first, then start this one.`)
+    throw new AlreadyRunningError(`another stolik router is answering on the socket ${socketPath}. Stop it first, then start this one.`)
   }
   return { path, release }
 }

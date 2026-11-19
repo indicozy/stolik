@@ -130,7 +130,7 @@ test('setup branch writes the token, owner and app, and never prints the token',
   try {
     const token = 'MTIzNDU2.' + 'a'.repeat(60)
     const paths: SetupPaths = {
-      envFile: join(dir, 'tg-bridge.env'),
+      envFile: join(dir, 'stolik.env'),
       configFile: join(dir, 'config.json'),
       pluginDir: join(dir, 'plugin'),
       nodePath: process.execPath,

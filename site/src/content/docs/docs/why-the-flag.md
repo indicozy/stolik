@@ -12,7 +12,7 @@ A channel is how a message from outside (here, Telegram) gets into a running Cla
 ## What the flag does
 
 ```sh
-claude --dangerously-load-development-channels plugin:tg-bridge@indicozy
+claude --dangerously-load-development-channels plugin:stolik@indicozy
 ```
 
 - It tells Claude Code to load **this one named plugin** as a channel although it is not on the list. It does not open the door to other plugins.

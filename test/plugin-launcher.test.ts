@@ -49,9 +49,9 @@ test('tg-plugin-node: uses nodePath from config.json when that file is executabl
   withFixture((root, home) => {
     fakeNode(join(root, 'cfgbin', 'node'), 'cfg-node')
     fakeNode(join(root, 'pathbin', 'node'), 'path-node')
-    mkdirSync(join(home, '.config', 'tg-bridge'), { recursive: true })
+    mkdirSync(join(home, '.config', 'stolik'), { recursive: true })
     writeFileSync(
-      join(home, '.config', 'tg-bridge', 'config.json'),
+      join(home, '.config', 'stolik', 'config.json'),
       JSON.stringify({ nodePath: join(root, 'cfgbin', 'node'), ownerUserId: '1' }, null, 2),
     )
     const r = runLauncher(root, { HOME: home })
@@ -63,8 +63,8 @@ test('tg-plugin-node: uses nodePath from config.json when that file is executabl
 test('tg-plugin-node: a nodePath that is gone falls back to node on PATH', () => {
   withFixture((root, home) => {
     fakeNode(join(root, 'pathbin', 'node'), 'path-node')
-    mkdirSync(join(home, '.config', 'tg-bridge'), { recursive: true })
-    writeFileSync(join(home, '.config', 'tg-bridge', 'config.json'), JSON.stringify({ nodePath: `${root}/gone/node` }))
+    mkdirSync(join(home, '.config', 'stolik'), { recursive: true })
+    writeFileSync(join(home, '.config', 'stolik', 'config.json'), JSON.stringify({ nodePath: `${root}/gone/node` }))
     const r = runLauncher(root, { HOME: home })
     assert.equal(r.stdout, 'path-node dist/hook.js Stop\n')
   })
@@ -75,8 +75,8 @@ test('tg-plugin-node: no config means node on PATH; an absolute XDG_CONFIG_HOME 
     fakeNode(join(root, 'pathbin', 'node'), 'path-node')
     fakeNode(join(root, 'xdgbin', 'node'), 'xdg-node')
     assert.equal(runLauncher(root, { HOME: home }).stdout, 'path-node dist/hook.js Stop\n')
-    mkdirSync(join(root, 'xdg', 'tg-bridge'), { recursive: true })
-    writeFileSync(join(root, 'xdg', 'tg-bridge', 'config.json'), JSON.stringify({ nodePath: `${root}/xdgbin/node` }))
+    mkdirSync(join(root, 'xdg', 'stolik'), { recursive: true })
+    writeFileSync(join(root, 'xdg', 'stolik', 'config.json'), JSON.stringify({ nodePath: `${root}/xdgbin/node` }))
     assert.equal(runLauncher(root, { HOME: home, XDG_CONFIG_HOME: join(root, 'xdg') }).stdout, 'xdg-node dist/hook.js Stop\n')
     assert.equal(runLauncher(root, { HOME: home, XDG_CONFIG_HOME: 'xdg' }).stdout, 'path-node dist/hook.js Stop\n')
   })
@@ -87,6 +87,6 @@ test('tg-plugin-node: no node anywhere gives a clear error and exit 1', () => {
     mkdirSync(join(root, 'pathbin'), { recursive: true })
     const r = runLauncher(root, { HOME: home })
     assert.equal(r.status, 1)
-    assert.match(r.stderr, /no node found \(set nodePath with: tg-bridge setup\)/)
+    assert.match(r.stderr, /no node found \(set nodePath with: stolik setup\)/)
   })
 })

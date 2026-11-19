@@ -1,4 +1,4 @@
-// The optional ML worker step of `tg-bridge setup` (plan 3.1, docs/install.md). Pure planning: which venv steps run and
+// The optional ML worker step of `stolik setup` (plan 3.1, docs/install.md). Pure planning: which venv steps run and
 // the build environment for llama-cpp-python (CUDA when nvcc is found, CPU otherwise). Nothing here deletes a venv:
 // an existing ml/.venv is reused, and a folder that is not a venv is refused, never removed.
 import { spawnSync } from 'node:child_process'

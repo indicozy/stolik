@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The `tg-bridge` command (package.json bin): `setup`, `service install|uninstall|status`, `addon add|list|remove|consent`,
+// The `stolik` command (package.json bin): `setup`, `service install|uninstall|status`, `addon add|list|remove|consent`,
 // `doctor`, `logs`, `trace` (docs/install.md).
 // The modules that load config.ts are imported inside the commands, not at the top: a bad config file throws while
 // config.ts loads, and that throw must reach the entry point's handler (message on stderr, exit 1), not a stack trace.
@@ -145,7 +145,7 @@ async function cmdTrace(args: string[]): Promise<number> {
 }
 
 const USAGE =
-  'usage: tg-bridge setup | service install|uninstall|status [--name N] [--start|--stop] | addon add|list|remove|consent ... | doctor [--json] | logs [--addon N] [--level L] [--since 10m] [--trace ID] [-f] | trace <traceId|telegramMessageId>\n'
+  'usage: stolik setup | service install|uninstall|status [--name N] [--start|--stop] | addon add|list|remove|consent ... | doctor [--json] | logs [--addon N] [--level L] [--since 10m] [--trace ID] [-f] | trace <traceId|telegramMessageId>\n'
 
 export async function runCli(argv: string[]): Promise<number> {
   const [command, ...args] = argv

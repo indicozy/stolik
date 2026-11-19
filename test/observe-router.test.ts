@@ -144,7 +144,7 @@ test('/debug: the report names the level, sessions, addons, queues, ML worker an
   await w.router.start()
   await send(w, inboundAt('/debug', { messageId: tgMsg(6001) }))
   const report = w.chat.sent.map((s) => s.text).join('\n')
-  assert.match(report, /tg-bridge 0\.1\.0 \(abc1234\)/)
+  assert.match(report, /stolik 0\.1\.0 \(abc1234\)/)
   assert.match(report, /log level: info/)
   assert.match(report, /sessions \(0\)/)
   assert.match(report, /addons \(0\)/)
@@ -171,7 +171,7 @@ test('/debug without the composition root still answers, with what the router kn
   const m = inboundAt('/debug', { messageId: tgMsg(6100) })
   await debugCommand(w.router, '', m)
   const text = w.chat.sent.at(-1)?.text ?? ''
-  assert.match(text, /tg-bridge unknown/)
+  assert.match(text, /stolik unknown/)
   assert.match(text, /ml-worker: not available/)
 })
 

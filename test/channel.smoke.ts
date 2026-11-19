@@ -79,7 +79,7 @@ let child!: ChildProcessWithoutNullStreams
 
 function spawnChannel(): void {
   child = spawn(process.execPath, [CHANNEL_JS], {
-    env: { ...process.env, TG_BRIDGE_SOCKET: SOCK, CLAUDE_PROJECT_DIR: PROJ_DIR },
+    env: { ...process.env, STOLIK_SOCKET: SOCK, CLAUDE_PROJECT_DIR: PROJ_DIR },
     stdio: ['pipe', 'pipe', 'pipe'],
   })
   let buf = ''
@@ -137,7 +137,7 @@ async function main(): Promise<void> {
     clientInfo: { name: 'channel-smoke', version: '0.0.0' },
   })
   const exp = init.result?.capabilities?.experimental ?? {}
-  check('initialize: serverInfo.name is tg-bridge', init.result?.serverInfo?.name === 'tg-bridge', init.result?.serverInfo)
+  check('initialize: serverInfo.name is stolik', init.result?.serverInfo?.name === 'stolik', init.result?.serverInfo)
   check('initialize: experimental claude/channel declared', 'claude/channel' in exp, exp)
   check('initialize: experimental claude/channel/permission declared', 'claude/channel/permission' in exp, exp)
   check('initialize: instructions present', typeof init.result?.instructions === 'string' && init.result.instructions.length > 0)
@@ -223,7 +223,7 @@ async function main(): Promise<void> {
   const down = await rpc(9, 'tools/call', { name: 'reply', arguments: { text: 'while-down' } })
   check(
     'router down: reply reports not running',
-    down.result.isError === true && toolText(down) === 'tg-bridge router is not running',
+    down.result.isError === true && toolText(down) === 'stolik router is not running',
     down,
   )
 

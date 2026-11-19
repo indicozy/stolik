@@ -335,7 +335,7 @@ test('forensics: the file is written owner-only with the start, the names of the
         dir: join(dir, 'forensics'),
         now: () => new Date('2026-11-14T10:00:00.000Z'),
         secrets: ['SUPERSECRETVALUE123'],
-        env: { PATH: '/usr/bin', HOME: '/home/u', TG_BRIDGE_TOKEN: 'SUPERSECRETVALUE123' },
+        env: { PATH: '/usr/bin', HOME: '/home/u', STOLIK_TOKEN: 'SUPERSECRETVALUE123' },
         claudeVersion: async () => '2.1.0 (Claude Code)',
       },
       {
@@ -349,7 +349,7 @@ test('forensics: the file is written owner-only with the start, the names of the
     const text = readFileSync(path as string, 'utf8')
     assert.match(text, /claude --version: 2\.1\.0 \(Claude Code\)/)
     assert.match(text, /PATH: \/usr\/bin/)
-    assert.match(text, /^ {2}TG_BRIDGE_TOKEN$/m, 'the variable name is listed')
+    assert.match(text, /^ {2}STOLIK_TOKEN$/m, 'the variable name is listed')
     assert.doesNotMatch(text, /SUPERSECRETVALUE123/, 'no secret value is written')
     assert.match(text, /\[REDACTED\]/)
     assert.match(readdirSync(join(dir, 'forensics'))[0], /^2026-11-14T10-00-00-000Z-shop\.txt$/)

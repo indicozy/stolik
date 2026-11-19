@@ -43,7 +43,7 @@ export class TracedChat implements ChatPort {
     this.now = now
   }
 
-  // A message id the router sent under `trace`, mapped for `tg-bridge trace` and /trace.
+  // A message id the router sent under `trace`, mapped for `stolik trace` and /trace.
   private noteOut(messageId: MessageId, trace: string | undefined): void {
     if (!trace || !this.sink) return
     try {

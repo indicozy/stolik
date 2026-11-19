@@ -1,4 +1,4 @@
-// `tg-bridge setup` (plan P3, design §5.1 and §6.2). Interactive. Every prompt and line of output goes through the
+// `stolik setup` (plan P3, design §5.1 and §6.2). Interactive. Every prompt and line of output goes through the
 // injected deps, so tests answer with fakes and use temp paths. The token is never printed. This makes no Telegram
 // calls: the group id is learned later from /bind (design §6.2).
 import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs'
@@ -13,9 +13,9 @@ export const TOKEN_RE = /^\d+:[A-Za-z0-9_-]{20,}$/
 export const OWNER_RE = /^\d+$/
 
 export type SetupPaths = {
-  // The secrets file (secrets, chmod 600): ~/.config/tg-bridge.env, or TG_BRIDGE_ENV_FILE when set (config.ts envFilePath).
+  // The secrets file (secrets, chmod 600): ~/.config/stolik.env, or STOLIK_ENV_FILE when set (config.ts envFilePath).
   envFile: string
-  // $XDG_CONFIG_HOME/tg-bridge/config.json (machine config, merged, unknown keys kept).
+  // $XDG_CONFIG_HOME/stolik/config.json (machine config, merged, unknown keys kept).
   configFile: string
   // <repo>/plugin, the folder for `/plugin marketplace add`.
   pluginDir: string
@@ -26,7 +26,7 @@ export type SetupPaths = {
 }
 
 export type SetupDeps = {
-  // The flags given to `tg-bridge setup` (parseSetupArgs). Absent: the defaults.
+  // The flags given to `stolik setup` (parseSetupArgs). Absent: the defaults.
   options?: SetupOptions
   // The pairing (telegram-setup.ts makeTelegramPairing, or discord-setup.ts makeDiscordPairing). Absent: the owner id is
   // typed instead.
@@ -54,9 +54,9 @@ export function readEnvValue(text: string, key: string): string | null {
   return found ? found : null
 }
 
-// Value of TG_BRIDGE_TOKEN in KEY=VALUE text, or null when absent or empty.
+// Value of STOLIK_TOKEN in KEY=VALUE text, or null when absent or empty.
 export function readEnvToken(text: string): string | null {
-  return readEnvValue(text, 'TG_BRIDGE_TOKEN')
+  return readEnvValue(text, 'STOLIK_TOKEN')
 }
 
 // Sets KEY in KEY=VALUE text: replaces every such line, or appends one. Other lines stay as they are.
@@ -76,9 +76,9 @@ export function mergeEnvKey(text: string, key: string, value: string): string {
   return out.join('\n') + '\n'
 }
 
-// Sets TG_BRIDGE_TOKEN in KEY=VALUE text (see mergeEnvKey).
+// Sets STOLIK_TOKEN in KEY=VALUE text (see mergeEnvKey).
 export function mergeEnvToken(text: string, token: string): string {
-  return mergeEnvKey(text, 'TG_BRIDGE_TOKEN', token)
+  return mergeEnvKey(text, 'STOLIK_TOKEN', token)
 }
 
 // Shallow merge of the keys setup owns over the existing config object. Keys setup does not own are kept as they are.
@@ -188,7 +188,7 @@ export async function runSetup(deps: SetupDeps): Promise<number> {
     out(`error: unknown chat app "${chat}" (telegram or discord)`)
     return 1
   }
-  out('tg-bridge setup')
+  out('stolik setup')
   out('')
   out('1. Bot token. Create a bot with @BotFather (send /newbot) and paste its token here.')
   out('   The token is written to ' + paths.envFile + ' (chmod 600) and is not shown again.')
@@ -230,7 +230,7 @@ export async function runSetup(deps: SetupDeps): Promise<number> {
     }
     owner = opts.ownerId
   } else if (saved !== null && !opts.pair) {
-    out(`2. owner already paired (id ${saved}). Run tg-bridge setup --pair to pair again.`)
+    out(`2. owner already paired (id ${saved}). Run stolik setup --pair to pair again.`)
   } else if (deps.pairing && botToken !== null) {
     out('2. Owner. Pairing links the bot to your Telegram account.')
     const begun = await deps.pairing.begin(botToken)
@@ -247,7 +247,7 @@ export async function runSetup(deps: SetupDeps): Promise<number> {
     const yes = YES_RE.test((await deps.ask('   Is this you? [y/N]: ')).trim())
     await deps.pairing.confirm(res.candidate.userId, yes)
     if (!yes) {
-      out('   not saved. Run tg-bridge setup --pair to pair again.')
+      out('   not saved. Run stolik setup --pair to pair again.')
       return 1
     }
     owner = res.candidate.userId
@@ -285,16 +285,16 @@ export async function runSetup(deps: SetupDeps): Promise<number> {
   out('')
   out('4. Claude Code plugin. In Claude Code, run:')
   out(`     /plugin marketplace add ${paths.pluginDir}`)
-  out('     /plugin install tg-bridge@indicozy')
+  out('     /plugin install stolik@indicozy')
   out('   Start sessions with the channel on, then confirm the development-channels prompt once:')
-  out('     claude --dangerously-load-development-channels plugin:tg-bridge@indicozy')
+  out('     claude --dangerously-load-development-channels plugin:stolik@indicozy')
 
   let code = 0
   if (deps.ml) code = await mlStep(deps, deps.ml)
 
   out('')
   if (paths.npxInstall) out('   ' + NPX_SERVICE_MESSAGE)
-  out('6. Service. Run the router in your logon session with: tg-bridge service install --start')
+  out('6. Service. Run the router in your logon session with: stolik service install --start')
   return code
 }
 
@@ -305,7 +305,7 @@ const YES_RE = /^y(es)?$/i
 export async function runDiscordSetup(deps: SetupDeps): Promise<number> {
   const { paths, out } = deps
   const opts = deps.options ?? {}
-  out('tg-bridge setup (Discord)')
+  out('stolik setup (Discord)')
   out('')
   for (const line of DISCORD_BIND_STEPS) out(line.startsWith('   ') ? line : '  ' + line)
   out('')
@@ -362,7 +362,7 @@ export async function runDiscordSetup(deps: SetupDeps): Promise<number> {
     }
     owner = opts.ownerId
   } else if (savedDc !== null && !opts.pair) {
-    out(`3. owner already paired (id ${savedDc}). Run tg-bridge setup --chat discord --pair to pair again.`)
+    out(`3. owner already paired (id ${savedDc}). Run stolik setup --chat discord --pair to pair again.`)
   } else if (deps.pairing && botToken !== null) {
     out('3. Owner. Pairing links the bot to your Discord account.')
     const begun = await deps.pairing.begin(botToken)
@@ -379,7 +379,7 @@ export async function runDiscordSetup(deps: SetupDeps): Promise<number> {
     const yes = YES_RE.test((await deps.ask('   Is this you? [y/N]: ')).trim())
     await deps.pairing.confirm(res.candidate.userId, yes)
     if (!yes) {
-      out('   not saved. Run tg-bridge setup --chat discord --pair to pair again.')
+      out('   not saved. Run stolik setup --chat discord --pair to pair again.')
       return 1
     }
     owner = res.candidate.userId
@@ -411,16 +411,16 @@ export async function runDiscordSetup(deps: SetupDeps): Promise<number> {
   out('')
   out('5. Claude Code plugin. In Claude Code, run:')
   out(`     /plugin marketplace add ${paths.pluginDir}`)
-  out('     /plugin install tg-bridge@indicozy')
+  out('     /plugin install stolik@indicozy')
   out('   Start sessions with the channel on, then confirm the development-channels prompt once:')
-  out('     claude --dangerously-load-development-channels plugin:tg-bridge@indicozy')
+  out('     claude --dangerously-load-development-channels plugin:stolik@indicozy')
 
   let code = 0
   if (deps.ml) code = await mlStep(deps, deps.ml, 6)
 
   out('')
   if (paths.npxInstall) out('   ' + NPX_SERVICE_MESSAGE)
-  out('7. Service. Run the router in your logon session with: tg-bridge service install --start')
+  out('7. Service. Run the router in your logon session with: stolik service install --start')
   return code
 }
 

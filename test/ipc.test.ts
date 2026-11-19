@@ -6,10 +6,10 @@ import { mkdtempSync, rmSync, existsSync, unlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-// Temp dir and socket path must be set before src/config.ts (which reads TG_BRIDGE_SOCKET) is imported.
-const dir = mkdtempSync(join(tmpdir(), 'tg-bridge-test-'))
+// Temp dir and socket path must be set before src/config.ts (which reads STOLIK_SOCKET) is imported.
+const dir = mkdtempSync(join(tmpdir(), 'stolik-test-'))
 const sockPath = join(dir, 'bridge.sock')
-process.env.TG_BRIDGE_SOCKET = sockPath
+process.env.STOLIK_SOCKET = sockPath
 const { oneShot, request } = await import('../src/adapters/channel/ipc.ts')
 
 let server: Server

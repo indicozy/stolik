@@ -51,7 +51,7 @@ test('classifySource: an existing folder, a git URL, an npm name, or none of the
     assert.equal(classifySource('/some/folder', isDir), 'folder')
     assert.equal(classifySource('https://example.org/owner/addon.git', () => false), 'git')
     assert.equal(classifySource('git@example.org:owner/addon.git', () => false), 'git')
-    assert.equal(classifySource('tg-bridge-addon-foo', () => false), 'npm')
+    assert.equal(classifySource('stolik-addon-foo', () => false), 'npm')
     assert.equal(classifySource('@scope/pkg@1.2.0', () => false), 'npm')
     assert.equal(classifySource('!!not a source', () => false), null)
     assert.equal(classifySource('--upload-pack=evil', () => false), null)
@@ -90,7 +90,7 @@ test('add: the access list is shown before the prompt; a typed yes installs it, 
     assert.match(shown, /read the text of your messages/)
     assert.match(shown, /see the names of your agent sessions/)
     assert.match(shown, /Addons run as your user with no sandbox/)
-    assert.ok(existsSync(join(addonsDir, 'addon-echo', 'tg-bridge-addon.json')))
+    assert.ok(existsSync(join(addonsDir, 'addon-echo', 'stolik-addon.json')))
     assert.equal(r.settings.isEnabled('addon-echo'), false)
     assert.ok(r.out.some((l) => /Installed addon-echo 0\.1\.0\. It is off\./.test(l)))
     assert.deepEqual(readdirSync(addonsDir).filter((n) => n.startsWith('.staging-')), [])
@@ -126,7 +126,7 @@ test('add: an invalid manifest, a taken name, and a missing requirement are each
   try {
     const broken = join(work, 'broken')
     mkdirSync(broken)
-    writeFileSync(join(broken, 'tg-bridge-addon.json'), JSON.stringify({ name: 'broken', protocol: 9 }))
+    writeFileSync(join(broken, 'stolik-addon.json'), JSON.stringify({ name: 'broken', protocol: 9 }))
     const r1 = rig(addonsDir)
     assert.equal(await runAddonCommand(['add', broken], r1.deps), 1)
     assert.match(r1.err.join('\n'), /Not installed: .*protocol/)
@@ -219,7 +219,7 @@ test('add from git or npm: a failing fetch is reported and nothing is left behin
     const npm = rig(addonsDir, 'yes', (file) =>
       file === 'npm' ? { status: 0, stdout: 'pkg-1.0.0.tgz\n', stderr: '' } : { status: 2, stdout: '', stderr: 'tar: broken\n' },
     )
-    assert.equal(await runAddonCommand(['add', 'tg-bridge-addon-foo'], npm.deps), 1)
+    assert.equal(await runAddonCommand(['add', 'stolik-addon-foo'], npm.deps), 1)
     assert.match(npm.err.join('\n'), /unpacking failed: tar: broken/)
     assert.equal(npm.prompts.length, 0)
     const left = existsSync(addonsDir) ? readdirSync(addonsDir).filter((n) => n.startsWith('.staging-')) : []

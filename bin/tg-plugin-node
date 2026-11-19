@@ -1,7 +1,7 @@
 #!/bin/sh
-# Runs a tg-bridge script with the right node (plan P3). plugin/.mcp.json and plugin/hooks/hooks.json call this instead
+# Runs a stolik script with the right node (plan P3). plugin/.mcp.json and plugin/hooks/hooks.json call this instead
 # of a bare `node`: hooks run with a minimal environment, and the asdf shim is not on that PATH.
-# Order: nodePath in ~/.config/tg-bridge/config.json (the node that ran `tg-bridge setup`), then node on PATH.
+# Order: nodePath in ~/.config/stolik/config.json (the node that ran `stolik setup`), then node on PATH.
 # Usage: tg-plugin-node <script.js> [args...]
 set -eu
 
@@ -9,7 +9,7 @@ case "${XDG_CONFIG_HOME:-}" in
   /*) base="$XDG_CONFIG_HOME" ;;
   *) base="$HOME/.config" ;;
 esac
-cfg="$base/tg-bridge/config.json"
+cfg="$base/stolik/config.json"
 
 node=""
 if [ -r "$cfg" ]; then
@@ -19,7 +19,7 @@ if [ -z "$node" ] || [ ! -x "$node" ]; then
   node="$(command -v node 2>/dev/null || true)"
 fi
 if [ -z "$node" ]; then
-  echo "tg-plugin-node: no node found (set nodePath with: tg-bridge setup)" >&2
+  echo "tg-plugin-node: no node found (set nodePath with: stolik setup)" >&2
   exit 1
 fi
 exec "$node" "$@"

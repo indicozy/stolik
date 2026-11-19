@@ -52,7 +52,7 @@ async function sendDirectly(text: string, project: string | null, plain: boolean
   const { readChatSettings } = await import('./adapters/chat/discord-setup.ts')
   const chat = readChatSettings(envFilePath(), tgConfigPath())
   if (chat.app === 'discord') {
-    if (!chat.token || !chat.ownerId) die('Discord is not set up (no token or owner); run tg-bridge setup --chat discord', 2)
+    if (!chat.token || !chat.ownerId) die('Discord is not set up (no token or owner); run stolik setup --chat discord', 2)
     const { sendDirectDiscord } = await import('./adapters/chat/discord-direct.ts')
     const err = await sendDirectDiscord({ token: chat.token, ownerId: chat.ownerId }, text, { project, plain, silent })
     if (err !== null) die(`send failed: ${err}`)

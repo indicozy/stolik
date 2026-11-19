@@ -89,7 +89,7 @@ test('permissionDetail: Bash shows the description above the command; file and w
   assert.equal(permissionDetail('Read', { file_path: '/x.md' }), '/x.md')
   assert.equal(permissionDetail('NotebookEdit', { file_path: '/n.ipynb' }), '/n.ipynb')
   assert.equal(permissionDetail('WebFetch', { url: 'https://example.com', prompt: 'p' }), 'https://example.com')
-  assert.equal(permissionDetail('WebSearch', { query: 'tg bridge' }), 'tg bridge')
+  assert.equal(permissionDetail('WebSearch', { query: 'stolik' }), 'stolik')
   // Without the key field the tool falls back to its JSON input.
   assert.equal(permissionDetail('Bash', { timeout: 5 }), JSON.stringify({ timeout: 5 }, null, 1))
   assert.equal(permissionDetail('Edit', { old_string: 'a' }), JSON.stringify({ old_string: 'a' }, null, 1))

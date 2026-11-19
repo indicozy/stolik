@@ -1,7 +1,7 @@
 // Notes inbox format (design §4.13): the entry text, the timestamps and the attachment file names. Pure: no I/O.
 // The notes addon (main.ts) writes it. The core imports it too (src/router/notes.ts for the fallback, and the file-name
 // helpers below for its own attachments), so this folder is the one definition. Nothing here imports outside this folder:
-// the addon is installed as a folder (tg-bridge addon add), and must run from there alone.
+// the addon is installed as a folder (stolik addon add), and must run from there alone.
 import { basename } from 'node:path'
 
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp'])

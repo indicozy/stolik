@@ -41,8 +41,8 @@ You can keep the router running during pairing. Until you pair, the router answe
 
 Setup writes two files and prints the next steps:
 
-- `~/.config/tg-bridge.env`: the bot token and the owner's chat id. Only your user can read it (mode 600).
-- `~/.config/tg-bridge/config.json`: everything else. The owner is stored as `chat.telegram.ownerUserId`. A missing file means defaults.
+- `~/.config/stolik.env`: the bot token and the owner's chat id. Only your user can read it (mode 600).
+- `~/.config/stolik/config.json`: everything else. The owner is stored as `chat.telegram.ownerUserId`. A missing file means defaults.
 
 It also offers the optional model worker for voice notes and the digest. Say no for now. You can run setup again later.
 
@@ -63,9 +63,9 @@ stolik service install --start
 stolik service status
 ```
 
-This writes a systemd **user** unit named `tg-bridge` and starts it. The router runs in your login session, not as root. The unit runs the copy of stolik that wrote it, so keep the global install in place. Restarting the router leaves your tmux sessions and the Claude Code sessions in them running.
+This writes a systemd **user** unit named `stolik` and starts it. The router runs in your login session, not as root. The unit runs the copy of stolik that wrote it, so keep the global install in place. Restarting the router leaves your tmux sessions and the Claude Code sessions in them running.
 
-If you change the Node version, run `stolik service install --start` again so the unit uses the new one. Logs: `journalctl --user -u tg-bridge -f`.
+If you change the Node version, run `stolik service install --start` again so the unit uses the new one. Logs: `journalctl --user -u stolik -f`.
 
 ## 4. Add the plugin to Claude Code
 
@@ -73,7 +73,7 @@ Setup prints the plugin folder. It is inside the global npm folder (`npm root -g
 
 ```
 /plugin marketplace add <the plugin folder that setup printed>
-/plugin install tg-bridge@indicozy
+/plugin install stolik@indicozy
 ```
 
 The plugin holds the channel (how messages get into a session) and a few hooks (how answers and permission prompts get out).
@@ -82,14 +82,14 @@ The plugin holds the channel (how messages get into a session) and a few hooks (
 
 ```sh
 cd ~/code/orbit-api
-TG_BRIDGE_PLUGIN=1 tg-claude
+STOLIK_PLUGIN=1 tg-claude
 ```
 
-`tg-claude` is `claude` with one extra flag: `--dangerously-load-development-channels plugin:tg-bridge@indicozy`. `TG_BRIDGE_PLUGIN=1` selects that plugin. Without it, `tg-claude` looks for a user-level MCP server named `tg-bridge`, and the plugin does not create one. Claude Code shows a warning screen. Press Enter. For sessions that you start from Telegram, the router presses Enter on that screen for you. [Why the flag?](../why-the-flag/) explains what it does and why stolik needs it.
+`tg-claude` is `claude` with one extra flag: `--dangerously-load-development-channels plugin:stolik@indicozy`. `STOLIK_PLUGIN=1` selects that plugin. Without it, `tg-claude` looks for a user-level MCP server named `stolik`, and the plugin does not create one. Claude Code shows a warning screen. Press Enter. For sessions that you start from Telegram, the router presses Enter on that screen for you. [Why the flag?](../why-the-flag/) explains what it does and why stolik needs it.
 
 A topic named `orbit-api` appears in your group. Write in it from your phone.
 
-To keep the variable, add `export TG_BRIDGE_PLUGIN=1` to your shell profile. Then `alias claude=tg-claude` works too. Subcommands such as `claude mcp` and `claude -p` pass through unchanged.
+To keep the variable, add `export STOLIK_PLUGIN=1` to your shell profile. Then `alias claude=tg-claude` works too. Subcommands such as `claude mcp` and `claude -p` pass through unchanged.
 
 ## Discord instead of Telegram
 

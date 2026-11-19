@@ -1,4 +1,4 @@
-# tg-bridge v3: design
+# stolik v3: design
 
 Status: design record, 2026-11-14.
 
@@ -8,7 +8,7 @@ Status: design record, 2026-11-14.
 
 ## 1. Goal and scope
 
-tg-bridge lets the owner talk to Claude Code sessions from Telegram: send messages, read answers, approve tool use,
+stolik lets the owner talk to Claude Code sessions from Telegram: send messages, read answers, approve tool use,
 resume sessions, and ask quick questions that need no session. v3 does four things:
 
 1. **New Telegram layout.** A private supergroup with one topic per folder (ticket 22), instead of one DM with the bot.
@@ -91,19 +91,19 @@ yesterday and always answers. Access: `messages.send` only.
 **Trust.** Declared access only: an addon gets only what its manifest declares. Install shows the list and needs an
 explicit yes. Listeners get a loud warning. Any addon can be disabled from Telegram. No sandbox; addons run as the user.
 
-**Install.** From the PC only: `tg-bridge addon add <git url | npm name | folder>`. In Telegram, `/addons` lists, enables
+**Install.** From the PC only: `stolik addon add <git url | npm name | folder>`. In Telegram, `/addons` lists, enables
 and disables. Nothing installs from the chat. A public index is backlog. Install refuses a name that is a built-in, counts
 a built-in as a present requirement, records the consent hash and leaves the addon off.
 
 **Re-consent.** Install stores a hash of the consented manifest (name, version, command, provides, access, requires,
 serves). When a user addon's manifest later differs from that hash, the host stops it, marks it "needs re-consent" in
-`/addons`, and it cannot run until the owner runs `tg-bridge addon consent <name>` on the PC and types `yes`. Nothing from
+`/addons`, and it cannot run until the owner runs `stolik addon consent <name>` on the PC and types `yes`. Nothing from
 Telegram can consent. Built-in addons ship with the code, so a changed built-in manifest updates its stored hash without
 asking. A user folder that has a built-in's name is ignored, and the built-in wins. Open for the owner's veto: the consent step is
 on the PC, as install is, rather than a typed `yes` in `/addons` (the coordinator's wording was "a yes in /addons"; Telegram
 is kept free of consent because it is the channel a stolen session would use).
 
-Manifest: a JSON file `tg-bridge-addon.json` at the addon root, with `name`, `version`, `protocol` (integer; 2 is the only one the host speaks, any other is refused), `command` (argv array), `provides` (plug-in points with their params, for example `{point:"prefix", words:[...]}`), `access` (what the addon may receive), `requires` (names of other addons) and `serves` (the ops it answers for other addons through `requires`; default none). The host refuses an addon-to-addon call to an op the target does not list in `serves`. The host's own point ops (prefix, reply, callback, tick, route, command, general, media, text-filter, event, router, gate) can never be listed in `serves`; the manifest is refused if they are. A gate provider must declare `messages.gate` (the manifest is refused otherwise). The ML worker serves `generate`, `transcribe` and `clean`. The coordinator's reserved list also named `clean`; it is allowed
+Manifest: a JSON file `stolik-addon.json` at the addon root, with `name`, `version`, `protocol` (integer; 2 is the only one the host speaks, any other is refused), `command` (argv array), `provides` (plug-in points with their params, for example `{point:"prefix", words:[...]}`), `access` (what the addon may receive), `requires` (names of other addons) and `serves` (the ops it answers for other addons through `requires`; default none). The host refuses an addon-to-addon call to an op the target does not list in `serves`. The host's own point ops (prefix, reply, callback, tick, route, command, general, media, text-filter, event, router, gate) can never be listed in `serves`; the manifest is refused if they are. A gate provider must declare `messages.gate` (the manifest is refused otherwise). The ML worker serves `generate`, `transcribe` and `clean`. The coordinator's reserved list also named `clean`; it is allowed
 here because voice cleanup needs it through ml-worker, and only addons that require ml-worker can call it (open for veto).
 
 **Protocol 2: ids and buttons.** The host hands every chat, thread and message id to an addon as an opaque string (`tg:…` on Telegram). The addon echoes it back and never parses it; a number in an id field is refused. A reply to a message is the `reply` point (`{ text, replyTo, messageId }`), not `thread`. Button data is tokenised by the host: a button carries `ax:<token>` (10 random characters, kept in memory for 24 h, at most 2000 tokens, oldest evicted), and the addon's data behind it is 1 to 256 characters. A press on an unknown or expired token gets the toast "This button has expired." and the addon is not called. The host lays out an addon's buttons to the chat app's limits (`capabilities.buttons`); the addon does not see them.
@@ -159,11 +159,11 @@ runs. Claude specifics (channel MCP, hooks, `--resume` with `~/.claude/projects`
 
 | Store | Contents | Why |
 |---|---|---|
-| SQLite `tg-bridge.db` via `node:sqlite` | Sessions, topics, mode threads, outbound ledger, addon settings, router decisions, usage and cost | Consistency and real queries; no extra dependency |
+| SQLite `stolik.db` via `node:sqlite` | Sessions, topics, mode threads, outbound ledger, addon settings, router decisions, usage and cost | Consistency and real queries; no extra dependency |
 | Files | Chat log (`log/YYYY-MM.jsonl`, daily `YYYY-MM-DD.md`), attachments, notes inbox, audit log | Greppable by the owner and read mode |
 
-The database is `~/.local/state/tg-bridge-v3/tg-bridge.db` (config `stateDir` overrides the folder). The v3 folder is
-separate from the old bot's `~/.local/state/tg-bridge/`, so v3 can run beside it. The audit log is `audit.log` in the same
+The database is `~/.local/state/stolik/stolik.db` (config `stateDir` overrides the folder). The v3 folder is
+separate from the old bot's `~/.local/state/stolik/`, so v3 can run beside it. The audit log is `audit.log` in the same
 v3 folder. The chat log, daily Markdown files, digests and attachments sit under the log root (`logRoot`, default
 `~/Documents/notes/telegram`). The notes inbox and its attachments stay under `~/Documents/notes/`.
 
@@ -215,7 +215,7 @@ Prefixes work **only in General**. Inside a folder topic only `/new` is parsed (
 
 A prefix is followed by a colon, a comma, or a dash followed by a space. No separator, no prefix: "note that the build
 failed" is an ordinary message. For `to` and `new` the name runs up to the first colon or comma, or to a dash set off by
-spaces, so "to tg-bridge - hi" names tg-bridge, and a dash inside a word ("quick-fix") is never a separator. `to` stays so a voice note in General can reach a session. Names match loosely against open sessions and
+spaces, so "to stolik - hi" names stolik, and a dash inside a word ("quick-fix") is never a separator. `to` stays so a voice note in General can reach a session. Names match loosely against open sessions and
 trusted folders; an unclear match shows buttons (v2 §4).
 
 ### 4.4 Unprefixed General messages
@@ -404,10 +404,10 @@ The terminal has a hook for this (token-guard); Telegram messages bypassed it, s
 - Channel and hooks ship as a **Claude Code plugin**. A non-allowlisted plugin channel loads with
   `--dangerously-load-development-channels plugin:<name>@<marketplace>` plus one confirm. Admins can allowlist it
   (`allowedChannelPlugins`). A public release needs an official listing. The Node channel needs no Bun.
-- An **npm package**: `npx tg-bridge setup` (bot token, owner pairing by a code sent to the bot, group setup; `--owner-id` for scripts; see docs/install.md) and `tg-bridge service install`. The router runs in the user's logon session, not as a system
+- An **npm package**: `npx stolik setup` (bot token, owner pairing by a code sent to the bot, group setup; `--owner-id` for scripts; see docs/install.md) and `stolik service install`. The router runs in the user's logon session, not as a system
   service; service definitions are written by us.
 
-The plugin is named `tg-bridge`, in a local marketplace `indicozy` on the owner's machines. `tg-claude` stays as a convenience launcher that adds `--dangerously-load-development-channels plugin:tg-bridge@indicozy` (decided 2026-11-14, coordinator).
+The plugin is named `stolik`, in a local marketplace `indicozy` on the owner's machines. `tg-claude` stays as a convenience launcher that adds `--dangerously-load-development-channels plugin:stolik@indicozy` (decided 2026-11-14, coordinator).
 
 | Platform | Process | Service | Idle and lock | IPC | Process info |
 |---|---|---|---|---|---|
@@ -434,7 +434,7 @@ Machine specifics are config with neutral defaults. Other machines get no pinnin
 One Python worker addon serves whisper (voice) and Qwen3-4B (cleanup, digest). Models load on demand and unload after 10
 minutes idle. A model goes to the 4060 when free VRAM allows (7.8 GB free on 2026-11-14), otherwise CPU. The VRAM check is per model.
 
-The venv (`ml/.venv`, pins in `ml/requirements.txt`) is installed by `tg-bridge setup` (optional step 5) or by hand.
+The venv (`ml/.venv`, pins in `ml/requirements.txt`) is installed by `stolik setup` (optional step 5) or by hand.
 The CUDA build of llama-cpp-python needs the environment setup prints. See `docs/install.md`.
 
 ## 5a. Observability
@@ -449,7 +449,7 @@ audit event written inside the flow carries `trace`. The addon protocol carries 
 `payload.trace` (protocol 2, optional, ignored by addons that do not read it), and an addon's request or call may carry its
 own `trace`, which the host then uses. A repeating timer gets a new id per tick. The trace map (SQLite `trace_map`, schema
 v3) keeps the Telegram message ids, in and out, against their trace ids for 7 days (`TracedTelegram` records the outbound
-ids, the router the inbound ones). `/trace` and `tg-bridge trace` read the timeline from the log files.
+ids, the router the inbound ones). `/trace` and `stolik trace` read the timeline from the log files.
 
 **Log writer** (src/router/log.ts). One `emit(level, component, msg, fields)` for everything: the journal (stderr, human
 lines), `<stateDir>/logs/router.jsonl` (JSON lines `{ts, level, component, trace?, msg, ...fields}`, 10 MB per file, five
@@ -480,7 +480,7 @@ have none.
 
 **tmux scope.** Every scoped start of the tmux server names its own transient unit (`tg-tmux-<hex>`, tmux.ts), and a refused scoped start is tried once more under a new name before the plain fallback. A plain server shares the router's cgroup, so the router-cgroup check (below) warns about it. Each headless run (modes: quick, read, web) starts in its own scope `tg-modes-<hex>` (adapters/scope.ts), so the `claude -p` process and the plugin hooks it starts stay out of the router's unit; the addon warns once when no scope is available. The check reads `/proc/<router>/cgroup` and its `cgroup.procs`, and warns about each process whose parent chain does not reach the router (adapters/cgroup.ts).
 
-**Doctor** (src/cli/doctor.ts; `tg-bridge doctor [--json]`). Each check is a function of its inputs and is tested with
+**Doctor** (src/cli/doctor.ts; `stolik doctor [--json]`). Each check is a function of its inputs and is tested with
 fakes. `startup` scope (run by the router at start, no network, no model): node, claude and tmux on PATH and on the router
 unit's PATH, `claude --version`, the socket path (writable, at most 107 bytes), the secrets file (mode 600, keys present),
 the config, disk space (warn below 1 GiB, fail below 200 MiB), the database integrity (`PRAGMA integrity_check`, read-only),
@@ -517,12 +517,12 @@ Phase 1 reaches the live bot only at cutover (§6.2). The live bot keeps the old
 
 In place, with no long side-by-side period:
 
-1. Owner creates the private supergroup with topics and adds the bot as admin with manage-topics. `tg-bridge setup` guides it.
+1. Owner creates the private supergroup with topics and adds the bot as admin with manage-topics. `stolik setup` guides it.
 2. Stop and disable the old service.
 3. Run the one-shot migration script, which only reads the old files.
 4. Start v3.
 
-The bot learns the group id from `/bind`. `tg-bridge setup` tells the owner to create the private supergroup with Topics on, add the bot as admin with "manage topics" and "delete messages", then send `/bind` in the group. The bot checks that the sender is the owner and stores the chat id in SQLite (decided 2026-11-14, coordinator).
+The bot learns the group id from `/bind`. `stolik setup` tells the owner to create the private supergroup with Topics on, add the bot as admin with "manage topics" and "delete messages", then send `/bind` in the group. The bot checks that the sender is the owner and stores the chat id in SQLite (decided 2026-11-14, coordinator).
 
 Sessions live during the switch: when v3 starts, live channel sessions reconnect to the socket and register. Each gets a topic on registration, like any new session. There is no special path.
 
@@ -534,7 +534,7 @@ Stop v3 and re-enable the old service. Possible because the migration only reads
 
 ### 6.4 Migration scope
 
-Copies what v3 needs from `~/.local/state/tg-bridge/` (session registry, message map, audit log) into the v3 store and
+Copies what v3 needs from `~/.local/state/stolik/` (session registry, message map, audit log) into the v3 store and
 chat-log folder. The notes inbox stays where it is.
 
 Attachments are not migrated. From v3 on they go to `~/Documents/notes/telegram/attachments/YYYY-MM-DD/` (§3.4).

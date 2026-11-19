@@ -36,7 +36,7 @@ import type { Router } from '../core.ts'
 export async function onInbound(router: Router, m: Inbound): Promise<void> {
   // The Telegram adapter only hands over the owner's messages; the brain checks again (ports.ts).
   if (!isOwnerUser(m.fromId, router.ownerId)) return
-  // The message's trace id (the flow started for it) is kept against its Telegram id, for /trace and `tg-bridge trace`.
+  // The message's trace id (the flow started for it) is kept against its Telegram id, for /trace and `stolik trace`.
   const trace = currentTrace()
   if (trace) router.traces?.recordTrace({ messageId: m.messageId, dir: 'in', trace, at: router.clock.now() })
   const where = m.chat.kind === 'home' ? (m.chat.thread !== null ? `topic ${m.chat.thread}` : 'group') : 'DM'

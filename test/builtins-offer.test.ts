@@ -120,30 +120,30 @@ test('after /bind the offer is posted once in General, with Choose in /addons on
   await router.start()
   assert.equal(addons.offered, false)
   await chat.inbound(textFrom('/bind', { chat: GROUP_CHAT }))
-  const offers = chat.sent.filter((s) => s.text.startsWith('tg-bridge has built-in addons'))
+  const offers = chat.sent.filter((s) => s.text.startsWith('stolik has built-in addons'))
   assert.equal(offers.length, 1)
   assert.equal(offers[0].chat, 'group')
   assert.deepEqual(offers[0].opts?.rows, [[{ text: 'Choose in /addons', data: BO_CHOOSE }]])
   assert.equal(addons.offered, true)
 
   await chat.inbound(textFrom('/bind', { chat: GROUP_CHAT, messageId: 11 }))
-  assert.equal(chat.sent.filter((s) => s.text.startsWith('tg-bridge has built-in addons')).length, 1, 'never again')
+  assert.equal(chat.sent.filter((s) => s.text.startsWith('stolik has built-in addons')).length, 1, 'never again')
 })
 
 test('the first DM start offers once; with a built-in choice already made it does not', async () => {
   const addons = new FakeBuiltins(STANDARD())
   const { router, chat } = build(addons)
   await router.start()
-  assert.equal(chat.sent.filter((s) => s.text.startsWith('tg-bridge has built-in addons')).length, 1)
+  assert.equal(chat.sent.filter((s) => s.text.startsWith('stolik has built-in addons')).length, 1)
 
   const again = build(addons)
   await again.router.start()
-  assert.equal(again.chat.sent.filter((s) => s.text.startsWith('tg-bridge has built-in addons')).length, 0, 'flag kept')
+  assert.equal(again.chat.sent.filter((s) => s.text.startsWith('stolik has built-in addons')).length, 0, 'flag kept')
 
   const chosen = new FakeBuiltins(STANDARD().map((x) => (x.name === 'notes' ? { ...x, choice: true } : x)))
   const other = build(chosen)
   await other.router.start()
-  assert.equal(other.chat.sent.filter((s) => s.text.startsWith('tg-bridge has built-in addons')).length, 0)
+  assert.equal(other.chat.sent.filter((s) => s.text.startsWith('stolik has built-in addons')).length, 0)
   assert.equal(chosen.offered, false, 'not marked: a later /bind still offers')
 })
 
@@ -152,7 +152,7 @@ test('Enable all turns the built-ins on in dependency order through setEnabled, 
   addons.refuse.set('digest', 'digest needs ml-worker installed and enabled first.')
   const { router, chat } = build(addons)
   await router.start()
-  const offer = chat.sent.find((s) => s.text.startsWith('tg-bridge has built-in addons'))!
+  const offer = chat.sent.find((s) => s.text.startsWith('stolik has built-in addons'))!
   await tap(router, chat, BO_ALL, offer.id)
 
   const on = addons.toggles.map((t) => t.name)
@@ -178,7 +178,7 @@ test('Enable all never re-enables or overrides a choice the owner made', async (
   const { router, chat } = build(addons)
   await router.start()
   await offerBuiltins(router)
-  const offer = chat.sent.find((s) => s.text.startsWith('tg-bridge has built-in addons'))!
+  const offer = chat.sent.find((s) => s.text.startsWith('stolik has built-in addons'))!
   assert.match(offer.text, /- notes: saves note/)
   await tap(router, chat, BO_ALL, offer.id)
   assert.ok(!addons.toggles.some((t) => t.name === 'notes'), 'notes: turned off by the owner, left alone')
@@ -192,7 +192,7 @@ test('the offer buttons are owner only: another user is refused and nothing is e
   const addons = new FakeBuiltins(STANDARD())
   const { router, chat } = build(addons)
   await router.start()
-  const offer = chat.sent.find((s) => s.text.startsWith('tg-bridge has built-in addons'))!
+  const offer = chat.sent.find((s) => s.text.startsWith('stolik has built-in addons'))!
   await tap(router, chat, BO_ALL, offer.id, '999')
   assert.equal(addons.toggles.length, 0)
   assert.deepEqual(chat.answers.at(-1), { id: 'cb', text: 'Not allowed' })
@@ -202,7 +202,7 @@ test('Choose in /addons sends the /addons menu', async () => {
   const addons = new FakeBuiltins(STANDARD())
   const { router, chat } = build(addons)
   await router.start()
-  const offer = chat.sent.find((s) => s.text.startsWith('tg-bridge has built-in addons'))!
+  const offer = chat.sent.find((s) => s.text.startsWith('stolik has built-in addons'))!
   await tap(router, chat, BO_CHOOSE, offer.id)
   assert.equal(addons.toggles.length, 0)
   assert.ok(chat.sent.some((s) => s.text.startsWith('No addons installed') || s.text.startsWith('Addons (install on the PC')))

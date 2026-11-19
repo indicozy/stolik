@@ -24,46 +24,46 @@ function withEnv(over: Record<string, string | undefined>, fn: () => void): void
 const LAUNCHER = join(REPO_DIR, 'bin', 'tg-claude')
 
 test('tmuxNewSessionArgs: always carries the router socket as -e before the launcher', () => {
-  withEnv({ TG_BRIDGE_SOCKET: undefined, TG_BRIDGE_CHANNEL: undefined, TG_BRIDGE_ENV_FILE: undefined }, () => {
+  withEnv({ STOLIK_SOCKET: undefined, STOLIK_CHANNEL: undefined, STOLIK_ENV_FILE: undefined }, () => {
     assert.deepEqual(tmuxNewSessionArgs('tg-alpha', '/home/u/alpha'), [
       'new-session', '-d', '-s', 'tg-alpha', '-c', '/home/u/alpha',
-      '-e', `TG_BRIDGE_SOCKET=${SOCKET_PATH}`,
+      '-e', `STOLIK_SOCKET=${SOCKET_PATH}`,
       LAUNCHER,
     ])
   })
 })
 
-test('tmuxNewSessionArgs: a non-default router socket also passes TG_BRIDGE_CHANNEL=self and its env file', () => {
-  const sock = '/run/user/1000/tg-bridge-v3.sock'
-  withEnv({ TG_BRIDGE_ENV_FILE: '/home/u/.config/tg-bridge-v3.env' }, () => {
+test('tmuxNewSessionArgs: a non-default router socket also passes STOLIK_CHANNEL=self and its env file', () => {
+  const sock = '/run/user/1000/stolik.sock'
+  withEnv({ STOLIK_ENV_FILE: '/home/u/.config/stolik.env' }, () => {
     assert.deepEqual(tmuxNewSessionArgs('tg-alpha', '/home/u/alpha', ['--resume', 'x'], sock), [
       'new-session', '-d', '-s', 'tg-alpha', '-c', '/home/u/alpha',
-      '-e', `TG_BRIDGE_SOCKET=${sock}`,
-      '-e', 'TG_BRIDGE_CHANNEL=self',
-      '-e', 'TG_BRIDGE_ENV_FILE=/home/u/.config/tg-bridge-v3.env',
+      '-e', `STOLIK_SOCKET=${sock}`,
+      '-e', 'STOLIK_CHANNEL=self',
+      '-e', 'STOLIK_ENV_FILE=/home/u/.config/stolik.env',
       LAUNCHER, '--resume', 'x',
     ])
   })
 })
 
 test('tmuxNewSessionArgs: a non-default socket without an env file adds only the channel flag', () => {
-  withEnv({ TG_BRIDGE_ENV_FILE: undefined }, () => {
+  withEnv({ STOLIK_ENV_FILE: undefined }, () => {
     const args = tmuxNewSessionArgs('tg-alpha', '/home/u/alpha', [], '/srv/tg/router.sock')
-    assert.ok(args.includes('TG_BRIDGE_CHANNEL=self'))
-    assert.equal(args.some((a) => a.startsWith('TG_BRIDGE_ENV_FILE=')), false)
+    assert.ok(args.includes('STOLIK_CHANNEL=self'))
+    assert.equal(args.some((a) => a.startsWith('STOLIK_ENV_FILE=')), false)
     assert.equal(args[args.length - 1], LAUNCHER)
   })
 })
 
 test('tmuxNewSessionArgs: the default socket gets no channel flag, whatever the environment says', () => {
   const dflt = defaultSocketPath()
-  withEnv({ TG_BRIDGE_CHANNEL: undefined, TG_BRIDGE_ENV_FILE: '/home/u/.config/tg-bridge-v3.env' }, () => {
+  withEnv({ STOLIK_CHANNEL: undefined, STOLIK_ENV_FILE: '/home/u/.config/stolik.env' }, () => {
     const args = tmuxNewSessionArgs('tg-alpha', '/home/u/alpha', [], dflt)
-    assert.equal(args.includes('TG_BRIDGE_CHANNEL=self'), false)
-    assert.equal(args.some((a) => a.startsWith('TG_BRIDGE_ENV_FILE=')), false)
+    assert.equal(args.includes('STOLIK_CHANNEL=self'), false)
+    assert.equal(args.some((a) => a.startsWith('STOLIK_ENV_FILE=')), false)
   })
 })
 
-test('defaultSocketPath: $XDG_RUNTIME_DIR/tg-bridge.sock', () => {
-  assert.equal(defaultSocketPath({ XDG_RUNTIME_DIR: '/run/user/1000' }), '/run/user/1000/tg-bridge.sock')
+test('defaultSocketPath: $XDG_RUNTIME_DIR/stolik.sock', () => {
+  assert.equal(defaultSocketPath({ XDG_RUNTIME_DIR: '/run/user/1000' }), '/run/user/1000/stolik.sock')
 })

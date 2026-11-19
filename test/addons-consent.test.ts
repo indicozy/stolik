@@ -1,5 +1,5 @@
 // The owner's consent to an addon's manifest (design §3.2, trust). A user addon runs only with the manifest the owner
-// allowed: a changed manifest stops it until `tg-bridge addon consent <name>` on the PC, and nothing from Telegram can
+// allowed: a changed manifest stops it until `stolik addon consent <name>` on the PC, and nothing from Telegram can
 // allow it. A built-in ships with the code: its manifest is trusted and its hash follows it.
 import './helpers/isolate.ts'
 import { test } from 'node:test'
@@ -14,7 +14,7 @@ import { FakeClock, MemorySettings, copyFixture, recordingLogger, removeDir, tmp
 
 const pin = (file: string, args: string[]) => ({ file, args })
 const OK: RunResult = { status: 0, stdout: '', stderr: '' }
-const RE_CONSENT = 'needs re-consent: run tg-bridge addon consent addon-x on the PC'
+const RE_CONSENT = 'needs re-consent: run stolik addon consent addon-x on the PC'
 
 // The settings with the consent record (MemorySettings in helpers predates it).
 class Settings extends MemorySettings {
@@ -89,7 +89,7 @@ test('a user addon with no recorded consent (copied in by hand) is not started a
     try {
       await host.start()
       assert.equal(running(host, 'addon-echo'), false)
-      assert.equal(host.list()[0].status, 'needs re-consent: run tg-bridge addon consent addon-echo on the PC')
+      assert.equal(host.list()[0].status, 'needs re-consent: run stolik addon consent addon-echo on the PC')
       assert.equal(settings.isEnabled('addon-echo'), false)
     } finally {
       await host.stop()
@@ -136,7 +136,7 @@ test('a built-in with no recorded hash gets one on first sight, silently', async
   }
 })
 
-// ---------- the consent command (tg-bridge addon consent <name>) ----------
+// ---------- the consent command (stolik addon consent <name>) ----------
 
 type Rig = { deps: CliDeps; out: string[]; err: string[]; prompts: string[]; outAtPrompt: number[]; settings: Settings }
 

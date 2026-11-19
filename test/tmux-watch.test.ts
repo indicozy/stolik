@@ -139,7 +139,7 @@ test('a pane that names the channels without the dialog is reported once, and no
 
 test('the accepted-channels banner of a session that is starting fine is not reported as a dialog', async () => {
   const misses: string[][] = []
-  const banner = 'Channels (experimental) messages from server:tg-bridge-v3 inject directly in\nthis session · restart without --dangerously-load-development-channels to stop'
+  const banner = 'Channels (experimental) messages from server:stolik inject directly in\nthis session · restart without --dangerously-load-development-channels to stop'
   assert.equal(isAcceptedChannelsBanner(banner), true)
   assert.equal(isAcceptedChannelsBanner('WARNING: development channels are loading'), false)
   const tmux = fakeTmux({ pane: banner })

@@ -1,4 +1,4 @@
-// The router's side of `tg-bridge setup --pair` (plan 0e, inventory B). The Telegram adapter consumes the code (see
+// The router's side of `stolik setup --pair` (plan 0e, inventory B). The Telegram adapter consumes the code (see
 // brain/pairing.ts) and reports the sender here. Setup asks with the `pair` ctl command and waits; the owner confirms
 // with `pair_confirm`, and only then does the sender become the owner. Nothing is written to the config here: setup
 // writes it after the confirmation.
@@ -9,9 +9,9 @@ export type PairCandidate = { userId: string; name: string; username: string | n
 export type PairResult = { ok: true; candidate: PairCandidate } | { ok: false; error: string }
 
 const FAILED: Partial<Record<Verdict, string>> = {
-  expired: 'the pairing code expired: run tg-bridge setup --pair again',
-  locked: 'too many wrong codes: the pairing is locked; run tg-bridge setup --pair again',
-  closed: 'no pairing code is active: run tg-bridge setup --pair',
+  expired: 'the pairing code expired: run stolik setup --pair again',
+  locked: 'too many wrong codes: the pairing is locked; run stolik setup --pair again',
+  closed: 'no pairing code is active: run stolik setup --pair',
 }
 
 export class PairingControl {

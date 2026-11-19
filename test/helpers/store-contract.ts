@@ -23,7 +23,7 @@ export function sandboxPaths(prefix: string): { root: string; paths: StorePaths;
   return { root, paths, cleanup: () => rmSync(root, { recursive: true, force: true }) }
 }
 
-const TOPIC_A: TopicRec = { threadId: tgThread(101), name: 'tg-bridge', project: 'tg-bridge', cwd: '/p/tg-bridge', sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null }
+const TOPIC_A: TopicRec = { threadId: tgThread(101), name: 'stolik', project: 'stolik', cwd: '/p/stolik', sessionKey: null, backendSessionId: null, state: 'open', endedAt: null, deleteAt: null }
 const TOPIC_B: TopicRec = {
   threadId: tgThread(7), name: 'old', project: 'proga', cwd: null, sessionKey: 'cwd:/p/proga', backendSessionId: '6d727728-f50d-46d9-83b5-b3e4f9e5a0a8',
   state: 'closed', endedAt: 1_700_000_000_000, deleteAt: 1_700_086_400_000,

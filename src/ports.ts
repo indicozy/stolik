@@ -118,13 +118,13 @@ export interface MlPort {
 // ---------- Storage ----------
 
 // What the router keeps between runs: the message map, the lock flag, the boot id, the group id and the topics
-// (SQLite, `tg-bridge.db`), and the notes inbox, attachments and Telegram inbox folder (files). SqliteStore implements
+// (SQLite, `stolik.db`), and the notes inbox, attachments and Telegram inbox folder (files). SqliteStore implements
 // it (src/adapters/store-sqlite.ts); JsonStore (store-json.ts) is the file-only version kept for tests and legacy reads.
 export interface StorePort {
   // The message map as JSON text, or '' when none is saved.
   readMsgMap(): string
   writeMsgMap(json: string): void
-  // The router lock (`tg-bridge-ctl lock`): survives a restart.
+  // The router lock (`stolik-ctl lock`): survives a restart.
   isLocked(): boolean
   setLocked(on: boolean): void
   // The model `/model` set for new sessions the bot starts, or null when none is set (the config value or Claude Code's
@@ -267,7 +267,7 @@ export interface Audit {
 
 // ---------- Database (SQLite, plan S9) ----------
 
-// Records for the tables of `tg-bridge.db`. Only the fields the store keeps; the Session type stays in the brain.
+// Records for the tables of `stolik.db`. Only the fields the store keeps; the Session type stays in the brain.
 export type SessionRecord = {
   key: SessionKey
   name: string
@@ -367,7 +367,7 @@ export type AddonInfo = {
 
 // An installed addon that declares a prefix word or a command, for the "comes from the X addon, which is off" notice.
 export type DeclaringAddon = { name: string; enabled: boolean; running: boolean; status: string }
-// A built-in addon (shipped with tg-bridge): its declared access and requirements, and whether the owner chose it before.
+// A built-in addon (shipped with stolik): its declared access and requirements, and whether the owner chose it before.
 export type BuiltinAddon = {
   name: string
   version: string
@@ -399,7 +399,7 @@ export interface AddonsPort {
   list(): AddonInfo[]
   // The installed addon that declares `word` as a prefix or a command, enabled or not; null when none does.
   declaring?(kind: 'prefix' | 'command', word: string): DeclaringAddon | null
-  // The built-in addons (shipped with tg-bridge), in name order.
+  // The built-in addons (shipped with stolik), in name order.
   builtins?(): BuiltinAddon[]
   // The one-time built-ins offer: whether it was made, and marking it made (kept in the store).
   builtinsOffered?(): boolean

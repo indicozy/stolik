@@ -1,6 +1,6 @@
-# Install tg-bridge
+# Install stolik
 
-tg-bridge runs a router in your logon session. It talks to Telegram and to Claude Code sessions through tmux. The
+stolik runs a router in your logon session. It talks to Telegram and to Claude Code sessions through tmux. The
 Claude Code side is a plugin (`plugin/`) that loads a channel server and hooks.
 
 You need: Node 22.13 or newer, tmux, Claude Code, and a bot token from @BotFather.
@@ -9,10 +9,10 @@ Plan and design: `docs/plan-v3.md` (P3, P4, P5), `docs/design-v3.md` (§5, §6.2
 
 ## Linux
 
-`./install.sh` runs steps 1 and 2 (`npm ci`, `npm run build`, then `tg-bridge setup`) and prints the rest. It does not
+`./install.sh` runs steps 1 and 2 (`npm ci`, `npm run build`, then `stolik setup`) and prints the rest. It does not
 register an MCP server or touch `~/.claude/settings.json`; the plugin in step 5 does the Claude side.
 
-1. Install the package. The npm way, which puts the `stolik` command (and the `tg-bridge` alias) on your PATH:
+1. Install the package. The npm way, which puts the `stolik` command (and the `stolik` alias) on your PATH:
 
    ```sh
    npm install -g stolik
@@ -31,21 +31,21 @@ register an MCP server or touch `~/.claude/settings.json`; the plugin in step 5 
 
 2. Run setup. It asks for the bot token (hidden), then pairs the bot with your Telegram account. Setup prints a
    six-digit code. Send it to the bot in a private chat (not a group). The code works for 5 minutes and 5 tries.
-   Setup then shows the account that sent it and asks you to confirm with `y`. It writes `~/.config/tg-bridge.env`
-   (chmod 600, with `TG_BRIDGE_TOKEN`; `TG_CHAT` is set to the owner's id when it is missing or the owner changes) and
-   `~/.config/tg-bridge/config.json` (the owner goes to `chat.telegram.ownerUserId`), prints the group and plugin
+   Setup then shows the account that sent it and asks you to confirm with `y`. It writes `~/.config/stolik.env`
+   (chmod 600, with `STOLIK_TOKEN`; `TG_CHAT` is set to the owner's id when it is missing or the owner changes) and
+   `~/.config/stolik/config.json` (the owner goes to `chat.telegram.ownerUserId`), prints the group and plugin
    steps, and offers the optional ML worker (see below):
 
    ```sh
-   tg-bridge setup
+   stolik setup
    ```
 
-   An install that already has an owner is not asked again. Run `tg-bridge setup --pair` to pair again.
-   `tg-bridge setup --owner-id <n>` sets the owner without pairing, for scripts and tests. `--chat telegram` is the
+   An install that already has an owner is not asked again. Run `stolik setup --pair` to pair again.
+   `stolik setup --owner-id <n>` sets the owner without pairing, for scripts and tests. `--chat telegram` is the
    default. `--chat discord` is not available yet.
 
    The router can keep running during pairing. Setup asks it to listen for the code. Until the owner pairs, the
-   router answers nobody, and `tg-bridge doctor` reports "not paired yet".
+   router answers nobody, and `stolik doctor` reports "not paired yet".
 
 3. Group: create a private supergroup, turn Topics on, add the bot as admin with "Manage topics" and "Delete
    messages", then send `/bind` in the group. The router checks that the sender is you.
@@ -54,9 +54,9 @@ register an MCP server or touch `~/.claude/settings.json`; the plugin in step 5 
    is already running, `--start` restarts it so the new definition applies.
 
    ```sh
-   tg-bridge service install --start
-   tg-bridge service status
-   journalctl --user -u tg-bridge -f
+   stolik service install --start
+   stolik service status
+   journalctl --user -u stolik -f
    ```
 
    The unit uses `KillMode=process`, so restarting the router leaves the tmux server and the Claude Code sessions
@@ -65,14 +65,14 @@ register an MCP server or touch `~/.claude/settings.json`; the plugin in step 5 
 5. Plugin, inside Claude Code (run once):
 
    ```
-   /plugin marketplace add ~/Documents/projects/tg-bridge/plugin
-   /plugin install tg-bridge@indicozy
+   /plugin marketplace add ~/Documents/projects/stolik/plugin
+   /plugin install stolik@indicozy
    ```
 
-   Start Claude with the channel on: `claude --dangerously-load-development-channels plugin:tg-bridge@indicozy`.
-   Or use `TG_BRIDGE_PLUGIN=1 tg-claude`, which adds the same flag. Without `TG_BRIDGE_PLUGIN=1`, `tg-claude` expects a
-   user-level MCP server named `tg-bridge`, which nothing creates now.
-   With the global install, the plugin folder is `$(npm root -g)/stolik/plugin`; `tg-bridge setup` prints the exact path.
+   Start Claude with the channel on: `claude --dangerously-load-development-channels plugin:stolik@indicozy`.
+   Or use `STOLIK_PLUGIN=1 tg-claude`, which adds the same flag. Without `STOLIK_PLUGIN=1`, `tg-claude` expects a
+   user-level MCP server named `stolik`, which nothing creates now.
+   With the global install, the plugin folder is `$(npm root -g)/stolik/plugin`; `stolik setup` prints the exact path.
 
 Idle and lock detection use logind (`loginctl`). For X11 without logind, set `"presence": "x11"` in `config.json`.
 
@@ -82,7 +82,7 @@ The ML worker runs faster-whisper (voice notes) and a local Qwen3-4B (voice clea
 and loads each model on first use; models download on first use and unload after 10 minutes idle. Without it, the
 voice, voice-cleanup and digest addons stay off.
 
-`tg-bridge setup` asks at step 5 (default no). If you say yes, it prints the build environment and the exact commands,
+`stolik setup` asks at step 5 (default no). If you say yes, it prints the build environment and the exact commands,
 asks again, then runs them. An existing `ml/.venv` is reused, never removed. A folder at that path with no
 `bin/python` is refused: move it aside and run setup again.
 
@@ -122,9 +122,9 @@ ml/.venv/bin/python -m unittest discover -s ml -p 'test_*.py'
 Nothing here has run on a Mac yet. The parsers are unit-tested with fixture output only; see `src/adapters/platform/macos.ts`.
 
 1. `brew install tmux node`, then the same clone, build and `npm link` as on Linux.
-2. `tg-bridge setup`, then the group and plugin steps above.
-3. `tg-bridge service install --start` writes `~/Library/LaunchAgents/com.tg-bridge.router.plist` and loads it
-   with `launchctl bootstrap`. The log is `~/Library/Logs/tg-bridge.log`.
+2. `stolik setup`, then the group and plugin steps above.
+3. `stolik service install --start` writes `~/Library/LaunchAgents/com.stolik.router.plist` and loads it
+   with `launchctl bootstrap`. The log is `~/Library/Logs/stolik.log`.
 4. Idle time comes from `ioreg` (HIDIdleTime). Lock detection is best effort. There is no CPU pinning on macOS.
 
 ## Windows (WSL2)
@@ -134,7 +134,7 @@ The router, tmux and Claude Code run inside WSL. Windows itself only hosts the t
 1. `wsl --install -d Ubuntu`, then open the Ubuntu shell.
 2. Inside WSL, install tmux, Node 22.13 or newer and Claude Code (the Linux build). Then follow the Linux steps.
 3. Systemd: add `[boot]` with `systemd=true` to `/etc/wsl.conf`, run `wsl --shutdown` from Windows, and reopen Ubuntu.
-   `tg-bridge service install --start` then works as on Linux.
+   `stolik service install --start` then works as on Linux.
 4. Without systemd, start the router from a Windows logon task that runs
    `wsl.exe -d Ubuntu -- node <repo>/dist/router/main.js`. This path is unverified.
 
@@ -143,18 +143,18 @@ Telegram gets every reply. This is expected for now.
 
 ## Configuration
 
-Secrets: `~/.config/tg-bridge.env`, key `TG_BRIDGE_TOKEN` (chmod 600). Everything else: `~/.config/tg-bridge/config.json`
+Secrets: `~/.config/stolik.env`, key `STOLIK_TOKEN` (chmod 600). Everything else: `~/.config/stolik/config.json`
 (`$XDG_CONFIG_HOME` is respected). Unknown keys make the router refuse to start. A missing file gives the defaults.
 
 A trial instance beside the old bot sets two environment variables, so it uses its own secrets file and its own router socket:
 
-- `TG_BRIDGE_ENV_FILE`: the secrets file, absolute or starting with `~/`. Default `~/.config/tg-bridge.env`. It is read by the router, the notify path and `tg-bridge setup`.
-- `TG_BRIDGE_SOCKET`: the router socket. It wins over `socketPath` in config.json. Without it (and without
-  `socketPath`) the default is `$XDG_RUNTIME_DIR/tg-bridge.sock` (`/run/user/<uid>/tg-bridge.sock` on Linux). On macOS
-  without `XDG_RUNTIME_DIR` it is `$XDG_STATE_HOME/tg-bridge-v3/router.sock` (`~/.local/state` by default), or
-  `$TMPDIR/tg-bridge-<uid>.sock` when that path is longer than 100 bytes.
+- `STOLIK_ENV_FILE`: the secrets file, absolute or starting with `~/`. Default `~/.config/stolik.env`. It is read by the router, the notify path and `stolik setup`.
+- `STOLIK_SOCKET`: the router socket. It wins over `socketPath` in config.json. Without it (and without
+  `socketPath`) the default is `$XDG_RUNTIME_DIR/stolik.sock` (`/run/user/<uid>/stolik.sock` on Linux). On macOS
+  without `XDG_RUNTIME_DIR` it is `$XDG_STATE_HOME/stolik/router.sock` (`~/.local/state` by default), or
+  `$TMPDIR/stolik-<uid>.sock` when that path is longer than 100 bytes.
 
-For example: `TG_BRIDGE_ENV_FILE=~/.config/tg-bridge-v3.env TG_BRIDGE_SOCKET=$XDG_RUNTIME_DIR/tg-bridge-v3.sock`.
+For example: `STOLIK_ENV_FILE=~/.config/stolik.env STOLIK_SOCKET=$XDG_RUNTIME_DIR/stolik.sock`.
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -181,32 +181,32 @@ messages and messages made by addons never get it.
 
 ## Doctor and logs
 
-`tg-bridge doctor [--json]` checks the install: node version, claude and tmux on PATH (and on the PATH of the router's unit),
+`stolik doctor [--json]` checks the install: node version, claude and tmux on PATH (and on the PATH of the router's unit),
 `claude --version`, the socket path, the secrets file (mode 600; its contents are never printed), the config, free disk
 space, the database integrity, the addon manifests and their requirements, the ML venv and the GPU, and, with the token,
 the bot and the group (a forum, and the bot an admin with topic, delete and pin rights). It exits 1 when a check fails;
 warnings do not fail it. The router runs the checks that need no network at start and posts the problems to the Logs topic.
 Before the owner pairs, doctor reports `not paired yet`.
 
-Run it for a trial instance with the instance's secrets file: `TG_BRIDGE_ENV_FILE=~/.config/tg-bridge-v3.env tg-bridge doctor`.
+Run it for a trial instance with the instance's secrets file: `STOLIK_ENV_FILE=~/.config/stolik.env stolik doctor`.
 Without the variable, the doctor checks the default secrets file, as the router would.
 
-`tg-bridge logs [--addon NAME] [--level warn] [--since 10m] [--trace ID] [-f]` prints the router log (`logs/router.jsonl`,
+`stolik logs [--addon NAME] [--level warn] [--since 10m] [--trace ID] [-f]` prints the router log (`logs/router.jsonl`,
 with the audit log), or one addon's log (`logs/addons/NAME.log`), filtered. `-f` keeps printing new lines.
 
-`tg-bridge trace <traceId | telegramMessageId>` prints the timeline of one flow, with the time since its first line. A
+`stolik trace <traceId | telegramMessageId>` prints the timeline of one flow, with the time since its first line. A
 number is looked up first as a Telegram message id (kept 7 days). In Telegram, reply to any message with `/trace` for the
-same timeline, short form. Files are in `~/.local/state/tg-bridge-v3/logs/` (10 MB per file, five kept).
+same timeline, short form. Files are in `~/.local/state/stolik/logs/` (10 MB per file, five kept).
 
 ## Service commands
 
 | Command | Does |
 |---|---|
-| `tg-bridge service install [--name N] [--start]` | Writes the unit (`N` defaults to `tg-bridge`) or the LaunchAgent. With `--start` it loads it, or restarts it if it runs |
-| `tg-bridge service uninstall [--name N] [--stop]` | Removes the file and disables the unit (it does not start at logon). `--stop` also stops it now |
-| `tg-bridge service status [--name N]` | Shows the file and the service state (read only) |
+| `stolik service install [--name N] [--start]` | Writes the unit (`N` defaults to `stolik`) or the LaunchAgent. With `--start` it loads it, or restarts it if it runs |
+| `stolik service uninstall [--name N] [--stop]` | Removes the file and disables the unit (it does not start at logon). `--stop` also stops it now |
+| `stolik service status [--name N]` | Shows the file and the service state (read only) |
 
-To keep an old unit next to a new one, install the new one under another name, e.g. `--name tg-bridge-v3`.
+To keep an old unit next to a new one, install the new one under another name, e.g. `--name stolik`.
 
 ## Troubleshooting
 
@@ -217,17 +217,17 @@ To keep an old unit next to a new one, install the new one under another name, e
 - **`/bind` does nothing.** Send it in the supergroup, not in the bot's private chat. The bot must be admin with
   "Manage topics", and the sender must be the paired owner (`chat.telegram.ownerUserId`). After a successful bind, the
   group id is stored in the router's database and `chat.telegram.homeId` in `config.json` is not changed.
-- **Exit 75: "another tg-bridge router is running".** Another router holds the lock or answers on the socket. Stop it
-  (`systemctl --user stop tg-bridge`, or the other instance), then start this one. systemd does not retry exit 75.
+- **Exit 75: "another stolik router is running".** Another router holds the lock or answers on the socket. Stop it
+  (`systemctl --user stop stolik`, or the other instance), then start this one. systemd does not retry exit 75.
 - **Exit 78: "config error".** `config.json` or the env file is wrong. The router's message names the key or file.
-  Fix it, then `systemctl --user start tg-bridge` (systemd does not retry exit 78).
-- **`no node found` from the plugin.** Run `tg-bridge setup` again so `nodePath` is written, or put `node` on PATH.
+  Fix it, then `systemctl --user start stolik` (systemd does not retry exit 78).
+- **`no node found` from the plugin.** Run `stolik setup` again so `nodePath` is written, or put `node` on PATH.
 - **`dist/router/main.js is missing`.** Run `npm run build` in the repo, then `service install` again.
-- **Plugin not found.** Run `/plugin install tg-bridge@indicozy` again after the marketplace add. The plugin's paths
+- **Plugin not found.** Run `/plugin install stolik@indicozy` again after the marketplace add. The plugin's paths
   point at `../dist` and `../bin`, so keep the built repo where it is (not verified from a marketplace cache).
-- **Service fails at start.** `journalctl --user -u tg-bridge -n 100` (Linux) or `~/Library/Logs/tg-bridge.log` (macOS).
-  Run `tg-bridge doctor` first; it names the check that fails.
-- **A session did not start.** The message names a forensics file (`~/.local/state/tg-bridge-v3/forensics/`): the start's
+- **Service fails at start.** `journalctl --user -u stolik -n 100` (Linux) or `~/Library/Logs/stolik.log` (macOS).
+  Run `stolik doctor` first; it names the check that fails.
+- **A session did not start.** The message names a forensics file (`~/.local/state/stolik/forensics/`): the start's
   command line, the environment variable names, the PATH, the pane's last lines and `claude --version`. The same name is in
-  the Logs topic. `tg-bridge logs --level warn --since 1h` shows the surrounding lines.
-- **Something went wrong on one message.** Reply to it with `/trace`, or run `tg-bridge trace <message id>`.
+  the Logs topic. `stolik logs --level warn --since 1h` shows the surrounding lines.
+- **Something went wrong on one message.** Reply to it with `/trace`, or run `stolik trace <message id>`.

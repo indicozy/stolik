@@ -99,7 +99,7 @@ export function tmpDir(label: string): string {
   return mkdtempSync(join(TEST_DIR, `.tmp-${label}-`))
 }
 
-// Records the owner's consent to every user addon in the folder as it is now (what `tg-bridge addon consent` records).
+// Records the owner's consent to every user addon in the folder as it is now (what `stolik addon consent` records).
 export function allowUserAddons(addonsDir: string, settings: AddonSettings): void {
   for (const name of readdirSync(addonsDir)) {
     const r = readManifest(join(addonsDir, name))
@@ -127,7 +127,7 @@ export function writeEchoLike(addonsDir: string, name: string, overrides: Record
     requires: [],
     ...overrides,
   }
-  writeFileSync(join(dir, 'tg-bridge-addon.json'), JSON.stringify(manifest, null, 2))
+  writeFileSync(join(dir, 'stolik-addon.json'), JSON.stringify(manifest, null, 2))
   return dir
 }
 

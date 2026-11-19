@@ -1,4 +1,4 @@
-tg-bridge commands (send them in General):
+stolik commands (send them in General):
 /list: live sessions, and the folders you can start one in
 /to <name> <text>: send to a session, or start one in a trusted folder
 /resume: continue an ended session (live ones are listed too)
@@ -8,7 +8,7 @@ tg-bridge commands (send them in General):
 /addons: list, enable or disable addons
 /away: send everything here
 /here: stop messages until you touch the desktop
-/lock: ignore all messages until unlocked at the desk (tg-bridge-ctl unlock)
+/lock: ignore all messages until unlocked at the desk (stolik-ctl unlock)
 /bind: run once in the group to make it the bot's home (owner only)
 /debug: router status and debug logging (/debug on [minutes], /debug off)
 Reply to any message with /trace to see what the router did with it.

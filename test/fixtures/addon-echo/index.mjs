@@ -3,7 +3,7 @@
 // sleep (never answers), crash (exits), stderr (writes to stderr, then answers), plus the six point ops.
 import { createInterface } from 'node:readline'
 
-const NAME = process.env.TG_BRIDGE_ADDON ?? 'addon-echo'
+const NAME = process.env.STOLIK_ADDON ?? 'addon-echo'
 const out = (s) => process.stdout.write(s)
 const reply = (id, result) => JSON.stringify({ id, result }) + '\n'
 

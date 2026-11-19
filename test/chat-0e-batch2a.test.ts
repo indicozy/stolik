@@ -57,10 +57,10 @@ test('each of the six command sites takes !x as well as /x', () => {
 
 test('help and usage read the sigil and the words of the port', () => {
   const tg = helpText(words(TELEGRAM_CAPABILITIES))
-  assert.match(tg, /^tg-bridge commands \(send them in General\):/)
+  assert.match(tg, /^stolik commands \(send them in General\):/)
   assert.match(tg, /\n\/list: live sessions/)
   const other = helpText({ ...words(TELEGRAM_CAPABILITIES), sigil: '!', lobby: 'server', home: 'server', thread: 'post' })
-  assert.match(other, /^tg-bridge commands \(send them in server\):/)
+  assert.match(other, /^stolik commands \(send them in server\):/)
   assert.match(other, /\n!list: live sessions/)
   assert.match(other, /Posts: one post per folder/)
   assert.equal(usageTo(), 'Usage: /to <name> <text>. <name> is a session name (see /list) or a project folder.')

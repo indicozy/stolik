@@ -1,7 +1,7 @@
-<!-- tg-bridge:start -->
-## Telegram (tg-bridge)
+<!-- stolik:start -->
+## Telegram (stolik)
 
-Message the user via the tg-bridge `reply` tool with `kind: "proactive"` (dropped automatically if
+Message the user via the stolik `reply` tool with `kind: "proactive"` (dropped automatically if
 they're at the desk) when: you've made a decision they'd plausibly want to veto and you're continuing
 anyway; a long task (>10 min) hits a meaningful milestone or finishes; something surprising turned up
 (a failing test that wasn't yours, data loss risk, a cost or quota issue). Don't message for routine
@@ -16,4 +16,4 @@ FYI (no ping); leave it out for answers and finished tasks; "critical" only for 
 something serious, and keep it rare (it always pings).
 
 Use the `close_session` tool only when the user asks you to close or quit yourself: it ends this session and closes its terminal.
-<!-- tg-bridge:end -->
+<!-- stolik:end -->

@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..')
 const LAUNCHER = join(REPO, 'bin', 'tg-claude')
-const CHANNEL_ARGS = ['--dangerously-load-development-channels', 'server:tg-bridge']
+const CHANNEL_ARGS = ['--dangerously-load-development-channels', 'server:stolik']
 
 // The Commands section of `claude --help`, as the real binary prints it (aliases joined with |, wrapped descriptions).
 const HELP = `Usage: claude [options] [command] [prompt]
@@ -56,7 +56,7 @@ function withHelpClaude(opts: { help: string | null }, fn: (run: (args: string[]
 }
 
 const helpCalls = (dir: string): number => (existsSync(join(dir, 'helpcalls')) ? readFileSync(join(dir, 'helpcalls'), 'utf8').split('\n').filter(Boolean).length : 0)
-const cachePath = (dir: string): string => join(dir, '.local', 'state', 'tg-bridge-v3', 'claude-subcommands')
+const cachePath = (dir: string): string => join(dir, '.local', 'state', 'stolik', 'claude-subcommands')
 
 test('tg-claude: a subcommand listed by claude --help passes through unchanged', () => {
   withHelpClaude({ help: HELP }, (run) => {
@@ -107,7 +107,7 @@ test('tg-claude: the parsed names are cached, and a fresh cache is not read from
 
 test('tg-claude: an old cache is refreshed from claude --help', () => {
   withHelpClaude({ help: HELP }, (run, dir) => {
-    mkdirSync(join(dir, '.local', 'state', 'tg-bridge-v3'), { recursive: true })
+    mkdirSync(join(dir, '.local', 'state', 'stolik'), { recursive: true })
     writeFileSync(cachePath(dir), 'stale-name\n')
     const old = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
     utimesSync(cachePath(dir), old, old)
@@ -119,7 +119,7 @@ test('tg-claude: an old cache is refreshed from claude --help', () => {
 
 test('tg-claude: a fresh cache is used even when claude --help would now fail', () => {
   withHelpClaude({ help: null }, (run, dir) => {
-    mkdirSync(join(dir, '.local', 'state', 'tg-bridge-v3'), { recursive: true })
+    mkdirSync(join(dir, '.local', 'state', 'stolik'), { recursive: true })
     writeFileSync(cachePath(dir), 'frobnicate\n')
     assert.deepEqual(run(['frobnicate']), ['frobnicate'])
   })

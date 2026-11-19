@@ -16,11 +16,11 @@ const TOKEN = '123456789:AAHfakeTokenForTestsOnly_abcdefgh'
 // A temp home with the env file and config folder; returns the env for loadConfig and a cleanup.
 function home(files: { env?: string; config?: object }) {
   const h = mkdtempSync(join(tmpdir(), 'tgb-0e-'))
-  const env: NodeJS.ProcessEnv = { TG_BRIDGE_ENV_FILE: join(h, 'bridge.env'), XDG_CONFIG_HOME: join(h, 'xdg') }
+  const env: NodeJS.ProcessEnv = { STOLIK_ENV_FILE: join(h, 'bridge.env'), XDG_CONFIG_HOME: join(h, 'xdg') }
   if (files.env !== undefined) writeFileSync(join(h, 'bridge.env'), files.env)
   if (files.config !== undefined) {
-    mkdirSync(join(h, 'xdg', 'tg-bridge'), { recursive: true })
-    writeFileSync(join(h, 'xdg', 'tg-bridge', 'config.json'), JSON.stringify(files.config))
+    mkdirSync(join(h, 'xdg', 'stolik'), { recursive: true })
+    writeFileSync(join(h, 'xdg', 'stolik', 'config.json'), JSON.stringify(files.config))
   }
   return { h, env, cleanup: () => rmSync(h, { recursive: true, force: true }) }
 }
@@ -29,7 +29,7 @@ function home(files: { env?: string; config?: object }) {
 
 test('live shape: env with token and TG_CHAT, config without a chat section resolves to the same token, owner and chat', () => {
   const t = home({
-    env: `TG_BRIDGE_TOKEN=${TOKEN}\nTG_CHAT=424242\n`,
+    env: `STOLIK_TOKEN=${TOKEN}\nTG_CHAT=424242\n`,
     config: { presence: 'logind', cpuAffinity: '8-19', nice: 19, gpu: { cudaVisibleDevices: '1', cudaDeviceOrder: 'PCI_BUS_ID' }, weeklyLimitPct: 99 },
   })
   try {
@@ -43,7 +43,7 @@ test('live shape: env with token and TG_CHAT, config without a chat section reso
 })
 
 test('back-compat: owner from the top-level ownerUserId; chat section wins over it; TG_CHAT is the chat id', () => {
-  const top = home({ env: `TG_BRIDGE_TOKEN=${TOKEN}\nTG_CHAT=-100555\n`, config: { ownerUserId: '111' } })
+  const top = home({ env: `STOLIK_TOKEN=${TOKEN}\nTG_CHAT=-100555\n`, config: { ownerUserId: '111' } })
   try {
     const cfg = loadConfig(top.env, top.h)
     assert.equal(cfg.ownerUserId, '111')
@@ -51,7 +51,7 @@ test('back-compat: owner from the top-level ownerUserId; chat section wins over 
   } finally {
     top.cleanup()
   }
-  const both = home({ env: `TG_BRIDGE_TOKEN=${TOKEN}\n`, config: { ownerUserId: '111', chat: { telegram: { ownerUserId: '222' } } } })
+  const both = home({ env: `STOLIK_TOKEN=${TOKEN}\n`, config: { ownerUserId: '111', chat: { telegram: { ownerUserId: '222' } } } })
   try {
     const cfg = loadConfig(both.env, both.h)
     assert.equal(cfg.ownerUserId, '222')
@@ -62,7 +62,7 @@ test('back-compat: owner from the top-level ownerUserId; chat section wins over 
 })
 
 test('back-compat: notify TG_CHAT is the last owner fallback, as before', () => {
-  const t = home({ env: `TG_BRIDGE_TOKEN=${TOKEN}\n`, config: {} })
+  const t = home({ env: `STOLIK_TOKEN=${TOKEN}\n`, config: {} })
   try {
     mkdirSync(join(t.h, '.config'), { recursive: true })
     writeFileSync(join(t.h, '.config', 'telegram-notify.env'), 'TG_CHAT=777\n')
@@ -75,7 +75,7 @@ test('back-compat: notify TG_CHAT is the last owner fallback, as before', () => 
 })
 
 test('config: a missing owner is pairing-only, not an error; a missing token is still one', () => {
-  const none = home({ env: `TG_BRIDGE_TOKEN=${TOKEN}\n` })
+  const none = home({ env: `STOLIK_TOKEN=${TOKEN}\n` })
   try {
     assert.equal(loadConfig(none.env, none.h).ownerUserId, null)
   } finally {
@@ -83,7 +83,7 @@ test('config: a missing owner is pairing-only, not an error; a missing token is 
   }
   const noToken = home({ env: 'TG_CHAT=1\n' })
   try {
-    assert.throws(() => loadConfig(noToken.env, noToken.h), (e: unknown) => e instanceof ConfigError && /TG_BRIDGE_TOKEN missing/.test((e as Error).message))
+    assert.throws(() => loadConfig(noToken.env, noToken.h), (e: unknown) => e instanceof ConfigError && /STOLIK_TOKEN missing/.test((e as Error).message))
   } finally {
     noToken.cleanup()
   }
@@ -99,7 +99,7 @@ test('config: chat section is accepted by the strict schema; unknown keys and un
 })
 
 test('config: chat.app discord needs DISCORD_BOT_TOKEN (a ConfigError without it) and reads the discord section', () => {
-  const none = home({ env: `TG_BRIDGE_TOKEN=${TOKEN}\n`, config: { chat: { app: 'discord' } } })
+  const none = home({ env: `STOLIK_TOKEN=${TOKEN}\n`, config: { chat: { app: 'discord' } } })
   try {
     assert.throws(() => loadConfig(none.env, none.h), (e: unknown) => e instanceof ConfigError && /DISCORD_BOT_TOKEN missing/.test((e as Error).message))
   } finally {
@@ -216,7 +216,7 @@ test('PairingControl: wait without an active code answers at once with the way t
   try {
     const r = await new PairingControl(dir, () => {}).wait()
     assert.equal(r.ok, false)
-    assert.match((r as { error: string }).error, /tg-bridge setup --pair/)
+    assert.match((r as { error: string }).error, /stolik setup --pair/)
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
@@ -297,13 +297,13 @@ test('setup, an expired code: the error is shown, exit 1, no owner saved', async
 })
 
 test('setup, an existing owner (top-level or TG_CHAT) is never asked again; --pair starts a new pairing', async () => {
-  const t = home({ env: `TG_BRIDGE_TOKEN=${TOKEN}\nTG_CHAT=555\n`, config: {} })
+  const t = home({ env: `STOLIK_TOKEN=${TOKEN}\nTG_CHAT=555\n`, config: {} })
   try {
     const f = fakeDriver({ ok: true, candidate: { userId: '9', name: 'New', username: null } })
     const kept = run(t.h, [''], { pairing: f.driver })
     assert.equal(await kept.run(), 0)
     assert.equal(f.begun(), 0, 'no code is made for a paired install')
-    assert.ok(kept.out.some((l) => /owner already paired \(id 555\)\. Run tg-bridge setup --pair/.test(l)))
+    assert.ok(kept.out.some((l) => /owner already paired \(id 555\)\. Run stolik setup --pair/.test(l)))
     assert.equal(kept.asked.length, 1, 'only the token is asked')
 
     const again = run(t.h, ['', 'y'], { pairing: f.driver, options: { pair: true } })

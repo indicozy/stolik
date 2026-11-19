@@ -16,9 +16,9 @@ process.env.XDG_CONFIG_HOME = join(root, 'config')
 process.env.XDG_CACHE_HOME = join(root, 'cache')
 process.env.XDG_RUNTIME_DIR = join(root, 'runtime')
 // A developer's shell may point these at a trial instance; no test should inherit that.
-delete process.env.TG_BRIDGE_SOCKET
-delete process.env.TG_BRIDGE_ENV_FILE
-delete process.env.TG_BRIDGE_CHANNEL
+delete process.env.STOLIK_SOCKET
+delete process.env.STOLIK_ENV_FILE
+delete process.env.STOLIK_CHANNEL
 
 // The folder this file made, for tests that need its root (for example the migration test's default target).
 export const ISOLATED_ROOT = root

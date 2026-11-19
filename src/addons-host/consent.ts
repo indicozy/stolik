@@ -11,7 +11,7 @@ const ACCESS_WORDS: Record<AccessField, string> = {
   'sessions.read': 'see the names, folders and recent activity of your agent sessions and trusted folders',
   'messages.send': 'send messages and buttons to your General chat',
   'messages.gate': 'hold messages to a session before they are delivered, and read back and release or drop the ones it held',
-  'sessions.spawn': 'list the folders tg-bridge can start in, and start a full agent session in one',
+  'sessions.spawn': 'list the folders stolik can start in, and start a full agent session in one',
   'usage.record': 'record what its runs cost, and read the weekly quota status',
   'usage.read': 'read what the mode runs cost today and this week',
 }

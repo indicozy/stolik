@@ -120,7 +120,7 @@ export async function buildRouter(cfg: Config): Promise<Router> {
   // old groupId. The store's id still wins.
   const startGroupId = tg.chat?.telegram?.homeId ? Number(tg.chat.telegram.homeId.slice(3)) : tg.groupId
   const startHome: ChatId | null = dcCfg ? (dcCfg.homeId as ChatId | null) : fromDbChat(startGroupId)
-  // The E2E driver is on only when the router runs with TG_BRIDGE_E2E=1 (docs/e2e.md). Off, nothing below changes.
+  // The E2E driver is on only when the router runs with STOLIK_E2E=1 (docs/e2e.md). Off, nothing below changes.
   const e2e = e2eEnabled() ? new E2e() : null
   // The store (SQLite, the v3 state folder) holds the structured state; the notes inbox and attachments stay files.
   const store = new SqliteStore({ stateDir: STATE_DIR, inboxDir: INBOX_DIR, notesDir: NOTES_DIR })
@@ -145,7 +145,7 @@ export async function buildRouter(cfg: Config): Promise<Router> {
   // The Logs topic posts through the traced decorator; its own sends are quiet, so a failure there is not reported again.
   const logsTopic = new LogsTopic({ chat, store: logThread, enabled: tg.logsTopic, groupId: groupIdNow, clock: systemClock })
   configureLog({ level: tg.logLevel, secrets, sink: (r) => logsTopic.report(r) })
-  if (e2e) log('e2e driver enabled (TG_BRIDGE_E2E=1): the router socket accepts injected messages and taps')
+  if (e2e) log('e2e driver enabled (STOLIK_E2E=1): the router socket accepts injected messages and taps')
   const machine = tg
   const configDir = tgConfigDir()
   // Quota and usage (plan 2.8): the quota-gate reading is cached; mode runs and /usage use the same bridge.

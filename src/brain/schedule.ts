@@ -1,5 +1,5 @@
 // Digest schedule (plan 3.4, design §4.9): when a digest is made. Pure: local-time run times, the period each run covers,
-// and the catch-up list for runs missed while tg-bridge was down. Run times are built from local calendar parts, so 04:00
+// and the catch-up list for runs missed while stolik was down. Run times are built from local calendar parts, so 04:00
 // stays 04:00 across DST changes.
 
 export type Schedule = 'request' | 'daily' | 'weekly'

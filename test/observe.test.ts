@@ -205,7 +205,7 @@ test('debug report: every area, the level and the queue depths', () => {
     quota: { weeklyUsedPct: 40, aheadBy: 0 },
     logsTopic: 'on',
   })
-  assert.match(text, /^tg-bridge 0\.1\.0 \(abc1234\), up 1h 5m/)
+  assert.match(text, /^stolik 0\.1\.0 \(abc1234\), up 1h 5m/)
   assert.match(text, /log level: debug \(debug on until \d\d:\d\d\)/)
   assert.match(text, /shop: connected, last activity 2m ago/)
   assert.match(text, /tmux tg-shop/)

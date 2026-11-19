@@ -71,7 +71,7 @@ export function offerText(list: readonly BuiltinAddon[], lobby: string): string 
     return `- ${b.name}: ${what}. ${access.length > 0 ? 'Access: ' + access.join('; ') : 'Access: its own requests only'}.`
   })
   return [
-    'tg-bridge has built-in addons. Each one is off until you turn it on:',
+    'stolik has built-in addons. Each one is off until you turn it on:',
     ...lines,
     'Choose in /addons turns on only the ones you pick.',
   ].join('\n')

@@ -7,7 +7,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { savePrefixNote, type NoteFiles } from './handle.ts'
 
-const notesDir = process.env.TG_BRIDGE_NOTES_DIR || join(homedir(), 'Documents', 'notes')
+const notesDir = process.env.STOLIK_NOTES_DIR || join(homedir(), 'Documents', 'notes')
 const inbox = join(notesDir, 'inbox.md')
 
 const files: NoteFiles = {

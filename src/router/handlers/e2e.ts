@@ -1,7 +1,7 @@
 // Router side of the E2E driver (docs/e2e.md). The socket message is {t:'e2e', op, reqId?, ...}; the reply is
 // {t:'e2e_result', reqId?, ok, ...}. Injected messages and taps go through the same handlers as Telegram's, so the rules
 // (lock, rate limit, prefixes, routing, topics, approvals) apply to them unchanged. Refused unless the router was
-// started with TG_BRIDGE_E2E=1 (router.e2e is null otherwise).
+// started with STOLIK_E2E=1 (router.e2e is null otherwise).
 import { basename, isAbsolute } from 'node:path'
 import type { ButtonPress, ChatRef, Inbound } from '../../brain/chat-types.ts'
 import type { ChatId, MessageId, ThreadId, UserId } from '../../brain/chat-types.ts'
@@ -14,7 +14,7 @@ import type { Router } from '../core.ts'
 import { onInbound } from './inbound.ts'
 import { onCallback } from './callbacks.ts'
 
-export const E2E_DISABLED_TEXT = 'e2e disabled: the router must run with TG_BRIDGE_E2E=1'
+export const E2E_DISABLED_TEXT = 'e2e disabled: the router must run with STOLIK_E2E=1'
 // The extensions a voice file may have (the transcriber reads these).
 const VOICE_EXT = /\.(ogg|oga|opus|wav|mp3|m4a)$/i
 

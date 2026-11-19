@@ -112,8 +112,8 @@ test('the built-in folder is read too, and a built-in wins over a user folder of
   mkdirSync(join(userDir, 'addon-bridge'), { recursive: true })
   const manifest = (version: string) =>
     JSON.stringify({ name: 'addon-bridge', version, protocol: 2, command: ['node', 'x.mjs'], provides: [{ point: 'reply' }], access: [], requires: [] })
-  writeFileSync(join(builtinDir, 'addon-bridge', 'tg-bridge-addon.json'), manifest('1.0.0'))
-  writeFileSync(join(userDir, 'addon-bridge', 'tg-bridge-addon.json'), manifest('9.9.9'))
+  writeFileSync(join(builtinDir, 'addon-bridge', 'stolik-addon.json'), manifest('1.0.0'))
+  writeFileSync(join(userDir, 'addon-bridge', 'stolik-addon.json'), manifest('9.9.9'))
   const host = new AddonHost({
     addonsDir: userDir,
     builtinDir,

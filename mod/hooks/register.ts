@@ -1,6 +1,6 @@
 import type { Register } from 'claude-code'
 
-// Node binary the engine runs the tg-bridge PermissionRequest hook with (dist/hook.js, from `npm run build`).
+// Node binary the engine runs the stolik PermissionRequest hook with (dist/hook.js, from `npm run build`).
 const NODE = '/home/user/.asdf/installs/nodejs/24.5.0/bin/node'
 const DISMISSED = 'Dismissed from Telegram.'
 // The router is told the terminal answered within this time; past it the race goes on without waiting.

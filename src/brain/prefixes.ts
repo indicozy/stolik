@@ -45,7 +45,7 @@ const WORD_RE = new RegExp(
 )
 
 // Splits "<name><sep><body>" for to and new. The separator is the first colon or comma, or a dash with spaces around
-// it (so "tg-bridge: hi" and "tg-bridge - hi" both name tg-bridge). Null when there is no separator or no clean name.
+// it (so "stolik: hi" and "stolik - hi" both name stolik). Null when there is no separator or no clean name.
 function splitName(rest: string): { name?: string; body: string } | null {
   if (!/^(\s|[:,])/.test(rest)) return null
   const sep = /[:,]|\s[-–—]+(?=\s|$)/.exec(rest)
@@ -97,7 +97,7 @@ export function parseGeneral(text: string): Prefix | null {
 
 export type NameMatch = { match: string } | { ambiguous: string[] } | null
 
-// Case, spaces, dashes and underscores do not count. "Tg Bridge", "tg_bridge" and "tg-bridge" are the same name.
+// Case, spaces, dashes and underscores do not count. "stolik", "stolik" and "stolik" are the same name.
 function normName(s: string): string {
   return s.toLowerCase().replace(/[\s_\-–—]+/g, '')
 }

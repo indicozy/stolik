@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# tg-claude: claude with the tg-bridge channel enabled. Installed as `alias claude=tg-claude`.
+# tg-claude: claude with the stolik channel enabled. Installed as `alias claude=tg-claude`.
 # Non-interactive and management subcommands run the plain claude binary unchanged.
 set -euo pipefail
 
 # Long-lived OAuth token (from `claude setup-token`) shared by every session, so concurrent sessions no longer refresh
 # and rotate the one login in ~/.claude/.credentials.json (a refresh race logged sessions out). Only
 # CLAUDE_CODE_OAUTH_TOKEN is read from the file; it is never put on a command line. An already set value wins.
-TG_CLAUDE_TOKEN_FILE="${TG_CLAUDE_TOKEN_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/tg-bridge/claude.env}"
+TG_CLAUDE_TOKEN_FILE="${TG_CLAUDE_TOKEN_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/stolik/claude.env}"
 if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -r "$TG_CLAUDE_TOKEN_FILE" ]; then
   tok="$(sed -n 's/^CLAUDE_CODE_OAUTH_TOKEN=//p' "$TG_CLAUDE_TOKEN_FILE" | head -n 1)"
   if [ -n "$tok" ]; then export CLAUDE_CODE_OAUTH_TOKEN="$tok"; fi
@@ -19,7 +19,7 @@ CLAUDE_SUBCOMMANDS_FALLBACK="mcp config plugin plugins update upgrade doctor ins
 
 # The subcommand names, one per line: the fallback list plus the cached names from `claude --help`. Never fails.
 claude_subcommands() {
-  local cache="${XDG_STATE_HOME:-$HOME/.local/state}/tg-bridge-v3/claude-subcommands" names help
+  local cache="${XDG_STATE_HOME:-$HOME/.local/state}/stolik/claude-subcommands" names help
   # One attempt a day: a failed or empty read is cached too, so an unreadable help does not slow every launch.
   if [ ! -e "$cache" ] || [ -n "$(find "$cache" -mmin +1440 2>/dev/null)" ]; then
     help="$(timeout 10 claude --help 2>/dev/null || true)"
@@ -49,23 +49,23 @@ if [ "$passthrough" = 1 ]; then
 fi
 
 # Self channel: a router on a non-default socket (a trial instance, or a session the router spawned for one) must
-# register with its own channel server, not with the user-scope "tg-bridge" one. Chosen only when TG_BRIDGE_CHANNEL=self
+# register with its own channel server, not with the user-scope "stolik" one. Chosen only when STOLIK_CHANNEL=self
 # (the router sets it on every session it starts with a non-default socket; see src/adapters/tmux.ts). The channel server
 # is this checkout's dist/channel.js, started through bin/tg-plugin-node (nodePath from config.json, then node on PATH),
-# and claude is given only that server (--strict-mcp-config) so the old "tg-bridge" server is not loaded.
-sock="${TG_BRIDGE_SOCKET:-}"
-if [ "${TG_BRIDGE_CHANNEL:-}" = self ]; then
+# and claude is given only that server (--strict-mcp-config) so the old "stolik" server is not loaded.
+sock="${STOLIK_SOCKET:-}"
+if [ "${STOLIK_CHANNEL:-}" = self ]; then
   repo="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
   json_str() { local s=${1//\\/\\\\}; s=${s//\"/\\\"}; printf '"%s"' "$s"; }
   env_json="\"MCP_PROTOCOL_NEGOTIATION\":\"legacy\""
-  if [ -n "$sock" ]; then env_json="\"TG_BRIDGE_SOCKET\":$(json_str "$sock"),$env_json"; fi
-  mcp_json="{\"mcpServers\":{\"tg-bridge-v3\":{\"command\":$(json_str "$repo/bin/tg-plugin-node"),\"args\":[$(json_str "$repo/dist/channel.js")],\"env\":{$env_json}}}}"
-  exec claude --mcp-config "$mcp_json" --strict-mcp-config --dangerously-load-development-channels server:tg-bridge-v3 "$@"
+  if [ -n "$sock" ]; then env_json="\"STOLIK_SOCKET\":$(json_str "$sock"),$env_json"; fi
+  mcp_json="{\"mcpServers\":{\"stolik\":{\"command\":$(json_str "$repo/bin/tg-plugin-node"),\"args\":[$(json_str "$repo/dist/channel.js")],\"env\":{$env_json}}}}"
+  exec claude --mcp-config "$mcp_json" --strict-mcp-config --dangerously-load-development-channels server:stolik "$@"
 fi
 
-# Default: the channel server registered by install.sh (user-scope MCP "tg-bridge"). TG_BRIDGE_PLUGIN=1 loads the
+# Default: the channel server registered by install.sh (user-scope MCP "stolik"). STOLIK_PLUGIN=1 loads the
 # Claude Code plugin in plugin/ instead (local marketplace "indicozy"; install it once with /plugin install).
-if [ "${TG_BRIDGE_PLUGIN:-0}" = 1 ]; then
-  exec claude --dangerously-load-development-channels plugin:tg-bridge@indicozy "$@"
+if [ "${STOLIK_PLUGIN:-0}" = 1 ]; then
+  exec claude --dangerously-load-development-channels plugin:stolik@indicozy "$@"
 fi
-exec claude --dangerously-load-development-channels server:tg-bridge "$@"
+exec claude --dangerously-load-development-channels server:stolik "$@"

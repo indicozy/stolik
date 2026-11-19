@@ -34,7 +34,7 @@ function writeJson(file: string, v: unknown): void {
 
 const TRANSCRIPT = [
   { type: 'user', isMeta: true, message: { role: 'user', content: 'META TEXT SHOULD NOT APPEAR' } },
-  { type: 'user', message: { role: 'user', content: `<channel source="tg-bridge" message_id="1">\nfix the video timing ${FAKE_BOT_TOKEN}\n</channel>` } },
+  { type: 'user', message: { role: 'user', content: `<channel source="stolik" message_id="1">\nfix the video timing ${FAKE_BOT_TOKEN}\n</channel>` } },
   { type: 'assistant', message: { content: [{ type: 'text', text: 'On it.' }, { type: 'tool_use', name: 'Bash', input: { command: 'npm test', description: 'Run unit tests' } }] } },
   { type: 'user', message: { content: [{ type: 'tool_result', content: 'ok 3 PRIVATE_RESULT_SHOULD_NOT_APPEAR' }] } },
   { type: 'user', message: { content: `<task-notification>finished ${SECRET}</task-notification>` } },
@@ -162,7 +162,7 @@ test('parseTranscriptTail: keeps the real prompt, skips tool results, meta and n
 
 test('parseTranscriptTail: falls back to last-prompt and handles text-only tails', () => {
   const raw = [
-    JSON.stringify({ type: 'last-prompt', lastPrompt: '<channel source="tg-bridge">\nwhat next?\n</channel>' }),
+    JSON.stringify({ type: 'last-prompt', lastPrompt: '<channel source="stolik">\nwhat next?\n</channel>' }),
     JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Waiting on CI.' }] } }),
   ].join('\n')
   const t = parseTranscriptTail(raw)
@@ -183,7 +183,7 @@ test('readTranscriptTail: a partial first line is dropped, every returned line p
 })
 
 test('userPromptText: channel wrapper removed; tool results and system notices are not prompts', () => {
-  assert.equal(userPromptText('<channel source="tg-bridge">\nhello\n</channel>'), 'hello')
+  assert.equal(userPromptText('<channel source="stolik">\nhello\n</channel>'), 'hello')
   assert.equal(userPromptText([{ type: 'tool_result', content: 'x' }]), null)
   assert.equal(userPromptText('<system-reminder>x</system-reminder>'), null)
   assert.equal(userPromptText([{ type: 'text', text: 'typed' }]), 'typed')

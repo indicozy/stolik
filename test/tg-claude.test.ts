@@ -1,5 +1,5 @@
 // bin/tg-claude, run for real in bash with a fake `claude` on PATH that prints its argv one argument per line.
-// Covers the default branch (unchanged) and the self-channel branch (TG_BRIDGE_CHANNEL=self).
+// Covers the default branch (unchanged) and the self-channel branch (STOLIK_CHANNEL=self).
 import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -36,63 +36,63 @@ function withFakeClaude(fn: (dir: string, run: (args: string[], env?: RunEnv) =>
   }
 }
 
-test('tg-claude default: loads the user-scope server:tg-bridge, unchanged', () => {
+test('tg-claude default: loads the user-scope server:stolik, unchanged', () => {
   withFakeClaude((dir, run) => {
-    assert.deepEqual(run(['--model', 'haiku']), ['--dangerously-load-development-channels', 'server:tg-bridge', '--model', 'haiku'])
+    assert.deepEqual(run(['--model', 'haiku']), ['--dangerously-load-development-channels', 'server:stolik', '--model', 'haiku'])
     // The router's default socket is not a reason to switch.
-    const defaultSock = join(dir, 'runtime', 'tg-bridge.sock')
-    assert.deepEqual(run([], { TG_BRIDGE_SOCKET: defaultSock }).slice(0, 2), ['--dangerously-load-development-channels', 'server:tg-bridge'])
-    // TG_BRIDGE_CHANNEL with another value is not the self channel either.
-    assert.equal(run([], { TG_BRIDGE_CHANNEL: 'other' })[1], 'server:tg-bridge')
+    const defaultSock = join(dir, 'runtime', 'stolik.sock')
+    assert.deepEqual(run([], { STOLIK_SOCKET: defaultSock }).slice(0, 2), ['--dangerously-load-development-channels', 'server:stolik'])
+    // STOLIK_CHANNEL with another value is not the self channel either.
+    assert.equal(run([], { STOLIK_CHANNEL: 'other' })[1], 'server:stolik')
   })
 })
 
-test('tg-claude: a non-default TG_BRIDGE_SOCKET alone does not pick the self channel (only TG_BRIDGE_CHANNEL=self does)', () => {
+test('tg-claude: a non-default STOLIK_SOCKET alone does not pick the self channel (only STOLIK_CHANNEL=self does)', () => {
   withFakeClaude((_dir, run) => {
-    const argv = run([], { TG_BRIDGE_SOCKET: '/run/user/1000/tg-bridge-v3.sock' })
-    assert.deepEqual(argv.slice(0, 2), ['--dangerously-load-development-channels', 'server:tg-bridge'])
+    const argv = run([], { STOLIK_SOCKET: '/run/user/1000/stolik.sock' })
+    assert.deepEqual(argv.slice(0, 2), ['--dangerously-load-development-channels', 'server:stolik'])
   })
 })
 
-test('tg-claude self (TG_BRIDGE_CHANNEL=self with a socket): inline mcp config for tg-bridge-v3 only', () => {
+test('tg-claude self (STOLIK_CHANNEL=self with a socket): inline mcp config for stolik only', () => {
   withFakeClaude((_dir, run) => {
-    const sock = '/run/user/1000/tg-bridge-v3.sock'
-    const argv = run(['--model', 'haiku'], { TG_BRIDGE_CHANNEL: 'self', TG_BRIDGE_SOCKET: sock })
+    const sock = '/run/user/1000/stolik.sock'
+    const argv = run(['--model', 'haiku'], { STOLIK_CHANNEL: 'self', STOLIK_SOCKET: sock })
     assert.equal(argv[0], '--mcp-config')
     const cfg = JSON.parse(argv[1])
-    assert.deepEqual(Object.keys(cfg.mcpServers), ['tg-bridge-v3'])
-    const s = cfg.mcpServers['tg-bridge-v3']
+    assert.deepEqual(Object.keys(cfg.mcpServers), ['stolik'])
+    const s = cfg.mcpServers['stolik']
     assert.equal(s.command, join(REPO, 'bin', 'tg-plugin-node'))
     assert.deepEqual(s.args, [join(REPO, 'dist', 'channel.js')])
-    assert.deepEqual(s.env, { TG_BRIDGE_SOCKET: sock, MCP_PROTOCOL_NEGOTIATION: 'legacy' })
+    assert.deepEqual(s.env, { STOLIK_SOCKET: sock, MCP_PROTOCOL_NEGOTIATION: 'legacy' })
     assert.deepEqual(argv.slice(2), [
-      '--strict-mcp-config', '--dangerously-load-development-channels', 'server:tg-bridge-v3', '--model', 'haiku',
+      '--strict-mcp-config', '--dangerously-load-development-channels', 'server:stolik', '--model', 'haiku',
     ])
-    assert.equal(argv.includes('server:tg-bridge'), false)
+    assert.equal(argv.filter((a) => a.startsWith('server:')).length, 1)
   })
 })
 
-test('tg-claude self (TG_BRIDGE_CHANNEL=self, no socket): the channel finds its own default socket', () => {
+test('tg-claude self (STOLIK_CHANNEL=self, no socket): the channel finds its own default socket', () => {
   withFakeClaude((_dir, run) => {
-    const argv = run([], { TG_BRIDGE_CHANNEL: 'self' })
-    const s = JSON.parse(argv[1]).mcpServers['tg-bridge-v3']
+    const argv = run([], { STOLIK_CHANNEL: 'self' })
+    const s = JSON.parse(argv[1]).mcpServers['stolik']
     assert.deepEqual(s.env, { MCP_PROTOCOL_NEGOTIATION: 'legacy' })
     assert.equal(argv[2], '--strict-mcp-config')
-    assert.equal(argv[4], 'server:tg-bridge-v3')
+    assert.equal(argv[4], 'server:stolik')
   })
 })
 
 test('tg-claude self: JSON-escapes a socket path with quotes and backslashes', () => {
   withFakeClaude((_dir, run) => {
     const sock = '/run/user/1000/odd "name"\\x.sock'
-    const s = JSON.parse(run([], { TG_BRIDGE_CHANNEL: 'self', TG_BRIDGE_SOCKET: sock })[1]).mcpServers['tg-bridge-v3']
-    assert.equal(s.env.TG_BRIDGE_SOCKET, sock)
+    const s = JSON.parse(run([], { STOLIK_CHANNEL: 'self', STOLIK_SOCKET: sock })[1]).mcpServers['stolik']
+    assert.equal(s.env.STOLIK_SOCKET, sock)
   })
 })
 
 test('tg-claude self: management and print subcommands still pass through unchanged', () => {
   withFakeClaude((_dir, run) => {
-    const env = { TG_BRIDGE_CHANNEL: 'self' }
+    const env = { STOLIK_CHANNEL: 'self' }
     assert.deepEqual(run(['mcp', 'list'], env), ['mcp', 'list'])
     assert.deepEqual(run(['-p', 'hi'], env), ['-p', 'hi'])
   })
@@ -100,7 +100,7 @@ test('tg-claude self: management and print subcommands still pass through unchan
 
 test('tg-claude self: plugin mode is not used on the self branch (the self channel wins)', () => {
   withFakeClaude((_dir, run) => {
-    const argv = run([], { TG_BRIDGE_CHANNEL: 'self', TG_BRIDGE_PLUGIN: '1' })
+    const argv = run([], { STOLIK_CHANNEL: 'self', STOLIK_PLUGIN: '1' })
     assert.equal(argv[0], '--mcp-config')
     assert.equal(argv.some((a) => a.startsWith('plugin:')), false)
   })

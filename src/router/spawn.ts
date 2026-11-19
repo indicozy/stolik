@@ -1,6 +1,6 @@
 // Router spawn and resume flow: starts a session in tmux for a queued message or /resume, and flushes the queue on register.
 //
-// Each start gets a spawn token in the session's tmux environment (TG_BRIDGE_SPAWN_TOKEN). The channel echoes it in its
+// Each start gets a spawn token in the session's tmux environment (STOLIK_SPAWN_TOKEN). The channel echoes it in its
 // `register`, and only the register that carries a queue's token takes that queue (its messages, spawned flag and
 // resumeOf). A register without a token (an older channel) matches a queue only when its claude process is below that
 // queue's tmux pane. A start that times out is stopped (its tmux session is killed); its token stays retired for a while,

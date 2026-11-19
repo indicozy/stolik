@@ -1,4 +1,4 @@
-// Owner pairing (plan 0e, inventory B). `tg-bridge setup` writes a one-time code to <stateDir>/pairing.json; the owner
+// Owner pairing (plan 0e, inventory B). `stolik setup` writes a one-time code to <stateDir>/pairing.json; the owner
 // sends it in a private chat with the bot, and the adapter that polls the bot consumes the attempt here. The file keeps
 // only a salted hash of the code, so reading the state folder does not reveal it. Pure logic first; the file helpers
 // at the bottom are the only I/O.

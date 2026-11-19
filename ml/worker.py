@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""tg-bridge ML worker (v3 plan 3.1). One process serves three ops to the ml-worker addon.
+"""stolik ML worker (v3 plan 3.1). One process serves three ops to the ml-worker addon.
 
 stdin : one JSON object per line   {"id": N, "op": "...", "payload": {...}}
 stdout: one JSON object per line   {"id": N, "result": {...}}   or   {"id": N, "error": "..."}

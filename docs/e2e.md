@@ -5,14 +5,14 @@ without a person typing. Inbound messages and button taps are injected; everythi
 
 ## Enable
 
-Only when the router runs with `TG_BRIDGE_E2E=1` (exactly `1`). Otherwise the socket refuses every `e2e` message with
+Only when the router runs with `STOLIK_E2E=1` (exactly `1`). Otherwise the socket refuses every `e2e` message with
 "e2e disabled". Nothing else changes.
 
 ## Use
 
-`scripts/e2e.ts` talks to the router socket named by `TG_BRIDGE_SOCKET`:
+`scripts/e2e.ts` talks to the router socket named by `STOLIK_SOCKET`:
 
-    export TG_BRIDGE_SOCKET=$XDG_RUNTIME_DIR/tg-bridge-v3.sock
+    export STOLIK_SOCKET=$XDG_RUNTIME_DIR/stolik.sock
     E2E="node --experimental-strip-types scripts/e2e.ts"
     $E2E send "what is running?"                     # owner text, General
     $E2E send "status?" --topic razdor               # into an open session topic

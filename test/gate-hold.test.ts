@@ -252,7 +252,7 @@ test('through the real addon host, a gate call reaches a messages.gate addon wit
     mkdirSync(addonsDir)
     const folder = copyFixture('addon-echo', addonsDir)
     writeFileSync(
-      join(folder, 'tg-bridge-addon.json'),
+      join(folder, 'stolik-addon.json'),
       JSON.stringify({ name: 'addon-echo', version: '0.1.0', protocol: 2, command: ['node', 'index.mjs'], provides: [{ point: 'gate' }], access: ['messages.gate'], requires: [] }),
     )
     const settings = new MemorySettings()

@@ -191,7 +191,7 @@ export class AddonBridge implements UsagePort {
     const messageId = wireId(payload.messageId)
     const real = this.r.platform.realpath(dir)
     if (!real || prompt === '') return { ok: false, error: 'bad request' }
-    if (!startableDirs(this.r).includes(real)) return { ok: false, error: 'that folder is not one tg-bridge can start in' }
+    if (!startableDirs(this.r).includes(real)) return { ok: false, error: 'that folder is not one stolik can start in' }
     if (!this.r.agent.isTrusted(real)) return { ok: false, error: 'that folder is not trusted yet' }
     if (runningSpawns(this.r) >= MAX_SPAWNED_SESSIONS) return { ok: false, error: `${MAX_SPAWNED_SESSIONS} router-started sessions are already running` }
     // A router-started session is written from the owner's DM; the DM's id is never read (only home chats are compared).

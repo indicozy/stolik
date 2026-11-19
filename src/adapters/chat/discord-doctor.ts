@@ -1,4 +1,4 @@
-// The Discord part of `tg-bridge doctor` (batch D2): the bot token, the bound lobby and the stolik folder categories, checked
+// The Discord part of `stolik doctor` (batch D2): the bot token, the bound lobby and the stolik folder categories, checked
 // through the REST API. The privacy checks (discord-privacy.ts, Message Content intent included) run beside it. Loaded by
 // cli/doctor.ts only when chat.app is 'discord'. Errors are redacted by the caller.
 import type { Check } from '../../brain/observe.ts'

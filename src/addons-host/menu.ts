@@ -23,10 +23,10 @@ export function parseAddonShow(data: string): string | null {
 
 export function addonsMenuText(list: AddonInfo[]): string {
   if (list.length === 0) {
-    return 'No addons installed. Install one on the PC: tg-bridge addon add <git url | npm name | folder>'
+    return 'No addons installed. Install one on the PC: stolik addon add <git url | npm name | folder>'
   }
   const lines = list.map((a) => `${a.name} ${a.version}: ${a.enabled ? 'on' : 'off'}, ${a.status} (${a.provides.join(', ')})`)
-  return ['Addons (install on the PC with tg-bridge addon add; the buttons turn them on or off):', ...lines].join('\n')
+  return ['Addons (install on the PC with stolik addon add; the buttons turn them on or off):', ...lines].join('\n')
 }
 
 // One button row per addon: "Turn off x" when it is on, "Turn on x" when it is off. A shadowed folder gets no button

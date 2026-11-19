@@ -229,7 +229,7 @@ function routeTo(arg: string, ctx: RouteCtx): Route {
 
 function toSession(s: Session, content: string): Route {
   if (!s.hasChannel) {
-    return { type: 'error', text: `${s.name} can't receive replies. It was not started with the tg-bridge channel.` }
+    return { type: 'error', text: `${s.name} can't receive replies. It was not started with the stolik channel.` }
   }
   return { type: 'session', session: s, content }
 }
@@ -532,7 +532,7 @@ export function formatList(live: Session[], now: number, startable: readonly str
 export function helpText(w: Words): string {
   const s = w.sigil
   return [
-    `tg-bridge commands (send them in ${w.lobby}):`,
+    `stolik commands (send them in ${w.lobby}):`,
     `${s}list: live sessions, and the folders you can start one in`,
     `${s}to <name> <text>: send to a session, or start one in a trusted folder`,
     `${s}resume: continue an ended session (live ones are listed too)`,
@@ -542,7 +542,7 @@ export function helpText(w: Words): string {
     `${s}addons: list, enable or disable addons`,
     `${s}away: send everything here`,
     `${s}here: stop messages until you touch the desktop`,
-    `${s}lock: ignore all messages until unlocked at the desk (tg-bridge-ctl unlock)`,
+    `${s}lock: ignore all messages until unlocked at the desk (stolik-ctl unlock)`,
     `${s}bind: run once in the ${w.home} to make it the bot's home (owner only)`,
     `${s}debug: router status and debug logging (${s}debug on [minutes], ${s}debug off)`,
     `Reply to any message with ${s}trace to see what the router did with it.`,
@@ -637,7 +637,7 @@ const DENY_BASENAME: RegExp[] = [
   /^\.env/i,
   /\.(pem|key|p12|pfx|kdbx)$/i,
   /^id_(rsa|ed25519|ecdsa|dsa)/i,
-  /tg-bridge\.env|telegram-notify\.env/i,
+  /stolik\.env|telegram-notify\.env/i,
 ]
 
 // Outbound file denylist. `real` is the realpath of the file, `home` the user's home dir.

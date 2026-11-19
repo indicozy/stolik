@@ -1,4 +1,4 @@
-// `tg-bridge logs` and `tg-bridge trace` (design §Observability): read the router's JSON-lines logs, the addon logs and the
+// `stolik logs` and `stolik trace` (design §Observability): read the router's JSON-lines logs, the addon logs and the
 // audit log. Pure parsing and filtering are here; the file reads are small wrappers so the rules are tested on temp files.
 import { existsSync, openSync, readSync, closeSync } from 'node:fs'
 import { join } from 'node:path'
@@ -28,7 +28,7 @@ export type LogsOptions = {
 
 const ADDON_NAME_RE = /^[a-z][a-z0-9-]{1,39}$/
 
-// The flags of `tg-bridge logs`. Returns the options, or a message saying what is wrong.
+// The flags of `stolik logs`. Returns the options, or a message saying what is wrong.
 export function parseLogsArgs(args: string[]): LogsOptions | string {
   const o: LogsOptions = { addon: null, level: null, sinceMs: null, trace: null, follow: false }
   for (let i = 0; i < args.length; i++) {
@@ -119,13 +119,13 @@ export function readNewLines(path: string, tail: Tail): string[] {
   return parts.filter((l) => l.trim() !== '')
 }
 
-// The timeline of one trace, as `tg-bridge trace` prints it. Empty when no line of the files has the id.
+// The timeline of one trace, as `stolik trace` prints it. Empty when no line of the files has the id.
 export function traceTimeline(trace: string, files: readonly string[]): string[] {
   const mine = readEntries(files).filter((e) => e.trace === trace)
   return formatTimeline(mine)
 }
 
-// `tg-bridge logs [--addon N] [--level L] [--since 10m] [--trace ID] [-f]`. Returns the exit code.
+// `stolik logs [--addon N] [--level L] [--since 10m] [--trace ID] [-f]`. Returns the exit code.
 export async function runLogsCommand(args: string[], out: (s: string) => void, err: (s: string) => void): Promise<number> {
   const parsed = parseLogsArgs(args)
   if (typeof parsed === 'string') {
@@ -159,11 +159,11 @@ export async function runLogsCommand(args: string[], out: (s: string) => void, e
   return 0
 }
 
-// `tg-bridge trace <traceId|telegramMessageId>`: the timeline of one trace. A number is first looked up as a Telegram
+// `stolik trace <traceId|telegramMessageId>`: the timeline of one trace. A number is first looked up as a Telegram
 // message id (the trace map); otherwise a trace id. Returns the exit code.
 export async function runTraceCommand(args: string[], out: (s: string) => void, err: (s: string) => void): Promise<number> {
   if (args.length !== 1) {
-    err('usage: tg-bridge trace <traceId | telegramMessageId>')
+    err('usage: stolik trace <traceId | telegramMessageId>')
     return 2
   }
   const arg = args[0]

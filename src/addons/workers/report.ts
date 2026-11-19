@@ -533,7 +533,7 @@ async function collectJobs(o: Resolved): Promise<WorkerJob[]> {
     if (!aiPids.has(pid) && stat.nice < JOB_MIN_NICE) continue
     const argv = readArgv(o.procRoot, pid)
     if (argv.length === 0 || isClaudeArgv(argv)) continue
-    if (argv.some((a) => a.includes('/tg-bridge/dist/') || a.startsWith(REPO_DIR + '/dist/'))) continue
+    if (argv.some((a) => a.includes('/stolik/dist/') || a.startsWith(REPO_DIR + '/dist/'))) continue
     first.set(pid, { stat, argv })
   }
   const t0 = Date.now()

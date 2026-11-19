@@ -23,8 +23,8 @@ test('parseSilentCommand: durations in m, h, d, w; /silent@botname is the same c
   assert.deepEqual(parseSilentCommand('/silent 1d'), { kind: 'for', ms: DAY })
   assert.deepEqual(parseSilentCommand('/silent 1w'), { kind: 'for', ms: WEEK }, 'one week is the most allowed')
   assert.deepEqual(parseSilentCommand('/silent 168h'), { kind: 'for', ms: WEEK }, 'exactly the maximum is allowed')
-  assert.deepEqual(parseSilentCommand('/silent@tg_bridge_bot 2h'), { kind: 'for', ms: 2 * HOUR })
-  assert.deepEqual(parseSilentCommand('/silent@tg_bridge_bot'), { kind: 'on' })
+  assert.deepEqual(parseSilentCommand('/silent@stolik_bot 2h'), { kind: 'for', ms: 2 * HOUR })
+  assert.deepEqual(parseSilentCommand('/silent@stolik_bot'), { kind: 'on' })
   assert.equal(MAX_MUTE_MS, WEEK)
 })
 

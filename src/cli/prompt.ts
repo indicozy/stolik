@@ -1,4 +1,4 @@
-// Terminal prompts for `tg-bridge setup`. Lines are queued as they arrive, so piped or pasted answers are not lost.
+// Terminal prompts for `stolik setup`. Lines are queued as they arrive, so piped or pasted answers are not lost.
 // A secret prompt turns the echo off, so the token is never shown on screen.
 import { createInterface } from 'node:readline'
 import { Writable } from 'node:stream'

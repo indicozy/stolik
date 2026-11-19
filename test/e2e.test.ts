@@ -22,10 +22,10 @@ function lastReply(conn: FakeConn): Record<string, unknown> {
 
 // ---------- the gate ----------
 
-test('the driver is on only for TG_BRIDGE_E2E=1 exactly', () => {
-  assert.equal(e2eEnabled({ TG_BRIDGE_E2E: '1' }), true)
+test('the driver is on only for STOLIK_E2E=1 exactly', () => {
+  assert.equal(e2eEnabled({ STOLIK_E2E: '1' }), true)
   for (const v of [undefined, '', '0', 'true', 'yes', ' 1']) {
-    assert.equal(e2eEnabled(v === undefined ? {} : { TG_BRIDGE_E2E: v }), false, `TG_BRIDGE_E2E=${JSON.stringify(v)}`)
+    assert.equal(e2eEnabled(v === undefined ? {} : { STOLIK_E2E: v }), false, `STOLIK_E2E=${JSON.stringify(v)}`)
   }
 })
 
@@ -41,7 +41,7 @@ test('without the driver, every e2e message is refused with an error and nothing
     const r = lastReply(c)
     assert.equal(r.t, 'e2e_result')
     assert.equal(r.ok, false)
-    assert.match(String(r.error), /TG_BRIDGE_E2E=1/)
+    assert.match(String(r.error), /STOLIK_E2E=1/)
     assert.equal(r.reqId, 'r1')
   }
   assert.deepEqual(h.agent.sent, [], 'no message reached the session')

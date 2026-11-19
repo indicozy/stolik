@@ -36,7 +36,7 @@ async function runHook(event: string, payload: unknown, args: string[] = []): Pr
   try {
     await new Promise<void>((resolve) => server.listen(sock, resolve))
     const child = spawn(process.execPath, ['--experimental-strip-types', HOOK, event, ...args], {
-      env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: dir, TG_BRIDGE_SOCKET: sock },
+      env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: dir, STOLIK_SOCKET: sock },
       stdio: ['pipe', 'ignore', 'ignore'],
     })
     child.stdin.end(JSON.stringify(payload))

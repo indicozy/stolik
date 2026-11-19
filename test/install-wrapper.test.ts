@@ -1,4 +1,4 @@
-// install.sh is a thin wrapper: npm ci, npm run build, then `tg-bridge setup`. It must not register MCP, touch the
+// install.sh is a thin wrapper: npm ci, npm run build, then `stolik setup`. It must not register MCP, touch the
 // Claude settings or build the old stt venv. Run with fake node and npm on PATH, so nothing real is built or set up.
 import './helpers/isolate.ts'
 import { test } from 'node:test'
@@ -58,9 +58,9 @@ test('install.sh: build, then setup; no MCP or settings writes', () => {
     const r = runInstall(bin, 'true')
     assert.equal(r.status, 0, r.stderr)
     const calls = readFileSync(log, 'utf8').trim().split('\n')
-    assert.deepEqual(calls, ['npm ci', 'npm run build', `node ${join(REPO, 'dist', 'cli', 'tg-bridge.js')} setup`])
-    assert.match(r.stdout, /tg-bridge service install --start/)
-    assert.match(r.stdout, /\/plugin install tg-bridge@indicozy/)
+    assert.deepEqual(calls, ['npm ci', 'npm run build', `node ${join(REPO, 'dist', 'cli', 'stolik.js')} setup`])
+    assert.match(r.stdout, /stolik service install --start/)
+    assert.match(r.stdout, /\/plugin install stolik@indicozy/)
     assert.equal(existsSync(join(bin, '.claude')), false, 'no ~/.claude is created')
   })
 })

@@ -42,8 +42,8 @@ function saveThreads(): void {
 const hookPath = join(here, 'hook.js')
 
 const cfg = currentTgConfig()
-// TG_BRIDGE_CLAUDE is for the tests only (a fake CLI); the real run is `claude` from PATH.
-const claudeBin = process.env.TG_BRIDGE_CLAUDE ?? 'claude'
+// STOLIK_CLAUDE is for the tests only (a fake CLI); the real run is `claude` from PATH.
+const claudeBin = process.env.STOLIK_CLAUDE ?? 'claude'
 
 // Each headless run gets its own systemd scope, so the Claude processes and the helpers they start (plugin hooks) are not
 // left in the router's unit cgroup. Probed once; without a scope the runs start plain and that is said once in the log.

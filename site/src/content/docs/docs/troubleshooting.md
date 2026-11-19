@@ -22,7 +22,7 @@ Doctor names the failing check. In Telegram, reply to any message with `/trace` 
 
 **"409 Conflict (another poller holds this token)".** Another program polls the same bot token. Stop it, then restart the router.
 
-**No topic appears when I start a session.** Start it with `TG_BRIDGE_PLUGIN=1 tg-claude`, not plain `claude`, and confirm the warning screen. Check that the plugin is installed (`/plugin` in Claude Code) and that `stolik service status` shows the router running.
+**No topic appears when I start a session.** Start it with `STOLIK_PLUGIN=1 tg-claude`, not plain `claude`, and confirm the warning screen. Check that the plugin is installed (`/plugin` in Claude Code) and that `stolik service status` shows the router running.
 
 **The bot says a folder "hasn't been trusted yet".** Open that folder once in Claude Code at the desk and accept the trust dialog. stolik never accepts it for you.
 
@@ -49,9 +49,9 @@ Doctor names the failing check. In Telegram, reply to any message with `/trace` 
 There is no single command. In this order:
 
 1. Stop and remove the service: `stolik service uninstall --stop`.
-2. In Claude Code: `/plugin uninstall tg-bridge@indicozy`.
+2. In Claude Code: `/plugin uninstall stolik@indicozy`.
 3. Remove the package: `npm uninstall -g stolik`. Remove your `alias claude=tg-claude` if you added one.
-4. Delete the files, if you want them gone: `~/.config/tg-bridge/`, `~/.config/tg-bridge.env`, `~/.local/state/tg-bridge-v3/`. The chat log (`~/Documents/notes/telegram/` by default) is yours. Keep it or delete it.
+4. Delete the files, if you want them gone: `~/.config/stolik/`, `~/.config/stolik.env`, `~/.local/state/stolik/`. The chat log (`~/Documents/notes/telegram/` by default) is yours. Keep it or delete it.
 5. In Telegram: remove the bot from the group, and delete the bot in @BotFather (`/deletebot`) to kill its token.
 
 None of these steps touches the sessions that run in tmux.

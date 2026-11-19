@@ -1,4 +1,4 @@
-// The optional ML worker step of `tg-bridge setup` (plan 3.1, docs/install.md): build environment, venv planning,
+// The optional ML worker step of `stolik setup` (plan 3.1, docs/install.md): build environment, venv planning,
 // detection with fake lookups, and the step inside runSetup with fake prompts and a fake runner. Nothing is installed.
 import './helpers/isolate.ts'
 import { test } from 'node:test'
@@ -180,9 +180,9 @@ const TOKEN = '123456789:AAHfakeTokenForTestsOnly_abcdefgh'
 function withSetupPaths(fn: (paths: SetupDeps['paths'], root: string) => Promise<void>): Promise<void> {
   const root = mkdtempSync(join(HERE, '.tmp-ml-setup-'))
   const paths = {
-    envFile: join(root, 'home', '.config', 'tg-bridge.env'),
-    configFile: join(root, 'home', '.config', 'tg-bridge', 'config.json'),
-    pluginDir: '/opt/tg-bridge/plugin',
+    envFile: join(root, 'home', '.config', 'stolik.env'),
+    configFile: join(root, 'home', '.config', 'stolik', 'config.json'),
+    pluginDir: '/opt/stolik/plugin',
     nodePath: '/usr/bin/node',
   }
   return fn(paths, root).finally(() => rmSync(root, { recursive: true, force: true }))

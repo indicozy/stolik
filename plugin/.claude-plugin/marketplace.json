@@ -4,7 +4,7 @@
   "description": "Local marketplace for the owner's machines. Add it with /plugin marketplace add <path to this plugin folder>.",
   "plugins": [
     {
-      "name": "tg-bridge",
+      "name": "stolik",
       "source": "./",
       "description": "Telegram bridge for Claude Code (channel server and hooks)."
     }

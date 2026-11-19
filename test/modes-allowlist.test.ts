@@ -23,8 +23,8 @@ test('allowed: the owner-accepted read commands, with paths inside the roots', (
     'git status', 'git status --short', 'git log --oneline -5', 'git diff', 'git diff --stat', 'git show HEAD',
     'git branch', 'git branch -a', 'git branch --show-current', 'git branch --merged main', 'git branch --list feat',
     'ls', 'ls -la /tmp', `ls -la ${CWD}`, 'df -h', `du -sh ${CWD}`, 'du -sh', 'free -m', 'uptime', 'ps aux',
-    'systemctl --user status tg-bridge', 'systemctl --user status foo.service', 'systemctl --user status tg-bridge --no-pager -n 20 -l',
-    'journalctl --user -u tg-bridge --since today', 'journalctl --user -n 5', 'nvidia-smi',
+    'systemctl --user status stolik', 'systemctl --user status foo.service', 'systemctl --user status stolik --no-pager -n 20 -l',
+    'journalctl --user -u stolik --since today', 'journalctl --user -n 5', 'nvidia-smi',
     'nvidia-smi --query-gpu=name,memory.used --format=csv', `${HOME}/.claude/skills/quota-gate/scripts/quota-gate --weekly-min=0`,
   ]) assert.ok(allowed(cmd), `should allow: ${cmd}`)
 })
@@ -33,7 +33,7 @@ test('denied: writes, installs, deletes, restarts and network (design §4.10)', 
   for (const cmd of [
     'touch /tmp/x', 'rm -rf /tmp/x', 'rm x', 'curl https://example.com', 'wget https://x', 'git push', 'git push origin main',
     'git commit -m x', 'git reset --hard', 'npm install', 'pip install x', 'mkdir d', 'mv a b', 'cp a b', 'chmod +x a',
-    'systemctl --user restart tg-bridge', 'systemctl --user stop tg-bridge', 'journalctl --user --vacuum-time=1d',
+    'systemctl --user restart stolik', 'systemctl --user stop stolik', 'journalctl --user --vacuum-time=1d',
     'git branch -D main', 'git branch newname', 'git branch -m a b', 'git diff --output=/tmp/x', 'git diff --ext-diff',
     'git -C /x status', 'git -c core.pager=sh log', 'nvidia-smi -r', 'nvidia-smi -pl 100',
     'python3 -c 1', 'sh -c ls', 'env', 'printenv',
@@ -54,7 +54,7 @@ test('a git branch name is only a ref after --merged, --contains or --list', () 
 })
 
 test('a Bash command that names a secret path is refused, and so is a secret path among the words', () => {
-  for (const cmd of ['ls /home/u/.ssh', 'ls ~/.ssh', 'ls ~/.config/telegram-notify.env', 'git log -- ~/.config/tg-bridge.env', 'ls ~/.claude.json']) {
+  for (const cmd of ['ls /home/u/.ssh', 'ls ~/.ssh', 'ls ~/.config/telegram-notify.env', 'git log -- ~/.config/stolik.env', 'ls ~/.claude.json']) {
     assert.equal(checkBash(cmd, POLICY).allow, false, `refused: ${cmd}`)
   }
 })
@@ -95,7 +95,7 @@ test('Grep and Glob are refused outside the roots (home, /, /home, the config fo
 
 test('secret paths are refused for Read, Grep and Glob', () => {
   for (const p of [
-    `${HOME}/.config/tg-bridge.env`, `${HOME}/.config/tg-bridge/config.json`, `${HOME}/.local/state/tg-bridge/modes/threads.json`,
+    `${HOME}/.config/stolik.env`, `${HOME}/.config/stolik/config.json`, `${HOME}/.local/state/stolik/modes/threads.json`,
     `${HOME}/.ssh/id_ed25519`, `${HOME}/.claude/.credentials.json`, `${CWD}/.env`, `${CWD}/.env.local`,
     '/proc/1234/environ', `${HOME}/aws/credentials`,
   ]) assert.equal(read(p), false, `refused: ${p}`)
@@ -207,10 +207,10 @@ test('finding 3 and 4: ls of a secret path is refused, in or out of a root', () 
 // Review finding 3: `journalctl --user` stays as it is, and the secret list still applies to its arguments.
 test('journalctl: the reading options are allowed', () => {
   for (const cmd of [
-    'journalctl --user -n 50', 'journalctl --user --lines=100 --no-pager', 'journalctl --user -u tg-bridge.service -o cat -q',
+    'journalctl --user -n 50', 'journalctl --user --lines=100 --no-pager', 'journalctl --user -u stolik.service -o cat -q',
     'journalctl --user -b -r -p err', 'journalctl --user -p 3..4 --until 2026-11-14', 'journalctl --user -e --no-pager',
-    'journalctl --user --user-unit tg-bridge', 'journalctl --user -o json -n 5', 'journalctl --user --unit=tg-bridge --output=short-iso',
-    'journalctl --user --since yesterday -u tg-bridge',
+    'journalctl --user --user-unit stolik', 'journalctl --user -o json -n 5', 'journalctl --user --unit=stolik --output=short-iso',
+    'journalctl --user --since yesterday -u stolik',
   ]) assert.ok(allowed(cmd), `should allow: ${cmd}`)
 })
 
@@ -235,14 +235,14 @@ test('Bash: ~ and ~/ expand to the home folder; other tilde forms and glob chara
 
 test('Bash: a secret path is refused after ./, ../ and ~ are resolved', () => {
   for (const cmd of [
-    `ls ${HOME}/.config/./tg-bridge.env`, `ls ~/.config/./tg-bridge.env`, `ls ${HOME}/.config/x/../tg-bridge.env`,
+    `ls ${HOME}/.config/./stolik.env`, `ls ~/.config/./stolik.env`, `ls ${HOME}/.config/x/../stolik.env`,
     `ls ${HOME}/projects/../.ssh`, `ls ~/./.ssh`, `ls ${HOME}/.ssh/.`, `ls ~/.claude/./.credentials.json`,
   ]) assert.equal(checkBash(cmd, POLICY).allow, false, `refused: ${cmd}`)
 })
 
 test('Read, Grep and Glob: the path is resolved first, so ./ and ../ do not hide a secret', () => {
-  assert.equal(read(`${HOME}/.config/./tg-bridge.env`), false)
-  assert.equal(read('~/.config/./tg-bridge.env'), false)
+  assert.equal(read(`${HOME}/.config/./stolik.env`), false)
+  assert.equal(read('~/.config/./stolik.env'), false)
   assert.equal(read(`${HOME}/projects/../.ssh/config`), false)
   assert.equal(read(`${HOME}/.claude/./.credentials.json`), false)
   assert.equal(glob('../../.ssh/*', CWD), false)

@@ -218,6 +218,9 @@ export function readRoots(input: { home: string; logRoot: string; notesDir: stri
 // --files0-from=/proc/1/environ and REV:/proc/... are caught, while ~/dev/myproject is not).
 const SECRET_PATH_RES: RegExp[] = [
   /(^|[=:])\/(proc|sys|dev)(\/|$)/,
+  /(^|\/)\.config\/stolik/,
+  /(^|\/)\.local\/state\/stolik/,
+  // legacy tg-bridge name: the old bot's secrets and state still sit here until the migration
   /(^|\/)\.config\/tg-bridge/,
   /(^|\/)\.local\/state\/tg-bridge/,
   /(^|\/)\.ssh(\/|$)/,
@@ -560,7 +563,7 @@ const SAFE_EXTS = ['ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'py', 'md', 'txt', 'j
 const SAFE_EXT_RE = new RegExp(`\\.(?:${SAFE_EXTS.join('|')})$`)
 const SAFE_BRACE_EXT_RE = new RegExp(`\\.\\{(?:${SAFE_EXTS.join('|')})(?:,(?:${SAFE_EXTS.join('|')}))*\\}$`)
 // Names that mark a secret; a recursive glob (**) that names one is refused.
-const SECRET_NAME_RE = /secret|credential|passw|token|private|\.pem|\.key|\.p12|\.kdbx|id_|ssh|gnupg|aws|npmrc|netrc|pgpass|git-credentials|history|kube|docker|vault|env|telegram|tg-bridge|cookie|login|keychain|wallet|\.claude/i
+const SECRET_NAME_RE = /secret|credential|passw|token|private|\.pem|\.key|\.p12|\.kdbx|id_|ssh|gnupg|aws|npmrc|netrc|pgpass|git-credentials|history|kube|docker|vault|env|telegram|stolik|cookie|login|keychain|wallet|\.claude/i
 
 function globProblem(glob: string): string | null {
   if (glob.includes('\0')) return 'that glob is not valid'

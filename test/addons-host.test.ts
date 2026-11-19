@@ -26,7 +26,7 @@ export class Settings extends MemorySettings {
   }
 }
 
-// The owner allows every user addon in the folder as it is now (what an install or `tg-bridge addon consent` records).
+// The owner allows every user addon in the folder as it is now (what an install or `stolik addon consent` records).
 function allowAll(addonsDir: string, settings: Settings): void {
   for (const name of readdirSync(addonsDir)) {
     const r = readManifest(join(addonsDir, name))
@@ -93,13 +93,13 @@ test('discovery: folders are listed in name order, hidden ones skipped, broken m
   const h = harness('disc', (addonsDir) => {
     copyFixture('addon-echo', addonsDir)
     mkdirSync(join(addonsDir, '.staging-abc'))
-    writeFileSync(join(addonsDir, '.staging-abc', 'tg-bridge-addon.json'), '{}')
+    writeFileSync(join(addonsDir, '.staging-abc', 'stolik-addon.json'), '{}')
     mkdirSync(join(addonsDir, 'broken'))
-    writeFileSync(join(addonsDir, 'broken', 'tg-bridge-addon.json'), '{ nope')
+    writeFileSync(join(addonsDir, 'broken', 'stolik-addon.json'), '{ nope')
     writeEchoLike(addonsDir, 'other', {})
     mkdirSync(join(addonsDir, 'wrong-folder'))
     writeFileSync(
-      join(addonsDir, 'wrong-folder', 'tg-bridge-addon.json'),
+      join(addonsDir, 'wrong-folder', 'stolik-addon.json'),
       JSON.stringify({ name: 'right-name', version: '1', protocol: 2, command: ['x'], provides: [{ point: 'listener' }] }),
     )
   })
@@ -109,7 +109,7 @@ test('discovery: folders are listed in name order, hidden ones skipped, broken m
     const byName = Object.fromEntries(list.map((a) => [a.name, a]))
     assert.equal(byName['addon-echo'].status, 'off')
     assert.deepEqual(byName['addon-echo'].provides, ['media', 'text-filter', 'prefix', 'command', 'router', 'schedule', 'listener'])
-    assert.match(byName.broken.status, /^invalid manifest: tg-bridge-addon\.json is not valid JSON/)
+    assert.match(byName.broken.status, /^invalid manifest: stolik-addon\.json is not valid JSON/)
     assert.match(byName['wrong-folder'].status, /must be named right-name/)
   } finally {
     await done(h)
@@ -515,12 +515,12 @@ test('a dependency cycle starts nothing', async () => {
 test('enabling is refused for a broken addon, and for a command the core already uses', async () => {
   const h = harness('refuse', (d) => {
     mkdirSync(join(d, 'broken'))
-    writeFileSync(join(d, 'broken', 'tg-bridge-addon.json'), '{}')
+    writeFileSync(join(d, 'broken', 'stolik-addon.json'), '{}')
     writeEchoLike(d, 'cmd-clash', { provides: [{ point: 'command', name: 'list' }] })
   })
   try {
     assert.match((await h.host.setEnabled('broken', true)) ?? '', /invalid manifest/)
-    assert.match((await h.host.setEnabled('cmd-clash', true)) ?? '', /used by tg-bridge itself/)
+    assert.match((await h.host.setEnabled('cmd-clash', true)) ?? '', /used by stolik itself/)
     assert.match((await h.host.setEnabled('nobody', true)) ?? '', /No addon named nobody/)
     assert.equal(h.settings.isEnabled('cmd-clash'), false)
   } finally {

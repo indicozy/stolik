@@ -42,8 +42,8 @@ test('recovery: a garbage file at the database path is moved aside, a fresh data
     try {
       assert.equal(store.schemaVersion(), 6)
       assert.equal(store.startupNotices.length, 1)
-      const moved = readdirSync(box.paths.stateDir).find((f) => /^tg-bridge\.db\.corrupt-/.test(f))
-      assert.ok(moved, 'the damaged file is kept under tg-bridge.db.corrupt-<timestamp>')
+      const moved = readdirSync(box.paths.stateDir).find((f) => /^stolik\.db\.corrupt-/.test(f))
+      assert.ok(moved, 'the damaged file is kept under stolik.db.corrupt-<timestamp>')
       assert.ok(store.startupNotices[0].includes(join(box.paths.stateDir, moved)), 'the notice names the moved file')
       assert.equal(readFileSync(join(box.paths.stateDir, moved), 'utf8'), 'this is not a database '.repeat(50))
       store.writeMsgMap('[1]')
@@ -67,7 +67,7 @@ test('recovery: a database that fails quick_check is moved aside; a stale -wal d
     const store = new SqliteStore(box.paths)
     try {
       assert.equal(store.startupNotices.length, 1)
-      const moved = readdirSync(box.paths.stateDir).find((f) => /^tg-bridge\.db\.corrupt-/.test(f) && !/-(wal|shm)$/.test(f))
+      const moved = readdirSync(box.paths.stateDir).find((f) => /^stolik\.db\.corrupt-/.test(f) && !/-(wal|shm)$/.test(f))
       assert.ok(moved, 'the damaged database is kept aside')
       assert.equal(store.readMsgMap(), '', 'the fresh database starts empty')
     } finally {
@@ -124,7 +124,7 @@ test('recovery: a live router lock blocks the move; the open error is thrown', (
   }
 })
 
-test('backup: a destructive migration copies the database to tg-bridge.db.bak-v<from> first', () => {
+test('backup: a destructive migration copies the database to stolik.db.bak-v<from> first', () => {
   const box = sandboxPaths('store-recovery-bak')
   try {
     mkdirSync(box.paths.stateDir, { recursive: true })

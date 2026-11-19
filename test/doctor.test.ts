@@ -1,4 +1,4 @@
-// `tg-bridge doctor` checks (src/cli/doctor.ts): each check against fake inputs, the composed run, and the argument handling.
+// `stolik doctor` checks (src/cli/doctor.ts): each check against fake inputs, the composed run, and the argument handling.
 import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -23,10 +23,10 @@ function fakeDeps(over: Partial<DoctorDeps> = {}): DoctorDeps {
     pathValue: '/usr/bin:/home/u/.local/bin',
     isExecutable: (f) => exec.has(f),
     claudeVersion: async () => '2.1.0 (Claude Code)',
-    socketPath: '/run/user/1000/tg-bridge.sock',
+    socketPath: '/run/user/1000/stolik.sock',
     dirWritable: () => true,
     envFileMode: () => 0o600,
-    envFile: '/home/u/.config/tg-bridge.env',
+    envFile: '/home/u/.config/stolik.env',
     envSettings: () => null,
     machineConfig: () => ({ ok: true, cfg: { groupId: null, logRoot: '/home/u/notes', stateDir: null } as never }),
     serviceUnits: () => [],
@@ -34,9 +34,9 @@ function fakeDeps(over: Partial<DoctorDeps> = {}): DoctorDeps {
     addonDirs: [],
     addonEnabled: () => false,
     freeBytes: () => 10 * GIB,
-    stateDir: '/home/u/.local/state/tg-bridge-v3',
+    stateDir: '/home/u/.local/state/stolik',
     logRoot: '/home/u/notes/telegram',
-    dbPath: '/home/u/.local/state/tg-bridge-v3/tg-bridge.db',
+    dbPath: '/home/u/.local/state/stolik/stolik.db',
     integrityCheck: () => 'ok',
     mlPython: '/repo/ml/.venv/bin/python',
     gpuPresent: () => true,
@@ -67,7 +67,7 @@ test('unit PATH: the router unit of this checkout must find claude and tmux; unr
   const routerUnit = '[Service]\nExecStart=/usr/bin/node /repo/dist/router/main.js\nEnvironment=PATH=/usr/bin:/home/u/.local/bin\n'
   const bad = '[Service]\nExecStart=/usr/bin/node /repo/dist/router/main.js\nEnvironment=PATH=/usr/bin\n'
   const other = '[Service]\nExecStart=/usr/bin/node /other/dist/router/main.js\nEnvironment=PATH=/nowhere\n'
-  const ok = checkUnitPaths(fakeDeps({ serviceUnits: () => [{ name: 'tg-bridge-v3.service', text: routerUnit }, { name: 'x.service', text: other }] }))
+  const ok = checkUnitPaths(fakeDeps({ serviceUnits: () => [{ name: 'stolik.service', text: routerUnit }, { name: 'x.service', text: other }] }))
   assert.equal(ok.length, 1)
   assert.equal(ok[0].status, 'ok')
   const fail = checkUnitPaths(fakeDeps({ serviceUnits: () => [{ name: 'v3.service', text: bad }] }))
@@ -106,7 +106,7 @@ test('env file: present and mode 600 pass; other modes fail with the fix; settin
   const missing = checkEnvFile(fakeDeps({ envFileMode: () => null }))
   assert.equal(missing.length, 1)
   assert.equal(missing[0].status, 'fail')
-  const bad = checkEnvFile(fakeDeps({ envSettings: () => 'TG_BRIDGE_TOKEN missing from /x' }))
+  const bad = checkEnvFile(fakeDeps({ envSettings: () => 'STOLIK_TOKEN missing from /x' }))
   assert.equal(bad[1].status, 'fail')
   assert.doesNotMatch(JSON.stringify(ok), /token=|chat=/i)
 })
@@ -147,9 +147,9 @@ test('addons: a bad manifest fails; an enabled addon whose requirement is missin
   const manifest = (name: string, requires: string[]) => ({
     name, version: '0.1.0', protocol: 2, command: ['node', 'x.mjs'], provides: [{ point: 'text-filter' }], access: ['message.text'], requires,
   })
-  writeFileSync(join(dir, 'good', 'tg-bridge-addon.json'), JSON.stringify(manifest('good', [])))
-  writeFileSync(join(dir, 'needy', 'tg-bridge-addon.json'), JSON.stringify(manifest('needy', ['ml-worker'])))
-  writeFileSync(join(dir, 'broken', 'tg-bridge-addon.json'), '{ not json')
+  writeFileSync(join(dir, 'good', 'stolik-addon.json'), JSON.stringify(manifest('good', [])))
+  writeFileSync(join(dir, 'needy', 'stolik-addon.json'), JSON.stringify(manifest('needy', ['ml-worker'])))
+  writeFileSync(join(dir, 'broken', 'stolik-addon.json'), '{ not json')
   const enabled = new Set(['good', 'needy'])
   const checks = checkAddons({ addonDirs: [dir], addonEnabled: (n) => enabled.has(n) })
   const byId = Object.fromEntries(checks.map((c) => [c.id, c]))
@@ -234,7 +234,7 @@ test('the command: unknown arguments give the usage and exit 2 (no machine check
   const errs: string[] = []
   const code = await runDoctorCommand(['--verbose'], () => {}, (s) => errs.push(s))
   assert.equal(code, 2)
-  assert.match(errs[0], /usage: tg-bridge doctor/)
+  assert.match(errs[0], /usage: stolik doctor/)
 })
 
 // ---------- lock, schema, systemd scope, read-mode hook self-test ----------

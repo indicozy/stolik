@@ -1,11 +1,11 @@
-// Addon manifest (`tg-bridge-addon.json` at the addon root) and the access fields it may declare (plan 2.9, design §3.2).
+// Addon manifest (`stolik-addon.json` at the addon root) and the access fields it may declare (plan 2.9, design §3.2).
 // An addon gets only the payload fields its manifest declares; `KEY_ACCESS` says which payload key needs which field.
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod'
 
-export const MANIFEST_FILE = 'tg-bridge-addon.json'
+export const MANIFEST_FILE = 'stolik-addon.json'
 export const SUPPORTED_PROTOCOL = 2
 
 // Every access field an addon can declare. An unknown field is a manifest error (a typo must not silently grant nothing).
@@ -99,7 +99,7 @@ export type Provide = Manifest['provides'][number]
 // The one message for a manifest written for another protocol. It is checked before the schema, so the reader sees this
 // line alone (the schema would also flag the points and ids the old protocol used).
 export function protocolRefusal(protocol: number): string {
-  return `written for addon protocol ${protocol}; this tg-bridge speaks protocol ${SUPPORTED_PROTOCOL} (ids are strings, point "thread" is now "reply"). Update the addon.`
+  return `written for addon protocol ${protocol}; this stolik speaks protocol ${SUPPORTED_PROTOCOL} (ids are strings, point "thread" is now "reply"). Update the addon.`
 }
 
 // Validates a parsed JSON value. Throws an Error that names each bad field.
@@ -111,7 +111,7 @@ export function parseManifest(raw: unknown): Manifest {
   throw new Error(r.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; '))
 }
 
-// Reads and validates `<dir>/tg-bridge-addon.json`. Returns the error text instead of throwing (the host lists broken addons).
+// Reads and validates `<dir>/stolik-addon.json`. Returns the error text instead of throwing (the host lists broken addons).
 export function readManifest(dir: string): { manifest: Manifest } | { error: string } {
   let text: string
   try {

@@ -1,13 +1,13 @@
 [Unit]
-Description=tg-bridge Telegram router for Claude Code
+Description=stolik Telegram router for Claude Code
 # No After=: user units have no network-online.target. The router retries its own connections.
 StartLimitIntervalSec=600
 StartLimitBurst=5
 
 [Service]
-# `tg-bridge service install` writes the real unit (service.ts renderSystemdUnit); this file is the reference copy.
+# `stolik service install` writes the real unit (service.ts renderSystemdUnit); this file is the reference copy.
 # ExecStart: the absolute node path is needed (an asdf shim is not usable from systemd).
-ExecStart=/usr/bin/env node %h/Documents/projects/tg-bridge/dist/router/main.js
+ExecStart=/usr/bin/env node %h/Documents/projects/stolik/dist/router/main.js
 Environment=DISPLAY=:0
 Environment=PATH=%h/.asdf/shims:%h/.local/bin:/usr/local/bin:/usr/bin
 # CPUAffinity and Nice apply to the router process only, not to tmux. The tmux server and the Claude Code sessions in it

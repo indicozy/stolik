@@ -87,7 +87,7 @@ type State = {
 }
 
 const state: State = {
-  threshold: process.env.TG_BRIDGE_DEBUG === '1' ? 'debug' : 'info',
+  threshold: process.env.STOLIK_DEBUG === '1' ? 'debug' : 'info',
   debugUntil: 0,
   secrets: [],
   file: true,
@@ -234,7 +234,7 @@ export function readEntries(files: readonly string[]): LogEntry[] {
   return out
 }
 
-// The router log (rotated files included) and the audit log: what /trace and `tg-bridge trace` read.
+// The router log (rotated files included) and the audit log: what /trace and `stolik trace` read.
 export function allRouterFiles(): string[] {
   return [...rotatedFiles(routerLogPath()), ...rotatedFiles(auditLogPath(), AUDIT_KEEP)].filter((f) => existsSync(f))
 }

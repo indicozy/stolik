@@ -3,7 +3,7 @@
 // PostToolUse shell guard (bin/tg-posttool-hook) reads the same folder: no marker, no forwarding. Keep the two in step.
 //
 // The folder is derived from the socket path, not from XDG_RUNTIME_DIR (finding 17). The router passes its socket to every
-// session it starts (TG_BRIDGE_SOCKET, src/adapters/tmux.ts), so the hook's environment resolves the same folder as the router.
+// session it starts (STOLIK_SOCKET, src/adapters/tmux.ts), so the hook's environment resolves the same folder as the router.
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { SOCKET_PATH } from '../../config.ts'

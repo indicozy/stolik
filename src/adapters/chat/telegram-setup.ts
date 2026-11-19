@@ -1,4 +1,4 @@
-// The Telegram part of `tg-bridge setup` (plan 0e, inventory B). Setup asks this module to make the pairing code, to wait
+// The Telegram part of `stolik setup` (plan 0e, inventory B). Setup asks this module to make the pairing code, to wait
 // for the owner to send it, and to give the owner's answer back. Two ways to wait: a running router listens (the `pair`
 // ctl command, the router owns the bot's poller), or, with no router running, setup polls the bot itself for a short time.
 import { Api, GrammyError } from 'grammy'
@@ -73,7 +73,7 @@ export async function pollOwnPairing(token: string, stateDir: string, api: Api =
       failures = 0
     } catch (e) {
       if (e instanceof GrammyError && e.error_code === 409) {
-        return { ok: false, error: 'another process polls this bot: stop the router or use tg-bridge service first' }
+        return { ok: false, error: 'another process polls this bot: stop the router or use stolik service first' }
       }
       failures += 1
       if (failures >= 3) return { ok: false, error: `cannot reach Telegram: ${(e as Error).message}` }

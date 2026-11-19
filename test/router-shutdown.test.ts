@@ -117,7 +117,7 @@ test('shutdownRouter: a stop that throws still releases the lock and exits', asy
 
 test('start: each store start-up notice is sent to the owner once, after the router is up', async () => {
   const h = harness()
-  ;(h.store as unknown as { startupNotices: string[] }).startupNotices = ['The database was damaged and was moved aside to tg-bridge.db.bad.']
+  ;(h.store as unknown as { startupNotices: string[] }).startupNotices = ['The database was damaged and was moved aside to stolik.db.bad.']
   await h.router.start()
   const hits = h.chat.texts().filter((t) => t.includes('moved aside'))
   assert.equal(hits.length, 1)

@@ -1,4 +1,4 @@
-// End-to-end driver support (docs/e2e.md). Off unless the router runs with TG_BRIDGE_E2E=1. When on, the router socket
+// End-to-end driver support (docs/e2e.md). Off unless the router runs with STOLIK_E2E=1. When on, the router socket
 // accepts synthetic inbound messages and button taps (router/handlers/e2e.ts), the Telegram adapter records what it sends
 // in a ring buffer, and a local file can stand in for a downloaded voice or photo. Nothing here changes what the router
 // does with a message: synthetic messages go through the same handlers as real ones.
@@ -6,7 +6,7 @@ import type { ChatRef } from '../brain/chat-types.ts'
 import type { Btn } from './state.ts'
 import type { MessageId } from '../brain/chat-types.ts'
 
-export const E2E_ENV = 'TG_BRIDGE_E2E'
+export const E2E_ENV = 'STOLIK_E2E'
 // Synthetic inbound message ids are negative, so they never collide with Telegram's positive ids.
 export const SYNTHETIC_ID_BASE = 1_000_000_000
 export const SENT_RING_CAPACITY = 200
@@ -14,7 +14,7 @@ export const SENT_RING_CAPACITY = 200
 export const E2E_FILE_PREFIX = 'e2e-file:'
 export const E2E_CALLBACK_PREFIX = 'e2e-cb-'
 
-// The driver is enabled only by the exact value "1" (the same rule as the other TG_BRIDGE_* switches).
+// The driver is enabled only by the exact value "1" (the same rule as the other STOLIK_* switches).
 export function e2eEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env[E2E_ENV] === '1'
 }

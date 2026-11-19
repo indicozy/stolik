@@ -1,4 +1,4 @@
-// Enable and disable state of each addon. The router and the `tg-bridge addon` CLI keep it in the SQLite store's
+// Enable and disable state of each addon. The router and the `stolik addon` CLI keep it in the SQLite store's
 // addon_settings table (DbAddonSettings, DbStorePort). JsonAddonSettings is the file form, `<config dir>/addons.json`,
 // kept for tests and for reading an old file.
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'

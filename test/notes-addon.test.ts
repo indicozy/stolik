@@ -95,7 +95,7 @@ test('the addon folder is self-contained: its sources import only their own file
 })
 
 test('the manifest is valid, claims the three words, and asks only for message text and files', () => {
-  const raw = JSON.parse(readFileSync(join(HERE, '..', 'src', 'addons', 'notes', 'tg-bridge-addon.json'), 'utf8'))
+  const raw = JSON.parse(readFileSync(join(HERE, '..', 'src', 'addons', 'notes', 'stolik-addon.json'), 'utf8'))
   const m = parseManifest(raw)
   assert.equal(m.name, 'notes')
   assert.deepEqual(m.provides, [{ point: 'prefix', words: ['note', 'заметка', 'запиши'] }])

@@ -1,4 +1,4 @@
-// The router's cgroup (tg-bridge doctor, and the router's start-up checks): the parsers for /proc and cgroup v2 files, the
+// The router's cgroup (stolik doctor, and the router's start-up checks): the parsers for /proc and cgroup v2 files, the
 // process tree test (a process is the router's when its parent chain reaches the router), the reader over an injected
 // file source, and the doctor check. Nothing here reads the machine: every file is a fake.
 import './helpers/isolate.ts'
@@ -7,7 +7,7 @@ import assert from 'node:assert/strict'
 import { foreignProcs, parseCgroupPath, parseCgroupProcs, parsePpid, readRouterCgroup, type CgroupIo } from '../src/adapters/cgroup.ts'
 import { checkRouterCgroup, type RouterCgroupFacts } from '../src/cli/doctor.ts'
 
-const UNIT = '/user.slice/user-1000.slice/user@1000.service/app.slice/tg-bridge.service'
+const UNIT = '/user.slice/user-1000.slice/user@1000.service/app.slice/stolik.service'
 
 test('parseCgroupPath: the cgroup v2 line of /proc/<pid>/cgroup; null for a v1-only file', () => {
   assert.equal(parseCgroupPath(`0::${UNIT}\n`), UNIT)
@@ -102,7 +102,7 @@ test('checkRouterCgroup: foreign processes in the router’s cgroup warn, naming
   assert.match(checks[0].detail, /2 processes outside the router/)
   assert.match(checks[0].detail, /tmux: server \(pid 200\)/)
   assert.match(checks[0].detail, /bash \(pid 201\)/)
-  assert.match(checks[0].detail, /tg-bridge\.service/)
+  assert.match(checks[0].detail, /stolik\.service/)
 })
 
 test('checkRouterCgroup: absent from the deps, no check line', () => {

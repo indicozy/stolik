@@ -2,7 +2,7 @@ import type { NotifyLevel } from '../../brain/notify-level.ts'
 
 export type Kind = 'response' | 'requested' | 'proactive'
 // channel server -> router (persistent connection)
-// spawnToken: the TG_BRIDGE_SPAWN_TOKEN the router put in this session's tmux environment (router-started sessions only).
+// spawnToken: the STOLIK_SPAWN_TOKEN the router put in this session's tmux environment (router-started sessions only).
 export type ChRegister = { t: 'register'; claudePid: number | null; cwd: string; spawnToken?: string }
 // level: how loud the message is (src/brain/notify-level.ts); absent means 'default'. `kind` is separate.
 export type ChReply = { t: 'reply'; reqId: string; text: string; files?: string[]; kind: Kind; level?: NotifyLevel }

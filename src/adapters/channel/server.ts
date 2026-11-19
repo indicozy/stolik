@@ -18,7 +18,7 @@ export function closeSocketServer(server: Server): Promise<void> {
   return new Promise((resolve) => server.close(() => resolve()))
 }
 
-// Unix socket for local clients (channel servers, hooks, tg-notify, tg-bridge-ctl). NDJSON per connection.
+// Unix socket for local clients (channel servers, hooks, tg-notify, stolik-ctl). NDJSON per connection.
 // Refuses to start if the socket's directory is not owned by the current user, or if another router answers on the
 // socket (AlreadyRunningError; the socket file is left alone). A socket file with no listener is stale and replaced.
 //
@@ -40,14 +40,14 @@ export function startSocketServer(
     throw new Error(`refusing to start: ${dir} is not owned by the current user`)
   }
   if (Buffer.byteLength(socketPath) > 107) {
-    return Promise.reject(new Error(`socket path too long for a unix socket (${socketPath.length} chars): set TG_BRIDGE_SOCKET`))
+    return Promise.reject(new Error(`socket path too long for a unix socket (${socketPath.length} chars): set STOLIK_SOCKET`))
   }
   return socketAnswers(socketPath).then((live) => {
     if (live) {
-      throw new AlreadyRunningError(`another tg-bridge router is answering on the socket ${socketPath}. Stop it first, then start this one.`)
+      throw new AlreadyRunningError(`another stolik router is answering on the socket ${socketPath}. Stop it first, then start this one.`)
     }
     if (existsSync(socketPath)) unlinkSync(socketPath)
-    const drop = opts.onDrop ?? ((reason: string) => process.stderr.write(`tg-bridge socket: dropped: ${reason}\n`))
+    const drop = opts.onDrop ?? ((reason: string) => process.stderr.write(`stolik socket: dropped: ${reason}\n`))
     const sockets = new Set<Socket>()
     const server = createServer((socket) => {
       sockets.add(socket)

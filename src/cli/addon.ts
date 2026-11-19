@@ -1,4 +1,4 @@
-// `tg-bridge addon add | list | remove` (plan 2.10). Install fetches the addon into a staging folder inside the addons
+// `stolik addon add | list | remove` (plan 2.10). Install fetches the addon into a staging folder inside the addons
 // folder, validates it, shows what it may see, and moves it into place only after the typed yes. Nothing is installed
 // from Telegram.
 import { randomBytes } from 'node:crypto'
@@ -40,7 +40,7 @@ export function classifySource(src: string, isDir: (p: string) => boolean = (p) 
   return null
 }
 
-// A built-in addon of this name ships with tg-bridge (its folder under the built-in folder).
+// A built-in addon of this name ships with stolik (its folder under the built-in folder).
 function isBuiltin(name: string, deps: CliDeps): boolean {
   return deps.builtinDir !== undefined && isDirectory(join(deps.builtinDir, name))
 }
@@ -48,10 +48,10 @@ function isBuiltin(name: string, deps: CliDeps): boolean {
 
 const usage = [
   'usage:',
-  '  tg-bridge addon add <git url | npm name | folder>   install after showing what it may see (type yes)',
-  '  tg-bridge addon list                               installed addons and whether they are on',
-  '  tg-bridge addon remove <name>                      delete an installed addon',
-  '  tg-bridge addon consent <name>                     allow an installed addon whose manifest changed (type yes)',
+  '  stolik addon add <git url | npm name | folder>   install after showing what it may see (type yes)',
+  '  stolik addon list                               installed addons and whether they are on',
+  '  stolik addon remove <name>                      delete an installed addon',
+  '  stolik addon consent <name>                     allow an installed addon whose manifest changed (type yes)',
   'Turn an addon on or off in Telegram with /addons.',
 ].join('\n')
 
@@ -115,7 +115,7 @@ async function install(src: string, deps: CliDeps): Promise<number> {
     }
     const target = join(deps.addonsDir, m.name)
     if (existsSync(target)) {
-      deps.err(`Not installed: ${m.name} is already installed. Remove it first with tg-bridge addon remove ${m.name}.`)
+      deps.err(`Not installed: ${m.name} is already installed. Remove it first with stolik addon remove ${m.name}.`)
       return 1
     }
     // A required addon counts as present when it is installed here or ships as a built-in.

@@ -1,4 +1,4 @@
-# ML worker (ml/worker.py). Installed by `tg-bridge setup` (step 5, optional) or by hand, see docs/install.md:
+# ML worker (ml/worker.py). Installed by `stolik setup` (step 5, optional) or by hand, see docs/install.md:
 #   uv venv --python 3.12 ml/.venv
 #   uv pip install --python ml/.venv/bin/python -r ml/requirements.txt --no-binary llama-cpp-python
 # llama-cpp-python has no CUDA wheel, so it is always built from source. Pins are the versions of the working venv
