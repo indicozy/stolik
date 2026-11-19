@@ -7,6 +7,7 @@ import { TELEGRAM_GROUP_STEPS, type PairingDriver } from '../adapters/chat/teleg
 import { DISCORD_BIND_STEPS, discordInviteUrl, fetchClientId } from '../adapters/chat/discord-setup.ts'
 import { formatMlPlan, llamaBuildPlan, mlInstallPlan, type MlSetupDeps } from './ml-setup.ts'
 import { NPX_SERVICE_MESSAGE } from './install-location.ts'
+import { runMigration } from './migrate.ts'
 
 // BotFather tokens: "<bot id>:<secret>". The secret is letters, digits, "_" and "-".
 export const TOKEN_RE = /^\d+:[A-Za-z0-9_-]{20,}$/
@@ -41,6 +42,8 @@ export type SetupDeps = {
   paths: SetupPaths
   // The optional ML worker step (step 5). Absent: the step is not offered.
   ml?: MlSetupDeps
+  // The one-time copy of the old tg-bridge settings (cli/migrate.ts), run first. Absent: no migration (tests).
+  migration?: { home: string; env: NodeJS.ProcessEnv; isOldRunning: () => Promise<boolean> }
 }
 
 // Value of KEY in KEY=VALUE text (the last line wins), or null when absent or empty.
@@ -182,6 +185,14 @@ export function savedOwner(existingEnv: string, existingConfig: Record<string, u
 export async function runSetup(deps: SetupDeps): Promise<number> {
   const { paths, out } = deps
   const opts = deps.options ?? {}
+  // Setup must not create fresh files next to an un-migrated old install, so a refused migration stops it.
+  if (deps.migration) {
+    const migrated = await runMigration({ ...deps.migration, log: out })
+    if (migrated.refused) {
+      out(migrated.refused)
+      return 1
+    }
+  }
   const chat = opts.chat ?? 'telegram'
   if (chat === 'discord') return runDiscordSetup(deps)
   if (chat !== 'telegram') {

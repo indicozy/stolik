@@ -110,20 +110,30 @@ export function defaultStateDir(env: NodeJS.ProcessEnv = process.env, home: stri
   return join(base, 'stolik')
 }
 
-// legacy tg-bridge name, read only by the migration
+// The v2 state folder (~/.local/state/tg-bridge). Not migration-only: the workers report (addons/workers/report.ts)
+// reads it for helper processes, and scripts/migrate-to-v3.ts reads it. The v3 router never writes it.
 export const OLD_STATE_DIR = join(homedir(), '.local', 'state', 'tg-bridge')
+
+// The legacy tg-bridge locations, read only by the stolik migration (cli/migrate.ts). Functions of (home, env) so tests
+// can use a temp home.
+export function legacyEnvFile(home: string = homedir()): string {
+  return join(home, '.config', 'tg-bridge.env')
+}
+export function legacyConfigDir(env: NodeJS.ProcessEnv = process.env, home: string = homedir()): string {
+  const xdg = env.XDG_CONFIG_HOME
+  return join(xdg && isAbsolute(xdg) ? xdg : join(home, '.config'), 'tg-bridge')
+}
+export function legacyStateDir(env: NodeJS.ProcessEnv = process.env, home: string = homedir()): string {
+  const xdg = env.XDG_STATE_HOME
+  return join(xdg && isAbsolute(xdg) ? xdg : join(home, '.local', 'state'), 'tg-bridge-v3')
+}
+
 // legacy tg-bridge name, read only by the migration
-export const LEGACY_ENV_FILE = join(homedir(), '.config', 'tg-bridge.env')
+export const LEGACY_ENV_FILE = legacyEnvFile()
 // legacy tg-bridge name, read only by the migration
-export const LEGACY_CONFIG_DIR = join(
-  process.env.XDG_CONFIG_HOME && isAbsolute(process.env.XDG_CONFIG_HOME) ? process.env.XDG_CONFIG_HOME : join(homedir(), '.config'),
-  'tg-bridge',
-)
+export const LEGACY_CONFIG_DIR = legacyConfigDir()
 // legacy tg-bridge name, read only by the migration
-export const LEGACY_STATE_DIR = join(
-  process.env.XDG_STATE_HOME && isAbsolute(process.env.XDG_STATE_HOME) ? process.env.XDG_STATE_HOME : join(homedir(), '.local', 'state'),
-  'tg-bridge-v3',
-)
+export const LEGACY_STATE_DIR = legacyStateDir()
 // legacy tg-bridge name, read only by the migration
 export const LEGACY_DB_NAME = 'tg-bridge.db'
 // legacy tg-bridge name, read only by the migration

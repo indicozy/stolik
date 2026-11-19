@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The `stolik` command (package.json bin): `setup`, `service install|uninstall|status`, `addon add|list|remove|consent`,
+// The `stolik` command (package.json bin): `setup`, `migrate` (copy the old tg-bridge settings), `service install|uninstall|status`, `addon add|list|remove|consent`,
 // `doctor`, `logs`, `trace` (docs/install.md).
 // The modules that load config.ts are imported inside the commands, not at the top: a bad config file throws while
 // config.ts loads, and that throw must reach the entry point's handler (message on stderr, exit 1), not a stack trace.
@@ -39,6 +39,7 @@ async function cmdSetup(args: string[]): Promise<number> {
   const { systemMlDeps } = await import('./ml-setup.ts')
   const { createPrompter } = await import('./prompt.ts')
   const { isNpxInstall } = await import('./install-location.ts')
+  const { oldServiceRunning } = await import('./migrate.ts')
   const options = parseSetupArgs(args)
   if (typeof options === 'string') {
     out(`error: ${options}`)
@@ -51,6 +52,8 @@ async function cmdSetup(args: string[]): Promise<number> {
       pairing: makeTelegramPairing({ stateDir: STATE_DIR, socketPath: SOCKET_PATH }),
       ask: prompter.ask,
       askSecret: prompter.askSecret,
+      // Copies the old tg-bridge settings first, when there are any (setup stops if that is refused).
+      migration: { home: homedir(), env: process.env, isOldRunning: oldServiceRunning },
       out,
       paths: {
         envFile: envFilePath(),
@@ -144,14 +147,30 @@ async function cmdTrace(args: string[]): Promise<number> {
   return runTraceCommand(args, out, err)
 }
 
+async function cmdMigrate(): Promise<number> {
+  const { planMigration, runMigration, oldServiceRunning } = await import('./migrate.ts')
+  if (planMigration({ home: homedir(), env: process.env }).length === 0) {
+    out('nothing to migrate')
+    return 0
+  }
+  const result = await runMigration({ home: homedir(), env: process.env, isOldRunning: oldServiceRunning, log: out })
+  if (result.refused) {
+    err(result.refused)
+    return 1
+  }
+  return 0
+}
+
 const USAGE =
-  'usage: stolik setup | service install|uninstall|status [--name N] [--start|--stop] | addon add|list|remove|consent ... | doctor [--json] | logs [--addon N] [--level L] [--since 10m] [--trace ID] [-f] | trace <traceId|telegramMessageId>\n'
+  'usage: stolik setup | migrate | service install|uninstall|status [--name N] [--start|--stop] | addon add|list|remove|consent ... | doctor [--json] | logs [--addon N] [--level L] [--since 10m] [--trace ID] [-f] | trace <traceId|telegramMessageId>\n'
 
 export async function runCli(argv: string[]): Promise<number> {
   const [command, ...args] = argv
   switch (command) {
     case 'setup':
       return cmdSetup(args)
+    case 'migrate':
+      return cmdMigrate()
     case 'service':
       return cmdService(args)
     case 'addon':

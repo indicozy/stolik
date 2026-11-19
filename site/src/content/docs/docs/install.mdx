@@ -166,6 +166,16 @@ The worker uses the CPU by default. To use a GPU, set `gpu` in `config.json`, fo
 - **Windows (WSL2, untested).** Install Ubuntu in WSL2, turn systemd on in `/etc/wsl.conf`, then follow the Linux steps inside WSL. WSL has no desktop session, so stolik treats you as always away and sends every answer.
 - **Native Windows.** Not supported.
 
+## Coming from tg-bridge
+
+`stolik migrate` copies your old tg-bridge settings and state into the stolik locations. It does not move anything. Your old files stay where they are.
+
+1. Stop the old service. Run `systemctl --user disable --now tg-bridge`. On macOS, run `launchctl bootout gui/$(id -u)/com.tg-bridge.router`. `stolik migrate` refuses to run while the old service is up.
+2. Run `stolik migrate`. `stolik setup` runs the same copy first when it finds the old files. Then start stolik with `stolik service install --start`.
+3. In Claude Code, remove the `tg-bridge@indicozy` plugin and add `stolik@indicozy`. The channel tools are now named `mcp__stolik__…`. Update any CLAUDE.md, hook or setting that names `mcp__tg-bridge__`.
+
+Delete the old files after stolik works.
+
 ## Check it
 
 ```sh

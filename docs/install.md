@@ -208,6 +208,16 @@ same timeline, short form. Files are in `~/.local/state/stolik/logs/` (10 MB per
 
 To keep an old unit next to a new one, install the new one under another name, e.g. `--name stolik`.
 
+## Coming from tg-bridge
+
+`stolik migrate` copies your old tg-bridge settings and state into the stolik locations. It does not move anything. Your old files stay where they are.
+
+1. Stop the old service. Run `systemctl --user disable --now tg-bridge`. On macOS, run `launchctl bootout gui/$(id -u)/com.tg-bridge.router`. `stolik migrate` refuses to run while the old service is up.
+2. Run `stolik migrate`. `stolik setup` runs the same copy first when it finds the old files. Then start stolik with `stolik service install --start`.
+3. In Claude Code, remove the `tg-bridge@indicozy` plugin and add `stolik@indicozy`. The channel tools are now named `mcp__stolik__…`. Update any CLAUDE.md, hook or setting that names `mcp__tg-bridge__`.
+
+Delete the old files after stolik works.
+
 ## Troubleshooting
 
 - **Development-channels prompt.** Claude asks to confirm `--dangerously-load-development-channels` once per start.
