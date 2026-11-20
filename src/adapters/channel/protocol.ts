@@ -3,7 +3,8 @@ import type { NotifyLevel } from '../../brain/notify-level.ts'
 export type Kind = 'response' | 'requested' | 'proactive'
 // channel server -> router (persistent connection)
 // spawnToken: the STOLIK_SPAWN_TOKEN the router put in this session's tmux environment (router-started sessions only).
-export type ChRegister = { t: 'register'; claudePid: number | null; cwd: string; spawnToken?: string }
+// agent / agentPid: an opencode session registers with agent 'opencode' and the pid of its opencode process (no claudePid).
+export type ChRegister = { t: 'register'; claudePid: number | null; cwd: string; spawnToken?: string; agent?: 'opencode'; agentPid?: number }
 // level: how loud the message is (src/brain/notify-level.ts); absent means 'default'. `kind` is separate.
 export type ChReply = { t: 'reply'; reqId: string; text: string; files?: string[]; kind: Kind; level?: NotifyLevel }
 // close_session: the session ends on request (the router answers close_result, then closes it a moment later).

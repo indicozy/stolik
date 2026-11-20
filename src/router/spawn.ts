@@ -8,6 +8,7 @@
 import { randomBytes } from 'node:crypto'
 import { basename } from 'node:path'
 import type { Inbound } from '../brain/chat-types.ts'
+import type { AgentKind } from '../ports.ts'
 import { isResumeId, type ResumeItem } from '../brain/resume.ts'
 import { deliver, send } from './deliver.ts'
 import { errMsg } from './log.ts'
@@ -52,12 +53,15 @@ export function startingText(tmuxName: string, project: string, model: string | 
 export type SpawnClaim = { kind: 'queue'; q: SpawnQueue } | { kind: 'late' }
 
 // The spawn a register belongs to, or null. `real` is the realpath of the registering folder, `claudePid` its claude
-// process. Pure apart from the platform's parent-pid reads.
-export function claimSpawn(router: Router, real: string | null, token: string | null, claudePid: number | null): SpawnClaim | null {
+// process. `agent` is the kind of the registering session: a token only takes a queue of that kind, and only a claude
+// register has the pane fallback (an opencode register always carries its token). Pure apart from the platform's
+// parent-pid reads.
+export function claimSpawn(router: Router, real: string | null, token: string | null, claudePid: number | null, agent: AgentKind = 'claude'): SpawnClaim | null {
   if (token !== null) {
-    for (const q of router.spawns.values()) if (q.token === token) return { kind: 'queue', q }
+    for (const q of router.spawns.values()) if (q.token === token && q.agent === agent) return { kind: 'queue', q }
     return router.retiredSpawns.has(token) ? { kind: 'late' } : null
   }
+  if (agent !== 'claude') return null
   if (real === null || claudePid === null) return null
   const q = router.spawns.get(real)
   if (!q || q.panePid === null) return null

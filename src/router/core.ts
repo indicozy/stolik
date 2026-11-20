@@ -269,6 +269,11 @@ export class Router {
     return backend
   }
 
+  // Whether this router runs a backend of the kind (an opencode register is refused when it does not).
+  hasAgent(kind: AgentKind): boolean {
+    return this.backends[kind] !== undefined
+  }
+
   // The backend of a session: the one of its kind. A key with no registered session gets the Claude backend.
   agentFor(key: SessionKey): AgentBackend {
     const s = this.registry.get(key)

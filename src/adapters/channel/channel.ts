@@ -13,6 +13,7 @@ import { SOCKET_PATH } from '../../config.ts'
 import { LEVEL_ERROR, LEVELS, parseLevel } from '../../brain/notify-level.ts'
 import { LineConn } from './ipc.ts'
 import { findClaudePid } from '../../claudepid.ts'
+import { channelCapabilities } from './capabilities.ts'
 import type {
   ChClose,
   ChPermReq,
@@ -32,6 +33,8 @@ const RECONNECT_MAX_MS = 15000
 // retried by the model, and the router's outbound ledger answers the retry without sending twice.
 const REPLY_TIMEOUT_MS = 120_000
 const REPLY_KINDS: readonly Kind[] = ['response', 'requested', 'proactive']
+// Run inside `opencode serve`: the session is an opencode one (no claude channel, no inbound messages over this link).
+const OPENCODE_MODE = process.env.STOLIK_AGENT === 'opencode'
 
 function log(msg: string): void {
   process.stderr.write(`stolik channel: ${msg}\n`)
@@ -59,14 +62,7 @@ const INSTRUCTIONS = [
 const mcp = new Server(
   { name: 'stolik', version: '0.1.0' },
   {
-    capabilities: {
-      tools: {},
-      experimental: {
-        'claude/channel': {},
-        // The router only accepts the configured chat id, so the replier is authenticated upstream.
-        'claude/channel/permission': {},
-      },
-    },
+    capabilities: channelCapabilities(process.env.STOLIK_AGENT),
     instructions: INSTRUCTIONS,
   },
 )
@@ -121,11 +117,19 @@ function onRouterMessage(msg: RtRegistered | RtReplyResult | RtCloseResult | RtI
       return
     }
     case 'inbound':
+      if (OPENCODE_MODE) {
+        log('inbound message ignored in opencode mode')
+        return
+      }
       mcp
         .notification({ method: 'notifications/claude/channel', params: { content: msg.content, meta: msg.meta } })
         .catch((err) => log(`failed to deliver inbound to Claude: ${err}`))
       return
     case 'permission':
+      if (OPENCODE_MODE) {
+        log('permission verdict ignored in opencode mode')
+        return
+      }
       mcp
         .notification({
           method: 'notifications/claude/channel/permission',
@@ -156,12 +160,10 @@ function connectRouter(): void {
   socket.on('connect', () => {
     current = conn
     backoffMs = RECONNECT_MIN_MS
-    const register: ChRegister = {
-      t: 'register',
-      claudePid: findClaudePid(),
-      cwd: process.env.CLAUDE_PROJECT_DIR ?? process.cwd(),
-      ...(process.env.STOLIK_SPAWN_TOKEN ? { spawnToken: process.env.STOLIK_SPAWN_TOKEN } : {}),
-    }
+    const spawnToken = process.env.STOLIK_SPAWN_TOKEN ? { spawnToken: process.env.STOLIK_SPAWN_TOKEN } : {}
+    const register: ChRegister = OPENCODE_MODE
+      ? { t: 'register', claudePid: null, agent: 'opencode', agentPid: process.ppid, cwd: process.cwd(), ...spawnToken }
+      : { t: 'register', claudePid: findClaudePid(), cwd: process.env.CLAUDE_PROJECT_DIR ?? process.cwd(), ...spawnToken }
     conn.send(register)
   })
   // 'error' is always followed by 'close', so reconnect bookkeeping happens in 'close' only.

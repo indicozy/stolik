@@ -642,6 +642,13 @@ export class FakeAgent implements AgentBackend {
     this.sessions.delete(key)
   }
 
+  // Each bindToken call, in order: the session and the spawn token it was given.
+  readonly bound: Array<[SessionKey, string]> = []
+
+  bindToken(key: SessionKey, spawnToken: string): void {
+    this.bound.push([key, spawnToken])
+  }
+
   isConnected(key: SessionKey): boolean {
     return this.sessions.has(key)
   }

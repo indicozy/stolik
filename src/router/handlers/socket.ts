@@ -99,18 +99,31 @@ export function bind(router: Router, conn: SocketConn, s: Session): void {
 }
 
 export function onRegister(router: Router, conn: SocketConn, msg: ChRegister): void {
-  const pid = typeof msg.claudePid === 'number' ? msg.claudePid : null
-  if (!router.agent.isInteractive(pid)) {
+  const opencode = msg.agent === 'opencode'
+  if (opencode && !router.hasAgent('opencode')) {
+    // An opencode session with no opencode backend in this router: refused like a print-mode claude.
+    conn.send({ t: 'registered', name: '' })
+    router.audit.event({ event: 'register_ignored', reason: 'no-opencode-backend' })
+    return
+  }
+  const pidField = opencode ? msg.agentPid : msg.claudePid
+  const pid = typeof pidField === 'number' ? pidField : null
+  // An opencode session has no claude process to check: its pid is the opencode process.
+  if (!opencode && !router.agent.isInteractive(pid)) {
     // Non-interactive claude (print mode): no session, no routing, no /list entry.
     conn.send({ t: 'registered', name: '' })
     router.audit.event({ event: 'register_ignored', reason: 'non-interactive' })
     return
   }
   const s = router.registry.registerChannel(procRef(pid, (p) => router.platform.processStart(p)), str(msg.cwd) ?? '', router.clock.now())
+  // The kind is set before bind, so the connection is attached to the backend of that kind.
+  if (opencode) s.agent = 'opencode'
   bind(router, conn, s)
+  const spawnToken = str(msg.spawnToken) ?? null
+  if (opencode && spawnToken !== null) router.agentOf('opencode').bindToken?.(s.key, spawnToken)
   conn.send({ t: 'registered', name: s.name })
   // Only the spawn this register belongs to (by its token) takes a queue; a stopped start's late register is counted.
-  const claim = claimSpawn(router, router.platform.realpath(s.cwd), str(msg.spawnToken) ?? null, pid)
+  const claim = claimSpawn(router, router.platform.realpath(s.cwd), spawnToken, pid, opencode ? 'opencode' : 'claude')
   if (claim?.kind === 'late') s.spawned = true
   const queue = claim?.kind === 'queue' ? claim.q : null
   void onSessionRegistered(router, s)

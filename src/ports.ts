@@ -72,6 +72,9 @@ export interface AgentBackend {
   attachSession(key: SessionKey, conn: SocketConn): void
   detachSession(conn: SocketConn): SessionKey | null
   dropSession(key: SessionKey): void
+  // Gives a session's spawn token to the backend that started it (optional: only a backend with router-started sessions
+  // that register with a token needs it). Called right after attachSession when the register carries a token.
+  bindToken?(key: SessionKey, spawnToken: string): void
   isConnected(key: SessionKey): boolean
   // Delivers an inbound user message to a connected session. Returns false when the session is not connected.
   sendToSession(key: SessionKey, content: string, meta: Record<string, string>): boolean
