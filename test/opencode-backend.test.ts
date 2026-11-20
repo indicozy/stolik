@@ -12,7 +12,7 @@ import { ISOLATED_ROOT } from './helpers/isolate.ts'
 import { harness } from './helpers/fakes.ts'
 import { REPO_DIR } from '../src/config.ts'
 import { configureLog } from '../src/router/log.ts'
-import { OpencodeBackend, OC_HEADER, SERVERS_FILE, agentOfArgs, attachments, shQuote, skillBody, splitModel } from '../src/adapters/agent/opencode.ts'
+import { OpencodeBackend, OC_HEADER, SERVERS_FILE, agentOfArgs, attachments, resolveOpencodeBin, shQuote, skillBody, splitModel } from '../src/adapters/agent/opencode.ts'
 import { tmuxNewSessionArgs, type Run, type ServerLauncher, type TmuxRun } from '../src/adapters/tmux.ts'
 import type { SessionKey } from '../src/brain/sessions.ts'
 
@@ -454,4 +454,18 @@ test('pure helpers: the skill body, the model split, the agent, the attachments'
   assert.equal(agentOfArgs([]), 'build')
   assert.deepEqual(attachments({ image_path: '/a/b.png' }), [{ uri: 'file:///a/b.png' }])
   assert.deepEqual(attachments({}), [])
+})
+
+test('resolveOpencodeBin: OPENCODE_BIN wins; then the first PATH hit; then ~/.opencode/bin; then the bare name', () => {
+  const home = '/home/u'
+  const onlyAt = (...paths: string[]) => (p: string) => paths.includes(p)
+  // OPENCODE_BIN is used even when it does not exist and PATH and home have one
+  assert.equal(resolveOpencodeBin({ OPENCODE_BIN: '/opt/oc', PATH: '/usr/bin' }, home, onlyAt('/usr/bin/opencode', '/home/u/.opencode/bin/opencode')), '/opt/oc')
+  // the first PATH directory that has an opencode wins
+  assert.equal(resolveOpencodeBin({ PATH: '/a:/usr/bin:/b' }, home, onlyAt('/usr/bin/opencode', '/b/opencode')), '/usr/bin/opencode')
+  // not on PATH: the installer's location
+  assert.equal(resolveOpencodeBin({ PATH: '/usr/bin' }, home, onlyAt('/home/u/.opencode/bin/opencode')), '/home/u/.opencode/bin/opencode')
+  // nowhere: the bare name, so the spawn fails with the familiar error
+  assert.equal(resolveOpencodeBin({ PATH: '/usr/bin' }, home, onlyAt()), 'opencode')
+  assert.equal(resolveOpencodeBin({}, home, onlyAt()), 'opencode')
 })

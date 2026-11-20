@@ -8,7 +8,7 @@
 import { randomBytes } from 'node:crypto'
 import { chmodSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { REPO_DIR } from '../../config.ts'
 import type { SessionKey } from '../../brain/sessions.ts'
@@ -94,6 +94,20 @@ export function shQuote(s: string): string {
 }
 
 // The command of a window: the env file is sourced (it holds the password, so it is never in an argv), then argv replaces the shell.
+// The opencode binary: OPENCODE_BIN if set, else the first `opencode` on PATH, else the installer's ~/.opencode/bin
+// (a systemd service's PATH does not have it), else the bare name.
+export function resolveOpencodeBin(env: NodeJS.ProcessEnv, home: string, exists: (p: string) => boolean): string {
+  if (env.OPENCODE_BIN) return env.OPENCODE_BIN
+  for (const dir of (env.PATH ?? '').split(delimiter)) {
+    if (dir === '') continue
+    const candidate = join(dir, 'opencode')
+    if (exists(candidate)) return candidate
+  }
+  const installed = join(home, '.opencode', 'bin', 'opencode')
+  if (exists(installed)) return installed
+  return 'opencode'
+}
+
 export function envScript(envFile: string, argv: readonly string[]): string {
   return `. ${shQuote(envFile)} && exec ${argv.map(shQuote).join(' ')}`
 }

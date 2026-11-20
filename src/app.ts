@@ -1,7 +1,7 @@
 // Composition root (plan S11): reads config, builds every adapter and hands them to the router as ports. Nothing
 // else builds an adapter. `src/router/main.ts` calls buildRouter and runs the result.
 import { execFile, execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { INBOX_DIR, NOTES_DIR, REPO_DIR, SOCKET_PATH, STATE_DIR, chatLogRoot, currentTgConfig, gpuEnv, pinned, tgConfigDir, type Config } from './config.ts'
@@ -11,7 +11,7 @@ import { audit, configureLog, error as logError, log, debug, warn as logWarn, wr
 import { AddonHost } from './addons-host/host.ts'
 import { DbAddonSettings } from './addons-host/settings.ts'
 import { ClaudeCodeBackend } from './adapters/agent/claude-code.ts'
-import { OpencodeBackend } from './adapters/agent/opencode.ts'
+import { OpencodeBackend, resolveOpencodeBin } from './adapters/agent/opencode.ts'
 import { FilesChatLog, readChatDays } from './adapters/files.ts'
 import { SqliteStore } from './adapters/store-sqlite.ts'
 import { Stt } from './adapters/stt.ts'
@@ -190,6 +190,7 @@ export async function buildRouter(cfg: Config): Promise<Router> {
     model: tg.opencodeModel,
     socketPath: SOCKET_PATH,
     channelScript: join(REPO_DIR, 'dist', 'channel.js'),
+    opencodeBin: resolveOpencodeBin(process.env, home, existsSync),
     onDeliveryError: (key, reason) => void router.reportDeliveryError(key, reason).catch(() => {}),
   })
   const router = new Router({
