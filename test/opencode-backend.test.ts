@@ -5,12 +5,14 @@ import './helpers/isolate.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
-import { mkdtempSync, readFileSync, statSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { ISOLATED_ROOT } from './helpers/isolate.ts'
 import { harness } from './helpers/fakes.ts'
 import { REPO_DIR } from '../src/config.ts'
-import { OpencodeBackend, OC_HEADER, SERVERS_FILE, agentOfArgs, attachments, skillBody, splitModel } from '../src/adapters/agent/opencode.ts'
+import { configureLog } from '../src/router/log.ts'
+import { OpencodeBackend, OC_HEADER, SERVERS_FILE, agentOfArgs, attachments, shQuote, skillBody, splitModel } from '../src/adapters/agent/opencode.ts'
 import { tmuxNewSessionArgs, type Run, type ServerLauncher, type TmuxRun } from '../src/adapters/tmux.ts'
 import type { SessionKey } from '../src/brain/sessions.ts'
 
@@ -19,12 +21,16 @@ const CHANNEL = '/opt/stolik/dist/channel.js'
 const SKILL_FILE = join(REPO_DIR, 'opencode', 'skills', 'stolik', 'SKILL.md')
 const TOKEN = 'token-stolik-1'
 
+// Log lines go to this list, not to the test output; a test can check that no line carries a password.
+const logged: string[] = []
+configureLog({ level: 'error', file: false, sink: (r) => void logged.push(JSON.stringify(r)) })
+
 // ---------- fake tmux ----------
 
 type Call = { args: string[] }
 
-// Records every tmux command. `new-session` records the serve's port and password under the port (the password is the
-// basic-auth check of the fake serve for requests from that port).
+// Records every tmux command. `new-session` records the serve's password under its port (the password is the basic-auth
+// check of the fake serve for requests from that port). The password is read from the env file the script sources.
 function fakeTmux(passwords: Map<string, string>): { calls: Call[]; run: TmuxRun } {
   const calls: Call[] = []
   const run: TmuxRun = async (_cmd, args) => {
@@ -34,13 +40,18 @@ function fakeTmux(passwords: Map<string, string>): { calls: Call[]; run: TmuxRun
     if (args[0] === 'display-message') return ok('4242\n')
     if (args[0] === 'capture-pane') return ok('serve listening\n')
     if (args[0] === 'new-session') {
-      const e = envPairs(args)
-      const port = servePort(args)
-      passwords.set(String(port), e.OPENCODE_PASSWORD)
+      const pw = envFilePassword(args[args.length - 1])
+      passwords.set(String(servePort(args)), pw)
     }
     return ok()
   }
   return { calls, run }
+}
+
+// The password in the env file a window script sources (`. <file> && exec ...`).
+function envFilePassword(script: string): string {
+  const file = /^\. (\S+) && exec /.exec(script)?.[1] ?? ''
+  return /export OPENCODE_PASSWORD=(\S+)/.exec(readFileSync(file, 'utf8'))?.[1] ?? ''
 }
 
 // The launcher a plain test wants: tmux runs directly (no systemd scope, no login shell).
@@ -58,29 +69,32 @@ function envPairs(args: string[]): Record<string, string> {
   return out
 }
 
-// The port of the serve in a new-session argv.
+// The port of the serve in a new-session argv (its window script ends with `--port <n>`).
 function servePort(args: string[]): number {
-  return Number(args[args.indexOf('--port') + 1])
+  return Number(/--port (\d+)/.exec(args[args.length - 1])?.[1] ?? 0)
 }
 
 // Every new-session argv, in order, parsed.
-function sessionsOf(calls: Call[]): Array<{ name: string; env: Record<string, string>; port: number; argv: string[] }> {
+function sessionsOf(calls: Call[]): Array<{ name: string; env: Record<string, string>; port: number; password: string; script: string; argv: string[] }> {
   return calls
     .filter((c) => c.args[0] === 'new-session')
-    .map((c) => ({ name: c.args[c.args.indexOf('-s') + 1], env: envPairs(c.args), port: servePort(c.args), argv: c.args }))
+    .map((c) => {
+      const script = c.args[c.args.length - 1]
+      return { name: c.args[c.args.indexOf('-s') + 1], env: envPairs(c.args), port: servePort(c.args), password: envFilePassword(script), script, argv: c.args }
+    })
 }
 
 // ---------- fake serve ----------
 
 type Seen = { method: string; path: string; origin: string; auth: string | undefined; body: any }
 
-type Fake = { port: number; seen: Seen[]; promptStatus: number; server: Server }
+type Fake = { port: number; seen: Seen[]; promptStatus: number; putStatus: number; server: Server }
 
 // A fake `opencode serve` on 127.0.0.1:0. The backend's own port is not listening: the fetch of each backend is routed here
 // with the backend's port in `x-origin-port`, and that port picks the password the auth check wants and the session id
 // (`ses_<port>`). /health needs no auth, the rest do.
 async function fakeServe(passwords: Map<string, string>): Promise<Fake> {
-  const fake: Fake = { port: 0, seen: [], promptStatus: 200, server: createServer() }
+  const fake: Fake = { port: 0, seen: [], promptStatus: 200, putStatus: 200, server: createServer() }
   fake.server.on('request', (req: IncomingMessage, res: ServerResponse) => {
     let raw = ''
     req.on('data', (c: Buffer) => (raw += c))
@@ -98,7 +112,7 @@ async function fakeServe(passwords: Map<string, string>): Promise<Fake> {
       const pw = passwords.get(origin)
       if (pw === undefined || auth !== basic(pw)) return reply(401, { name: 'UnauthorizedError' })
       if (req.method === 'POST' && path === '/api/session') return reply(200, { data: { id: `ses_${origin}` } })
-      if (req.method === 'PUT' && path.includes('/instructions/entries/stolik')) return reply(200, {})
+      if (req.method === 'PUT' && path.includes('/instructions/entries/stolik')) return reply(fake.putStatus, {})
       if (req.method === 'POST' && path.endsWith('/prompt')) return reply(fake.promptStatus, { data: { id: 'msg_1' } })
       if (req.method === 'POST' && path.endsWith('/interrupt')) return reply(200, {})
       reply(404, { name: 'NotFound' })
@@ -180,11 +194,11 @@ test('startSession runs serve in tmux with its env; the start command shows no p
   assert.equal(ns.env.STOLIK_SOCKET, SOCK)
   assert.deepEqual(JSON.parse(ns.env.OPENCODE_CONFIG_CONTENT), { mcp: { stolik: { type: 'local', command: [process.execPath, CHANNEL] } } })
   assert.match(ns.env.OPENCODE_CONFIG_CONTENT, /"stolik"/)
-  assert.equal(ns.env.OPENCODE_PASSWORD.length, 32, 'a 24-byte base64url password')
-  const tail = ns.argv.slice(ns.argv.indexOf('opencode'))
-  assert.deepEqual(tail, ['opencode', 'serve', '--hostname', '127.0.0.1', '--port', String(ns.port)])
+  assert.equal(ns.password.length, 32, 'a 24-byte base64url password')
+  assert.equal(ns.env.OPENCODE_PASSWORD, undefined, 'the password is not an -e argument')
+  assert.match(ns.script, /^\. \S+ && exec opencode serve --hostname 127\.0\.0\.1 --port \d+$/)
   assert.ok(ns.port > 0)
-  assert.equal(JSON.stringify(backend.startCommand()).includes(ns.env.OPENCODE_PASSWORD), false)
+  assert.equal(JSON.stringify(backend.startCommand()).includes(ns.password), false)
   assert.deepEqual(backend.startCommand(), ['opencode', 'serve', '--hostname', '127.0.0.1', '--port', '<port>'])
 })
 
@@ -209,11 +223,18 @@ test('after health: creates the session, loads the skill, opens the TUI in a sec
   assert.equal(seen[2].body.value.startsWith('---'), false, 'frontmatter is not in the instructions')
   const win = tmux.calls.find((c) => c.args[0] === 'new-window')!.args
   assert.equal(win[win.indexOf('-t') + 1], '=oc-stolik:')
-  assert.equal(win[win.indexOf('--session') + 1], 'ses_' + port)
-  assert.equal(win[win.indexOf('--server') + 1], `http://127.0.0.1:${port}`)
-  assert.equal(win[win.indexOf('-e') + 1].startsWith('OPENCODE_PASSWORD='), true)
-  assert.equal(win[win.length - 1], '/home/u/stolik')
+  assert.equal(win.includes('-e'), false, 'no -e: the password comes from the env file')
+  assert.equal(
+    win[win.length - 1],
+    `. ${envFileOf(tmux.calls)} && exec opencode --server http://127.0.0.1:${port} --session ses_${port} /home/u/stolik`,
+  )
 })
+
+// The env file a test's window scripts source (the path is in the serve's script).
+function envFileOf(calls: Call[]): string {
+  const script = calls.find((c) => c.args[0] === 'new-session')!.args.slice(-1)[0]
+  return /^\. (\S+) && exec /.exec(script)![1]
+}
 
 test('no model and no --agent plan: the session is build with no model field', async (t) => {
   const { fake } = await started(t, 'stolik', '/home/u/stolik')
@@ -318,6 +339,59 @@ test('killSession interrupts the session, kills its tmux session and forgets its
   assert.equal(backend.sendToSession('k-kill', 'gone', {}), false)
   const saved = JSON.parse(readFileSync(join(stateDir, SERVERS_FILE), 'utf8'))
   assert.deepEqual(saved, [])
+  assert.equal(existsSync(envFileOf(tmux.calls)), false, 'the env file is deleted with the session')
+})
+
+test('the skill PUT failing (500) is logged and the TUI still opens; prompts still go', async (t) => {
+  const s = await setup(t)
+  s.fake.putStatus = 500
+  await s.backend.startSession('stolik', '/home/u/stolik', [], TOKEN)
+  await waitFor(() => s.tmux.calls.some((c) => c.args[0] === 'new-window'), 'the TUI window despite the skill failure')
+  const port = sessionsOf(s.tmux.calls)[0].port
+  assert.ok(logged.some((l) => l.includes('runs without the stolik skill')), 'the skill failure is logged')
+  assert.equal(logged.some((l) => l.includes(sessionsOf(s.tmux.calls)[0].password)), false, 'and the log has no password')
+  const win = s.tmux.calls.find((c) => c.args[0] === 'new-window')!.args
+  assert.ok(win[win.length - 1].includes(`--session ses_${port} `), 'the TUI names the session')
+  s.backend.bindToken('k-skill', TOKEN)
+  assert.equal(s.backend.sendToSession('k-skill', 'still works', {}), true)
+  await waitFor(() => s.fake.seen.some((x) => x.body?.text === OC_HEADER + 'still works'), 'the prompt')
+})
+
+test('no tmux argv carries the password; the env file is 0600 and sources to the password', async (t) => {
+  const { passwords, tmux, stateDir, backend, name } = await started(t, 'stolik', '/home/u/stolik')
+  const [pw] = [...passwords.values()]
+  assert.ok(pw.length > 0)
+  for (const c of tmux.calls) assert.equal(c.args.join(' ').includes(pw), false, `argv of ${c.args[0]} has the password`)
+  const file = envFileOf(tmux.calls)
+  assert.equal(file.startsWith(stateDir), true)
+  assert.equal(statSync(file).mode & 0o777, 0o600)
+  const sourced = execFileSync('sh', ['-c', `. ${shQuote(file)} && printf %s "$OPENCODE_PASSWORD"`], { encoding: 'utf8' })
+  assert.equal(sourced, pw)
+  assert.equal(JSON.stringify(backend.startCommand()).includes(pw), false)
+  await backend.killSession(name)
+})
+
+test('shQuote: a word that holds quotes and spaces reaches the shell as one word', () => {
+  for (const word of ["plain-word_1", "with space", "it's", "$HOME `x` \"q\"", "a'b'c"]) {
+    const got = execFileSync('sh', ['-c', `printf %s ${shQuote(word)}`], { encoding: 'utf8' })
+    assert.equal(got, word)
+  }
+})
+
+test('a records file that does not parse is moved aside, and a later save keeps the moved copy', async (t) => {
+  const stateDir = mkdtempSync(join(ISOLATED_ROOT, 'oc-corrupt-'))
+  const file = join(stateDir, SERVERS_FILE)
+  writeFileSync(file, '[{"token": "x", "password": "keep-me"')
+  const s = await setup(t, { stateDir })
+  assert.equal(existsSync(file), false, 'the damaged file is no longer in place')
+  const bad = readdirSync(stateDir).filter((f) => f.startsWith(SERVERS_FILE + '.bad-'))
+  assert.equal(bad.length, 1)
+  assert.equal(readFileSync(join(stateDir, bad[0]), 'utf8'), '[{"token": "x", "password": "keep-me"')
+  await s.backend.startSession('stolik', '/home/u/stolik', [], TOKEN)
+  await waitFor(() => s.tmux.calls.some((c) => c.args[0] === 'new-window'), 'the TUI window')
+  assert.equal(statSync(file).mode & 0o777, 0o600)
+  assert.equal(readFileSync(join(stateDir, bad[0]), 'utf8'), '[{"token": "x", "password": "keep-me"', 'the moved copy is untouched')
+  assert.equal(JSON.parse(readFileSync(file, 'utf8')).length, 1)
 })
 
 test("the router reports a delivery error in the chat as Couldn't deliver to opencode", async () => {

@@ -6,7 +6,7 @@
 // Records (token, tmux name, port, password, opencode session id) are kept in <stateDir>/opencode-servers.json (0600), so a
 // router restart can still route to a running server. The password is never in logs, error reasons or the start command.
 import { randomBytes } from 'node:crypto'
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -85,6 +85,33 @@ export function attachments(meta: Record<string, string>): Array<{ uri: string }
   return [meta.image_path, meta.file_path].filter((p): p is string => typeof p === 'string' && p !== '').map((p) => ({ uri: pathToFileURL(p).href }))
 }
 
+// One shell word: plain text stays as it is; anything else is single-quoted (a quote inside becomes '\'').
+export function shQuote(s: string): string {
+  return /^[A-Za-z0-9_./:=@%+,-]+$/.test(s) ? s : `'${s.replace(/'/g, `'\\''`)}'`
+}
+
+// The command of a window: the env file is sourced (it holds the password, so it is never in an argv), then argv replaces the shell.
+export function envScript(envFile: string, argv: readonly string[]): string {
+  return `. ${shQuote(envFile)} && exec ${argv.map(shQuote).join(' ')}`
+}
+
+// Writes a file that holds a secret: a temp file made 0600, then renamed over the target (so a crash never leaves a half file).
+function writeAtomic(path: string, text: string): void {
+  const tmp = `${path}.tmp-${randomBytes(6).toString('hex')}`
+  try {
+    writeFileSync(tmp, text, { mode: 0o600 })
+    chmodSync(tmp, 0o600)
+    renameSync(tmp, path)
+  } catch (e) {
+    try {
+      unlinkSync(tmp)
+    } catch {
+      // The temp file was never made.
+    }
+    throw e
+  }
+}
+
 function isServer(v: unknown): v is OcServer {
   const r = v as Partial<OcServer> | null
   return (
@@ -100,7 +127,8 @@ function isServer(v: unknown): v is OcServer {
   )
 }
 
-// The saved servers. A missing file is none; a file that does not parse is reported without its text (it holds passwords).
+// The saved servers. A missing file is none. A file that does not parse is moved aside (never overwritten: it holds the
+// records of running servers) and reported without its text (it holds passwords).
 function loadServers(file: string): OcServer[] {
   let text: string
   try {
@@ -108,12 +136,27 @@ function loadServers(file: string): OcServer[] {
   } catch {
     return []
   }
+  let v: unknown
   try {
-    const v: unknown = JSON.parse(text)
-    return Array.isArray(v) ? v.filter(isServer) : []
+    v = JSON.parse(text)
   } catch {
-    warn('the opencode servers file does not parse: its sessions are not routed', 'opencode')
+    v = undefined
+  }
+  if (!Array.isArray(v)) {
+    moveAside(file)
     return []
+  }
+  return v.filter(isServer)
+}
+
+// Renames an unreadable servers file to <file>.bad-<timestamp>, and logs where it went.
+function moveAside(file: string): void {
+  const bad = `${file}.bad-${new Date().toISOString().replace(/[:.]/g, '-')}`
+  try {
+    renameSync(file, bad)
+    warn(`the opencode servers file does not parse; moved to ${bad}: its sessions are not routed`, 'opencode')
+  } catch (e) {
+    warn(`the opencode servers file does not parse and could not be moved aside: ${errMsg(e)}`, 'opencode')
   }
 }
 
@@ -243,15 +286,18 @@ export class OpencodeBackend implements AgentBackend {
     const password = randomBytes(24).toString('base64url')
     const token = spawnToken ?? randomBytes(16).toString('hex')
     const config = { mcp: { stolik: { type: 'local', command: [process.execPath, this.channelScript] } } }
+    const envFile = this.envPath(token)
+    writeAtomic(envFile, `export OPENCODE_PASSWORD=${shQuote(password)}\n`)
     let name: string
     try {
       name = await startTmux(project, dir, [], this.tmux, token, this.launcher, {
         prefix: 'oc-',
         socket: this.socketPath,
-        command: [this.bin, 'serve', '--hostname', '127.0.0.1', '--port', String(port)],
-        env: ['STOLIK_AGENT=opencode', `OPENCODE_PASSWORD=${password}`, `OPENCODE_CONFIG_CONTENT=${JSON.stringify(config)}`],
+        command: ['sh', '-c', envScript(envFile, [this.bin, 'serve', '--hostname', '127.0.0.1', '--port', String(port)])],
+        env: ['STOLIK_AGENT=opencode', `OPENCODE_CONFIG_CONTENT=${JSON.stringify(config)}`],
       })
     } catch (e) {
+      this.removeEnv(token)
       throw new Error(redact(errMsg(e), password))
     }
     const rec: OcServer = { token, tmuxName: name, port, password, sessionId: null, dir, agent: agentOfArgs(extraArgs) }
@@ -274,13 +320,31 @@ export class OpencodeBackend implements AgentBackend {
       if (created.status < 200 || created.status >= 300 || typeof id !== 'string') throw new Error(`session create: HTTP ${created.status}`)
       rec.sessionId = id
       this.save()
-      const skill = skillBody(readFileSync(SKILL_PATH, 'utf8'))
-      const put = await ocFetch(rec, 'PUT', `/api/experimental/session/${encodeURIComponent(id)}/instructions/entries/stolik`, { value: skill }, this.fetchImpl)
-      if (put.status < 200 || put.status >= 300) throw new Error(`skill instructions: HTTP ${put.status}`)
+      // The skill is a session's instructions, not a condition of its TUI: a failure is logged and the window still opens.
+      try {
+        const skill = skillBody(readFileSync(SKILL_PATH, 'utf8'))
+        const put = await ocFetch(rec, 'PUT', `/api/experimental/session/${encodeURIComponent(id)}/instructions/entries/stolik`, { value: skill }, this.fetchImpl)
+        if (put.status < 200 || put.status >= 300) throw new Error(`skill instructions: HTTP ${put.status}`)
+      } catch (e) {
+        warn(`opencode session ${rec.tmuxName} runs without the stolik skill: ${redact(errMsg(e), rec.password)}`, 'opencode')
+      }
       if (!this.servers.includes(rec)) return
       await this.openTui(rec)
     } catch (e) {
       warn(`opencode session ${rec.tmuxName} did not start: ${redact(errMsg(e), rec.password)}`, 'opencode')
+    }
+  }
+
+  // The per-session env file: the password, sourced by the serve and the TUI windows (never in an argv).
+  private envPath(token: string): string {
+    return join(this.stateDir, `opencode-${token.replace(/[^A-Za-z0-9_-]/g, '_')}.env`)
+  }
+
+  private removeEnv(token: string): void {
+    try {
+      unlinkSync(this.envPath(token))
+    } catch {
+      // Already gone.
     }
   }
 
@@ -301,19 +365,8 @@ export class OpencodeBackend implements AgentBackend {
 
   // The TUI, attached to the server and the session, in a second window of the same tmux session.
   private async openTui(rec: OcServer): Promise<void> {
-    const r = await this.tmux('tmux', [
-      'new-window',
-      '-t',
-      exactTarget(rec.tmuxName),
-      '-e',
-      `OPENCODE_PASSWORD=${rec.password}`,
-      this.bin,
-      '--server',
-      `http://127.0.0.1:${rec.port}`,
-      '--session',
-      rec.sessionId ?? '',
-      rec.dir,
-    ])
+    const script = envScript(this.envPath(rec.token), [this.bin, '--server', `http://127.0.0.1:${rec.port}`, '--session', rec.sessionId ?? '', rec.dir])
+    const r = await this.tmux('tmux', ['new-window', '-t', exactTarget(rec.tmuxName), 'sh', '-c', script])
     if (r.code !== 0) throw new Error(`tmux new-window failed: ${redact(r.stderr.trim() || String(r.code), rec.password)}`)
   }
 
@@ -328,6 +381,7 @@ export class OpencodeBackend implements AgentBackend {
   }
 
   private forget(rec: OcServer): void {
+    this.removeEnv(rec.token)
     this.servers = this.servers.filter((r) => r !== rec)
     for (const [key, bound] of this.bindings) if (bound === rec) this.bindings.delete(key)
     this.save()
@@ -389,12 +443,11 @@ export class OpencodeBackend implements AgentBackend {
 
   respondToAsk(): void {}
 
-  // Writes the records (0600). A failed write is logged, not thrown: the servers keep running.
+  // Writes the records (0600, atomically). A failed write is logged, not thrown: the servers keep running.
   private save(): void {
     try {
       mkdirSync(this.stateDir, { recursive: true, mode: 0o700 })
-      writeFileSync(this.file, JSON.stringify(this.servers, null, 2), { mode: 0o600 })
-      chmodSync(this.file, 0o600)
+      writeAtomic(this.file, JSON.stringify(this.servers, null, 2))
     } catch (e) {
       warn(`could not save the opencode servers file: ${errMsg(e)}`, 'opencode')
     }
