@@ -6,13 +6,14 @@
 // New…, quick, read, web. Forwarded messages skip (1) to (3) and get the buttons. Config routerAutoStart "off" skips
 // (2) and (3). quick, read and web are handed to the modes addon through its prefix dispatch (addons.general); with no
 // addon they say which addon would answer it (or "not installed"). New… opens the folder picker. Also the prefix
-// "new <project>:" (startNewFromPrefix). Every decision is audited as a `route` event.
+// "new <project>:" (startNewFromPrefix) and "oc <project>:" (startOpencodeFromPrefix). Every decision is audited as a
+// `route` event.
 import { basename, join } from 'node:path'
 import type { ButtonPress, Inbound } from '../../brain/chat-types.ts'
 import type { MessageId } from '../../brain/chat-types.ts'
 import { autoStartAllowed, folderPage, lastActivity, orderFolders, plainTarget } from '../../brain/route.ts'
 import { nameHit, quoteData } from '../../brain/route-match.ts'
-import type { RoutePayload } from '../../ports.ts'
+import type { AgentKind, RoutePayload } from '../../ports.ts'
 import { startableDirs, prepare, send, deliverable } from '../deliver.ts'
 import { errMsg } from '../log.ts'
 import { recordMsg, logRouteDecision, say } from '../send.ts'
@@ -26,8 +27,16 @@ import {
 } from '../state.ts'
 import type { Router } from '../core.ts'
 
-// Args for a Read-only session: claude starts in plan mode.
+// Args for a Read-only session: claude starts in plan mode, opencode with its plan agent.
 export const READ_ONLY_ARGS: readonly string[] = ['--permission-mode', 'plan']
+export const OPENCODE_READ_ONLY_ARGS: readonly string[] = ['--agent', 'plan']
+// The args of a start of the harness `agent`, Read-only or full.
+export function startArgs(agent: AgentKind, readOnly: boolean): readonly string[] {
+  if (!readOnly) return []
+  return agent === 'opencode' ? OPENCODE_READ_ONLY_ARGS : READ_ONLY_ARGS
+}
+export const OC_UNAVAILABLE_TEXT = 'opencode is not available here.'
+export const OC_USAGE = 'Usage: oc <name>: <text>. <name> is a trusted folder (see /list).'
 export const ASK_TEXT = 'Which one?'
 export const NO_SESSION_TEXT = 'No session can take it right now. Start one with New…, or ask quick, read or web.'
 
@@ -220,7 +229,7 @@ async function askStart(
   const id = newRouteId()
   const text = `Start ${await folderLabel(router, dir)}?${notice ? ` (not started by itself: ${notice})` : ''}`
   const messageId = await router.chat
-    .sendText(text, { replyTo: m.messageId, ...inboundTarget(router, m), rows: startRows(id) })
+    .sendText(text, { replyTo: m.messageId, ...inboundTarget(router, m), rows: startRows(id, router.hasAgent('opencode')) })
     .catch((e) => {
       router.logger.log(`start confirm failed: ${errMsg(e)}`)
       return null
@@ -236,7 +245,8 @@ async function askStart(
 // offers Stop it and the folder picker.
 async function startRouted(router: Router, dir: string, m: Inbound, prepared: Prepared): Promise<void> {
   const project = basename(dir)
-  const model = effectiveModel(router).model
+  const agent = autoStartAgent(router)
+  const model = agent === 'claude' ? effectiveModel(router).model : null
   const text = startingText(tmuxNameFor(project), project, model)
   const id = newRouteId()
   router.lastAutoStartAt = router.clock.now()
@@ -251,7 +261,7 @@ async function startRouted(router: Router, dir: string, m: Inbound, prepared: Pr
       m, prepared, mode: 'started', messageId, text, candidates: [], folders: [], folder: dir, createdAt: router.clock.now(),
     })
   }
-  const tmuxName = await spawnFor(router, project, dir, m, prepared.body, prepared, [], { announce: false })
+  const tmuxName = await spawnFor(router, project, dir, m, prepared.body, prepared, [], { announce: false, agent })
   const p = router.routePending.get(id)
   if (tmuxName !== null && p) p.tmuxName = tmuxName
   // The name was taken (a -2 suffix), so the start message names the instance that really runs. Its buttons stay.
@@ -259,6 +269,11 @@ async function startRouted(router: Router, dir: string, m: Inbound, prepared: Pr
     p.text = startingText(tmuxName, project, model)
     await router.chat.editRows(p.messageId, p.text, wrongOneRows(id)).catch(() => {})
   }
+}
+
+// The harness of the bot's own starts: config defaultAgent, or claude when this router does not run it.
+export function autoStartAgent(router: Router): AgentKind {
+  return router.hasAgent(router.defaultAgent) ? router.defaultAgent : 'claude'
 }
 
 // The "wrong one?" button under a start or a delivery confirmation.
@@ -320,6 +335,19 @@ export async function startNewFromPrefix(router: Router, name: string | undefine
   return askLaunch(router, m, ready, r.dir)
 }
 
+// `oc <name>:` (or `new oc <name>:`): a new opencode session in the named trusted folder, in full, at once (no question),
+// with the text as its first message. Plan mode is in the new-prefix question's opencode plan button.
+export async function startOpencodeFromPrefix(router: Router, name: string, body: string, m: Inbound, prepared?: Prepared): Promise<void> {
+  const target = inboundTarget(router, m)
+  if (!router.hasAgent('opencode')) return say(router, OC_UNAVAILABLE_TEXT, m.messageId, target)
+  const ready: Prepared | null = prepared ? { body, meta: prepared.meta } : await prepare(router, m, body)
+  if (!ready) return
+  const r = resolveProject(name, startableDirs(router))
+  if (r.status === 'none') return say(router, `No trusted folder named "${name}". See /list for the folders.`, m.messageId, target)
+  if (r.status === 'ambiguous') return say(router, r.error, m.messageId, target)
+  await spawnFor(router, basename(r.dir), r.dir, m, ready.body, ready, [], { agent: 'opencode' })
+}
+
 // The folder picker (page 0), as a new message replying to `m`.
 async function askFolder(router: Router, m: Inbound, prepared: Prepared, folders: string[]): Promise<void> {
   const id = newRouteId()
@@ -341,7 +369,7 @@ async function askLaunch(router: Router, m: Inbound, prepared: Prepared, dir: st
   const id = newRouteId()
   const text = launchText(dir)
   const messageId = await router.chat
-    .sendText(text, { replyTo: m.messageId, ...inboundTarget(router, m), rows: launchRows(id) })
+    .sendText(text, { replyTo: m.messageId, ...inboundTarget(router, m), rows: launchRows(id, router.hasAgent('opencode')) })
     .catch((e) => {
       router.logger.log(`launch prompt failed: ${errMsg(e)}`)
       return null
@@ -396,7 +424,7 @@ export async function onRouteCallback(router: Router, cb: ButtonPress, r: RouteC
     case 'm':
       return runMode(router, r.pendingId, p, r.mode, answer)
     case 'l':
-      return launch(router, r.pendingId, p, r.readOnly, answer)
+      return launch(router, r.pendingId, p, r.agent, r.readOnly, answer)
   }
 }
 
@@ -578,16 +606,19 @@ export async function startFolder(router: Router, id: string, p: RoutePending, i
   return answer()
 }
 
-// [Read-only] or [Full] of the `new <name>:` prefix, or of a folder confirm: starts the session in the chosen folder.
-export async function launch(router: Router, id: string, p: RoutePending, readOnly: boolean, answer: Answer): Promise<void> {
+// [Claude] / [opencode] (with read-only or plan) of the `new <name>:` prefix, or of a folder confirm: starts the session in
+// the chosen folder with the chosen harness.
+export async function launch(router: Router, id: string, p: RoutePending, agent: AgentKind, readOnly: boolean, answer: Answer): Promise<void> {
   if ((p.mode !== 'launch' && p.mode !== 'confirm') || !p.folder) return answer('Nothing to start.')
+  if (!router.hasAgent(agent)) return answer(`${agent} is not available here.`)
   router.routePending.delete(id)
   const dir = p.folder
   const project = basename(dir)
   if (p.mode === 'confirm') {
     router.audit.event({ event: 'route', decision: 'start', source: p.via?.source ?? 'model', folder: project, reason: 'confirmed' })
   }
-  await router.chat.editRows(p.messageId, `→ starting ${project} (${readOnly ? 'read-only' : 'full'})`, []).catch(() => {})
-  await spawnFor(router, project, dir, p.m, p.prepared.body, p.prepared, readOnly ? READ_ONLY_ARGS : [])
+  const how = agent === 'opencode' ? `opencode, ${readOnly ? 'read-only' : 'full'}` : readOnly ? 'read-only' : 'full'
+  await router.chat.editRows(p.messageId, `→ starting ${project} (${how})`, []).catch(() => {})
+  await spawnFor(router, project, dir, p.m, p.prepared.body, p.prepared, startArgs(agent, readOnly), { agent })
   return answer()
 }

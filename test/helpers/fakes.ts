@@ -806,6 +806,7 @@ export class FakeLogger implements Logger {
 export function harness(opts: {
   groupId?: ChatId | null; ownerUserId?: string; chatLog?: ChatLogPort; addons?: AddonsPort; e2e?: E2e
   startWhenNoSession?: boolean; quotaRefusal?: () => Promise<string | null>; claudeModel?: string | null
+  defaultAgent?: 'claude' | 'opencode'
   idleCloseMinutes?: number; home?: string
   // A second agent backend, registered as the 'opencode' kind (the Claude backend is always FakeAgent `agent`).
   opencodeAgent?: FakeAgent
@@ -850,6 +851,7 @@ export function harness(opts: {
     startWhenNoSession: opts.startWhenNoSession,
     quotaRefusal: opts.quotaRefusal,
     claudeModel: opts.claudeModel,
+    defaultAgent: opts.defaultAgent,
     agents: opts.opencodeAgent ? { opencode: opts.opencodeAgent } : undefined,
   })
   return { router, chat, store, platform, agent, clock, audit, logger }

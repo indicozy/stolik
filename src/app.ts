@@ -238,6 +238,7 @@ export async function buildRouter(cfg: Config): Promise<Router> {
     idleCloseMinutes: tg.idleCloseMinutes,
     askDelay: tg.askDelay,
     claudeModel: tg.claudeModel,
+    defaultAgent: tg.defaultAgent,
     // Fail closed: an unknown quota refuses an auto-start (the router asks before it starts anything by itself).
     quotaRefusal: () => bridge.quotaRefusal(),
     stopSession: (name) => killTmuxSession(name),

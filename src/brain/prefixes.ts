@@ -1,8 +1,8 @@
-// Prefix words in General (design §4.3): "to <session>:", "new <project>:", "note:", "quick:", "read:", "web:".
+// Prefix words in General (design §4.3): "to <session>:", "new <project>:", "oc <project>:" (opencode), "note:", "quick:", "read:", "web:".
 // Pure: no I/O. Only General messages are parsed; inside a session topic nothing is (ticket 07).
 // Also here: name matching for `to` and `new` (matchName), and the legacy note reader kept for test/notes.test.ts.
 
-export type PrefixKind = 'to' | 'new' | 'note' | 'quick' | 'read' | 'web'
+export type PrefixKind = 'to' | 'new' | 'oc' | 'note' | 'quick' | 'read' | 'web'
 
 // `name` is set for the kinds that take one (to, new); it is absent when the name is empty.
 export type Prefix = { kind: PrefixKind; name?: string; body: string }
@@ -12,13 +12,17 @@ export type Prefix = { kind: PrefixKind; name?: string; body: string }
 export const PREFIX_WORDS: Readonly<Record<PrefixKind, readonly string[]>> = {
   to: ['to', 'send to', 'отправь в'],
   new: ['new', 'новая', 'новый'],
+  oc: ['oc', 'opencode'],
   note: ['note', 'заметка', 'запиши'],
   quick: ['quick', 'quick question', 'question', 'вопрос', 'быстро'],
   read: ['read', 'check', 'почитай', 'проверь'],
   web: ['web', 'web search', 'search', 'поиск', 'загугли'],
 }
 
-const NAME_KINDS: ReadonlySet<PrefixKind> = new Set(['to', 'new'])
+const NAME_KINDS: ReadonlySet<PrefixKind> = new Set(['to', 'new', 'oc'])
+
+// The phrases that start opencode after the word "new" ("new oc stolik: hi"). They are oc, not new.
+const OC_PHRASES: readonly string[] = ['new oc', 'new opencode']
 // A name longer than this, or one spanning lines, is a sentence that happens to start with "to", not a name.
 export const PREFIX_NAME_MAX = 60
 
@@ -30,6 +34,7 @@ const PHRASE_KIND = new Map<string, PrefixKind>()
 for (const kind of Object.keys(PREFIX_WORDS) as PrefixKind[]) {
   for (const w of PREFIX_WORDS[kind]) PHRASE_KIND.set(normWord(w), kind)
 }
+for (const w of OC_PHRASES) PHRASE_KIND.set(normWord(w), 'oc')
 
 function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

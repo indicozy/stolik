@@ -87,12 +87,13 @@ function retire(router: Router, token: string, real: string): void {
 
 // Options of a start. `announce: false` leaves the start message to the caller (startRouted sends its own, with buttons).
 // `onQueued` is called with the queue of a new start, synchronously, before the start (the tmux call) begins: a message
-// that arrives during the start can then already find the queue.
-export type SpawnOptions = { announce?: boolean; onQueued?: (q: SpawnQueue) => void }
+// that arrives during the start can then already find the queue. `agent` is the harness the start runs (default claude).
+export type SpawnOptions = { announce?: boolean; onQueued?: (q: SpawnQueue) => void; agent?: AgentKind }
 
-// `real` is the resolved project folder (a realpath, see resolveProject). `extraArgs` go to the claude command in tmux
-// (New with Read-only passes --permission-mode plan). A new start also gets `--model` when a model is set and the
-// arguments do not already name one. Returns the tmux session name when one was started, else null.
+// `real` is the resolved project folder (a realpath, see resolveProject). `extraArgs` go to the agent's command in tmux
+// (New with Read-only passes --permission-mode plan, opencode's plan agent is --agent plan). A new Claude start also gets
+// `--model` when a model is set and the arguments do not already name one (opencode's model is not set here).
+// Returns the tmux session name when one was started, else null.
 export async function spawnFor(
   router: Router,
   project: string,
@@ -117,13 +118,14 @@ export async function spawnFor(
     await say(router, `Not starting ${project}: ${MAX_SPAWNED_SESSIONS} router-started sessions are already running.`, m.messageId, inboundTarget(router, m))
     return null
   }
-  // The model flag is added to new starts only (a resumed session keeps its own model), and not twice.
-  const model = effectiveModel(router).model
+  // The model flag is added to new Claude starts only (a resumed session keeps its own model), and not twice.
+  const agent: AgentKind = options.agent ?? 'claude'
+  const model = agent === 'claude' ? effectiveModel(router).model : null
   const hasModel = extraArgs.some((a) => a === '--model' || a.startsWith('--model='))
   const args = model !== null && !hasModel ? ['--model', model, ...extraArgs] : [...extraArgs]
   // The queue entry is set before the start (no await in between), so a second message for this folder joins it
   // instead of starting a second session, and the entry counts toward the cap while the start is pending.
-  const q: SpawnQueue = { project, real, agent: 'claude', tmuxName: '', items: [{ m, content, prepared }], timer: null, token: newSpawnToken(), panePid: null, extraArgs: args }
+  const q: SpawnQueue = { project, real, agent, tmuxName: '', items: [{ m, content, prepared }], timer: null, token: newSpawnToken(), panePid: null, extraArgs: args }
   router.spawns.set(real, q)
   options.onQueued?.(q)
   let tmuxName: string

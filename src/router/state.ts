@@ -8,6 +8,7 @@ import { MINUTE, REDACTED, cutAt, redact } from '../brain/common.ts'
 import { TEXT_MARGIN, chunkText } from '../brain/chat-layout.ts'
 import type { NotifyLevel } from '../brain/notify-level.ts'
 import { isImagePath, sanitizeFileName } from '../addons/notes/format.ts'
+import type { AgentKind } from '../ports.ts'
 
 export { isImagePath, sanitizeFileName }
 import {
@@ -302,9 +303,12 @@ export function idleRows(pendingId: string): Rows {
   return [[{ text: NEW_FOLDERS_LABEL, data: `rt:n:${pendingId}` }], ROUTE_MODES.map((m) => ({ text: m, data: `rt:m:${pendingId}:${m}` }))]
 }
 
-// The two ways a new session can start.
-export function launchRows(pendingId: string): Rows {
-  return [[{ text: 'Read-only', data: `rt:l:${pendingId}:ro` }, { text: 'Full', data: `rt:l:${pendingId}:full` }]]
+// The harness and mode a new session starts with: the Claude row, then the opencode row (only when this router runs
+// opencode). Each row is [full] [read-only]; the callback data says which harness (`o` prefix = opencode).
+export function launchRows(pendingId: string, withOpencode: boolean): Rows {
+  const rows: Rows = [[{ text: 'Claude', data: `rt:l:${pendingId}:full` }, { text: 'Claude read-only', data: `rt:l:${pendingId}:ro` }]]
+  if (withOpencode) rows.push([{ text: 'opencode', data: `rt:l:${pendingId}:ofull` }, { text: 'opencode plan', data: `rt:l:${pendingId}:oro` }])
+  return rows
 }
 
 // Confirm buttons (a name or the model preselected a target): [Yes] [Other…] for a session, [Full] [👁 Read-only]
@@ -314,12 +318,14 @@ export const STOP_LABEL = '⏹ Stop it'
 export function sendRows(pendingId: string): Rows {
   return [[{ text: 'Yes', data: `rt:y:${pendingId}` }, { text: OTHER_LABEL, data: `rt:o:${pendingId}` }]]
 }
-export function startRows(pendingId: string): Rows {
-  return [[
+export function startRows(pendingId: string, withOpencode: boolean): Rows {
+  const row: Rows[number] = [
     { text: 'Full', data: `rt:l:${pendingId}:full` },
     { text: '👁 Read-only', data: `rt:l:${pendingId}:ro` },
-    { text: OTHER_LABEL, data: `rt:o:${pendingId}` },
-  ]]
+  ]
+  if (withOpencode) row.push({ text: 'opencode', data: `rt:l:${pendingId}:ofull` })
+  row.push({ text: OTHER_LABEL, data: `rt:o:${pendingId}` })
+  return [row]
 }
 export function stopRow(pendingId: string): Rows[number] {
   return [{ text: STOP_LABEL, data: `rt:k:${pendingId}` }]
@@ -336,7 +342,7 @@ export type RouteCallback =
   | { kind: 'f' | 'r'; pendingId: string; idx: number }
   | { kind: 'p'; pendingId: string; page: number }
   | { kind: 'm'; pendingId: string; mode: RouteMode }
-  | { kind: 'l'; pendingId: string; readOnly: boolean }
+  | { kind: 'l'; pendingId: string; readOnly: boolean; agent: AgentKind }
 
 export function parseRouteCallback(data: string): RouteCallback | null {
   const a = /^rt:([wnyok]):([0-9a-f]{8})$/.exec(data)
@@ -347,8 +353,8 @@ export function parseRouteCallback(data: string): RouteCallback | null {
   if (p) return { kind: 'p', pendingId: p[1], page: Number(p[2]) }
   const c = /^rt:m:([0-9a-f]{8}):(quick|read|web)$/.exec(data)
   if (c) return { kind: 'm', pendingId: c[1], mode: c[2] as RouteMode }
-  const d = /^rt:l:([0-9a-f]{8}):(ro|full)$/.exec(data)
-  if (d) return { kind: 'l', pendingId: d[1], readOnly: d[2] === 'ro' }
+  const d = /^rt:l:([0-9a-f]{8}):(ro|full|oro|ofull)$/.exec(data)
+  if (d) return { kind: 'l', pendingId: d[1], readOnly: d[2] === 'ro' || d[2] === 'oro', agent: d[2].startsWith('o') ? 'opencode' : 'claude' }
   return null
 }
 

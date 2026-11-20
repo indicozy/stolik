@@ -1,6 +1,6 @@
 // Router prefixes in General (design §4.3): "to <session>:" delivers to a session, "note:" saves to the notes inbox.
-// new starts a session (route.ts). quick, read and web go to the modes addon through its prefix dispatch. Inside a
-// session topic nothing is parsed (ticket 07), so this is only called for General messages.
+// new starts a Claude session and oc an opencode one (route.ts). quick, read and web go to the modes addon through its
+// prefix dispatch. Inside a session topic nothing is parsed (ticket 07), so this is only called for General messages.
 import type { Inbound } from '../../brain/chat-types.ts'
 import { matchName, type Prefix } from '../../brain/prefixes.ts'
 import { deliver, prepare } from '../deliver.ts'
@@ -8,7 +8,7 @@ import { say, traceInbound } from '../send.ts'
 import type { Prepared } from '../shared.ts'
 import { liveSummary, type Session } from '../state.ts'
 import { noteViaAddon, saveNote } from './notes.ts'
-import { askWhich, runModeText, startNewFromPrefix } from './route.ts'
+import { OC_USAGE, askWhich, runModeText, startNewFromPrefix, startOpencodeFromPrefix } from './route.ts'
 import type { Router } from '../core.ts'
 
 export const TO_USAGE = 'Usage: to <name>: <text>. <name> is a session name (see /list).'
@@ -28,6 +28,9 @@ export async function runPrefix(router: Router, p: Prefix, m: Inbound, prepared?
       return runTo(router, p.name, p.body, m, prepared)
     case 'new':
       return startNewFromPrefix(router, p.name, p.body, m, prepared)
+    case 'oc':
+      if (p.name === undefined) return say(router, OC_USAGE, m.messageId)
+      return startOpencodeFromPrefix(router, p.name, p.body, m, prepared)
     case 'quick':
     case 'read':
     case 'web':

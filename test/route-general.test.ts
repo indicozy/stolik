@@ -214,10 +214,10 @@ test('"new <project>: text" goes straight to Read-only / Full; Full starts witho
   await h.chat.inbound(textFrom('new proj: build the thing', { messageId: tgMsg(60) }))
   const prompt = h.chat.sent.find((s) => s.text === 'Start proj: read-only or full?')!
   assert.ok(prompt, 'the Read-only / Full question is asked')
-  assert.deepEqual(prompt.opts!.rows![0].map((b) => b.text), ['Read-only', 'Full'])
+  assert.deepEqual(prompt.opts!.rows![0].map((b) => b.text), ['Claude', 'Claude read-only'])
   assert.deepEqual(h.agent.startedSessions, [], 'nothing starts before the answer')
 
-  await tap(h, prompt.opts!.rows![0][1].data, prompt.id) // Full
+  await tap(h, prompt.opts!.rows![0][0].data, prompt.id) // Claude (full)
   assert.deepEqual(h.agent.startedSessions, [{ project: 'proj', dir: PROJ, extra: [] }])
 
   h.agent.receive(new FakeConn(), { t: 'register', claudePid: 6161, cwd: PROJ, spawnToken: h.agent.spawnTokens[0] })

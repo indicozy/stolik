@@ -95,6 +95,8 @@ export type RouterDeps = {
   askDelay?: { desk: number; away: number }
   // The config `claudeModel`: the model new bot-started sessions get when `/model` set none. Null: Claude Code's default.
   claudeModel?: string | null
+  // The config `defaultAgent`: the harness the bot's own starts (auto-start, name-hit start) run. Default claude.
+  defaultAgent?: AgentKind
   // The quota gate before an auto-start: null when the quota allows it, else the reason. Absent: refused (fail closed).
   quotaRefusal?: () => Promise<string | null>
   // Stops a tmux session by its name (Stop it on an auto-started session). Absent: nothing is stopped.
@@ -138,6 +140,8 @@ export class Router {
   stopping = false
   // The config `claudeModel` (see RouterDeps.claudeModel). The store's `/model` setting takes precedence (spawn.ts).
   readonly configModel: string | null
+  // The config `defaultAgent` (see RouterDeps.defaultAgent). Default 'claude'.
+  readonly defaultAgent: AgentKind
   // Asked before an auto-start (see RouterDeps.quotaRefusal). Public so the handlers and tests can call it.
   quotaRefusal: () => Promise<string | null> = async () => 'the quota is not known'
   // Stops a tmux session (see RouterDeps.stopSession). Public so tests can replace it.
@@ -257,6 +261,7 @@ export class Router {
     this.askDelay = deps.askDelay ?? { desk: 60, away: 0 }
     this.startWhenNoSession = deps.startWhenNoSession ?? true
     this.configModel = deps.claudeModel ?? null
+    this.defaultAgent = deps.defaultAgent ?? 'claude'
     if (deps.quotaRefusal) this.quotaRefusal = deps.quotaRefusal
     if (deps.stopSession) this.stopSession = deps.stopSession
     this.idleCloseMinutes = deps.idleCloseMinutes ?? 60

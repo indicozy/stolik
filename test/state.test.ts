@@ -259,11 +259,12 @@ test('folderPageRows: one row per folder on the page (＋ and 👁), the index i
   for (const row of [...first, ...last]) for (const b of row) assert.ok(Buffer.byteLength(b.data) <= 64, b.data)
 })
 
-test('launchRows: Read-only and Full (the new-prefix question)', () => {
-  assert.deepEqual(launchRows('0a1b2c3d'), [[
-    { text: 'Read-only', data: 'rt:l:0a1b2c3d:ro' },
-    { text: 'Full', data: 'rt:l:0a1b2c3d:full' },
+test('launchRows: Claude full and read-only (the new-prefix question); the opencode row only when opencode runs', () => {
+  assert.deepEqual(launchRows('0a1b2c3d', false), [[
+    { text: 'Claude', data: 'rt:l:0a1b2c3d:full' },
+    { text: 'Claude read-only', data: 'rt:l:0a1b2c3d:ro' },
   ]])
+  assert.equal(launchRows('0a1b2c3d', true).length, 2)
 })
 
 test('folderLabels: the basename, and parent/basename where two folders share one', () => {
@@ -288,8 +289,8 @@ test('parseRouteCallback: the forms of the buttons, and nothing else', () => {
   assert.deepEqual(parseRouteCallback('rt:r:0a1b2c3d:12'), { kind: 'r', pendingId: '0a1b2c3d', idx: 12 })
   assert.deepEqual(parseRouteCallback('rt:p:0a1b2c3d:3'), { kind: 'p', pendingId: '0a1b2c3d', page: 3 })
   assert.deepEqual(parseRouteCallback('rt:m:0a1b2c3d:web'), { kind: 'm', pendingId: '0a1b2c3d', mode: 'web' })
-  assert.deepEqual(parseRouteCallback('rt:l:0a1b2c3d:ro'), { kind: 'l', pendingId: '0a1b2c3d', readOnly: true })
-  assert.deepEqual(parseRouteCallback('rt:l:0a1b2c3d:full'), { kind: 'l', pendingId: '0a1b2c3d', readOnly: false })
+  assert.deepEqual(parseRouteCallback('rt:l:0a1b2c3d:ro'), { kind: 'l', pendingId: '0a1b2c3d', readOnly: true, agent: 'claude' })
+  assert.deepEqual(parseRouteCallback('rt:l:0a1b2c3d:full'), { kind: 'l', pendingId: '0a1b2c3d', readOnly: false, agent: 'claude' })
   for (const bad of ['rt:s:XYZ:1', 'rt:x:0a1b2c3d', 'perm:allow:abcde', 'rt:s:0a1b2c3d:1000', 'rt:p:0a1b2c3d', 'rt:w:0a1b2c3d:1', '', 'rt:m:0a1b2c3d:btw', 'rt:l:0a1b2c3d:x']) {
     assert.equal(parseRouteCallback(bad), null, bad)
   }
