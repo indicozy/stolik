@@ -42,6 +42,9 @@ export type OcServer = {
   agent: 'build' | 'plan'
 }
 
+// A chat message held while its server boots (no session id yet), in arrival order.
+type Queued = { key: SessionKey; content: string; meta: Record<string, string> }
+
 export type OpencodeBackendOptions = {
   // The state folder (SERVERS_FILE lives here).
   stateDir: string
@@ -197,6 +200,8 @@ export class OpencodeBackend implements AgentBackend {
   private readonly bindings = new Map<SessionKey, OcServer>()
   // Session key -> the socket its channel registered on (isConnected).
   private readonly sessions = new Map<SessionKey, SocketConn>()
+  // A server whose boot is running -> the messages held for it. An entry is removed when the boot posts them or gives up.
+  private readonly booting = new Map<OcServer, Queued[]>()
 
   constructor(opts: OpencodeBackendOptions) {
     this.stateDir = opts.stateDir
@@ -254,11 +259,29 @@ export class OpencodeBackend implements AgentBackend {
     return this.sessions.has(key)
   }
 
-  // Posts the message as a prompt. True when the prompt was sent (or is being sent); a refused or failed post is reported
-  // through onDeliveryError, once.
+  // True when the server's tmux session is one this backend started (its record is kept here).
+  ownsTmux(name: string): boolean {
+    return this.servers.some((r) => r.tmuxName === name)
+  }
+
+  // Posts the message as a prompt. True when the prompt was sent (or is being sent), or held until the session is created
+  // (its server is still booting). A refused or failed post is reported through onDeliveryError, once.
   sendToSession(key: SessionKey, content: string, meta: Record<string, string>): boolean {
     const rec = this.bindings.get(key)
-    if (!rec || rec.sessionId === null) return false
+    if (!rec) return false
+    const held = this.booting.get(rec)
+    if (held) {
+      held.push({ key, content, meta })
+      return true
+    }
+    if (rec.sessionId === null) return false
+    this.post(rec, key, content, meta)
+    return true
+  }
+
+  // Posts one message to the session of a record.
+  private post(rec: OcServer, key: SessionKey, content: string, meta: Record<string, string>): void {
+    if (rec.sessionId === null) return
     const files = attachments(meta)
     const body = { text: OC_HEADER + content, delivery: 'queue', ...(files.length > 0 ? { files } : {}) }
     const path = `/api/session/${encodeURIComponent(rec.sessionId)}/prompt`
@@ -268,7 +291,22 @@ export class OpencodeBackend implements AgentBackend {
       },
       (e: unknown) => this.fail(key, errMsg(e)),
     )
-    return true
+  }
+
+  // Posts the messages held for a booting server, in order, and stops holding.
+  private flushHeld(rec: OcServer): void {
+    const held = this.booting.get(rec)
+    if (!held) return
+    this.booting.delete(rec)
+    for (const m of held) this.post(rec, m.key, m.content, m.meta)
+  }
+
+  // A boot that ends without posting its held messages drops them: each key that had one is reported once.
+  private dropHeld(rec: OcServer): void {
+    const held = this.booting.get(rec)
+    if (!held) return
+    this.booting.delete(rec)
+    for (const key of new Set(held.map((m) => m.key))) this.fail(key, 'opencode did not start')
   }
 
   private fail(key: SessionKey, reason: string): void {
@@ -303,11 +341,13 @@ export class OpencodeBackend implements AgentBackend {
     const rec: OcServer = { token, tmuxName: name, port, password, sessionId: null, dir, agent: agentOfArgs(extraArgs) }
     this.servers.push(rec)
     this.save()
+    this.booting.set(rec, [])
     void this.boot(rec, project)
     return name
   }
 
-  // Waits for the server, creates its session, loads the skill and opens the TUI. A failure is logged; the session then never
+  // Waits for the server, creates its session, loads the skill and opens the TUI. Messages sent meanwhile are held and posted
+  // once the skill is loaded (or dropped with a report when the boot fails). A failure is logged; the session then never
   // registers, and the router's spawn timeout reports it.
   private async boot(rec: OcServer, project: string): Promise<void> {
     try {
@@ -329,9 +369,12 @@ export class OpencodeBackend implements AgentBackend {
         warn(`opencode session ${rec.tmuxName} runs without the stolik skill: ${redact(errMsg(e), rec.password)}`, 'opencode')
       }
       if (!this.servers.includes(rec)) return
+      this.flushHeld(rec)
       await this.openTui(rec)
     } catch (e) {
       warn(`opencode session ${rec.tmuxName} did not start: ${redact(errMsg(e), rec.password)}`, 'opencode')
+    } finally {
+      this.dropHeld(rec)
     }
   }
 

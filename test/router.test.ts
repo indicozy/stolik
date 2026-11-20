@@ -35,6 +35,17 @@ test('a text message from the owner goes to the one live session', async () => {
   assert.deepEqual(chat.texts(), ['→ [proj]'])
 })
 
+test('a message the agent refuses is answered in the topic as not connected: no seen reaction, no pending reply', async () => {
+  const { chat, agent, router } = await startWithSession()
+  agent.sendToSession = () => false
+
+  await chat.inbound(textFrom('are you there'))
+
+  assert.ok(chat.texts().includes('proj is not connected right now. Try again in a moment.'), JSON.stringify(chat.texts()))
+  assert.deepEqual(chat.reactions, [])
+  assert.equal(router.registry.get('4242:start-4242')?.pendingTg ?? null, null)
+})
+
 test('a message from a non-owner id is ignored', async () => {
   const { chat, agent } = await startWithSession()
 

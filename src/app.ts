@@ -251,7 +251,14 @@ export async function buildRouter(cfg: Config): Promise<Router> {
     defaultAgent: tg.defaultAgent,
     // Fail closed: an unknown quota refuses an auto-start (the router asks before it starts anything by itself).
     quotaRefusal: () => bridge.quotaRefusal(),
-    stopSession: (name) => killTmuxSession(name),
+    // An opencode session is stopped by its backend (its server is interrupted and its record forgotten); others by tmux.
+    stopSession: async (name) => {
+      if (opencode.ownsTmux(name)) {
+        await opencode.killSession(name)
+        return true
+      }
+      return killTmuxSession(name)
+    },
   })
   // Pairing (plan 0e): the adapter hands private texts from non-owners to the pairing control; a confirmed sender becomes
   // the owner here and in the adapter, with no restart.

@@ -88,13 +88,13 @@ function sessionsOf(calls: Call[]): Array<{ name: string; env: Record<string, st
 
 type Seen = { method: string; path: string; origin: string; auth: string | undefined; body: any }
 
-type Fake = { port: number; seen: Seen[]; promptStatus: number; putStatus: number; server: Server }
+type Fake = { port: number; seen: Seen[]; promptStatus: number; putStatus: number; createStatus: number; server: Server }
 
 // A fake `opencode serve` on 127.0.0.1:0. The backend's own port is not listening: the fetch of each backend is routed here
 // with the backend's port in `x-origin-port`, and that port picks the password the auth check wants and the session id
 // (`ses_<port>`). /health needs no auth, the rest do.
 async function fakeServe(passwords: Map<string, string>): Promise<Fake> {
-  const fake: Fake = { port: 0, seen: [], promptStatus: 200, putStatus: 200, server: createServer() }
+  const fake: Fake = { port: 0, seen: [], promptStatus: 200, putStatus: 200, createStatus: 200, server: createServer() }
   fake.server.on('request', (req: IncomingMessage, res: ServerResponse) => {
     let raw = ''
     req.on('data', (c: Buffer) => (raw += c))
@@ -111,7 +111,7 @@ async function fakeServe(passwords: Map<string, string>): Promise<Fake> {
       if (path === '/health') return reply(200, undefined)
       const pw = passwords.get(origin)
       if (pw === undefined || auth !== basic(pw)) return reply(401, { name: 'UnauthorizedError' })
-      if (req.method === 'POST' && path === '/api/session') return reply(200, { data: { id: `ses_${origin}` } })
+      if (req.method === 'POST' && path === '/api/session') return reply(fake.createStatus, fake.createStatus === 200 ? { data: { id: `ses_${origin}` } } : {})
       if (req.method === 'PUT' && path.includes('/instructions/entries/stolik')) return reply(fake.putStatus, {})
       if (req.method === 'POST' && path.endsWith('/prompt')) return reply(fake.promptStatus, { data: { id: 'msg_1' } })
       if (req.method === 'POST' && path.endsWith('/interrupt')) return reply(200, {})
@@ -319,14 +319,51 @@ test('the records survive a restart: a new backend on the same folder routes a b
   assert.equal(statSync(file).mode & 0o777, 0o600)
 })
 
-test('an unbound key, or a bound one whose session is not created yet, gets false', async (t) => {
+test('an unbound key gets false; a bound one whose session is booting is queued, then goes straight through', async (t) => {
   const s = await setup(t)
   assert.equal(s.backend.sendToSession('nobody', 'hi', {}), false)
   await s.backend.startSession('stolik', '/home/u/stolik', [], TOKEN)
   s.backend.bindToken('k-early', TOKEN)
-  assert.equal(s.backend.sendToSession('k-early', 'too early', {}), false, 'no session id until the create answers')
+  assert.equal(s.backend.sendToSession('k-early', 'too early', {}), true, 'queued until the session exists')
   await waitFor(() => s.tmux.calls.some((c) => c.args[0] === 'new-window'), 'the TUI window')
   assert.equal(s.backend.sendToSession('k-early', 'now', {}), true)
+})
+
+test('a message bound before the session exists is posted after the create, in order', async (t) => {
+  const s = await setup(t)
+  await s.backend.startSession('stolik', '/home/u/stolik', [], TOKEN)
+  s.backend.bindToken('k-queue', TOKEN)
+  assert.equal(s.backend.sendToSession('k-queue', 'first', {}), true, 'queued while the session boots')
+  assert.equal(s.backend.sendToSession('k-queue', 'second', {}), true)
+  await waitFor(() => s.tmux.calls.some((c) => c.args[0] === 'new-window'), 'the TUI window')
+  await waitFor(() => s.fake.seen.filter((x) => x.path.endsWith('/prompt')).length === 2, 'the two queued prompts')
+  const prompts = s.fake.seen.filter((x) => x.path.endsWith('/prompt'))
+  assert.deepEqual(prompts.map((x) => x.body.text), [OC_HEADER + 'first', OC_HEADER + 'second'])
+  const create = s.fake.seen.findIndex((x) => x.method === 'POST' && x.path === '/api/session')
+  assert.ok(create >= 0 && s.fake.seen.indexOf(prompts[0]) > create, 'the prompts follow the session create')
+  assert.deepEqual(s.reports, [], 'nothing is reported')
+})
+
+test('a failed session create drops the queued messages: their key is reported once and no prompt is posted', async (t) => {
+  const s = await setup(t)
+  s.fake.createStatus = 500
+  await s.backend.startSession('stolik', '/home/u/stolik', [], TOKEN)
+  s.backend.bindToken('k-dead', TOKEN)
+  assert.equal(s.backend.sendToSession('k-dead', 'one', {}), true)
+  assert.equal(s.backend.sendToSession('k-dead', 'two', {}), true)
+  await waitFor(() => s.reports.length === 1, 'the boot failure report')
+  await new Promise((r) => setTimeout(r, 50))
+  assert.deepEqual(s.reports, [['k-dead', 'opencode did not start']])
+  assert.equal(s.fake.seen.some((x) => x.path.endsWith('/prompt')), false, 'the queued messages are dropped')
+  assert.equal(s.backend.sendToSession('k-dead', 'three', {}), false, 'a session that never started takes no more messages')
+})
+
+test('ownsTmux: true for the tmux name of a record, false for other names; a killed session is no longer owned', async (t) => {
+  const { backend, name } = await started(t, 'stolik', '/home/u/stolik')
+  assert.equal(backend.ownsTmux(name), true)
+  assert.equal(backend.ownsTmux('tg-stolik'), false)
+  await backend.killSession(name)
+  assert.equal(backend.ownsTmux(name), false)
 })
 
 test('killSession interrupts the session, kills its tmux session and forgets its record', async (t) => {

@@ -218,7 +218,11 @@ export async function send(router: Router, s: Session, m: Inbound, p: Prepared, 
   const busy = turnBusy(s, now)
   const meta = { ...p.meta, ts: new Date(now).toISOString() }
   const content = (m.forwarded ? FORWARD_PREFIX : '') + p.body
-  router.agentFor(s.key).sendToSession(s.key, content, meta)
+  // The agent may hold no delivery for a session that is still starting: then the user is told, as for a lost connection.
+  if (!router.agentFor(s.key).sendToSession(s.key, content, meta)) {
+    await say(router, notConnected(s), m.messageId, inboundTarget(router, m))
+    return false
+  }
   // The newest delivered message is the one the session's answers address (see pendingTg in brain/sessions.ts).
   s.pendingTg = { messageId: m.messageId, thread: m.chat.kind === 'home' ? m.chat.thread : null, replied: false }
   traceInbound(router, m.messageId, {
