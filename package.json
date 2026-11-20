@@ -27,6 +27,7 @@
     "dist/",
     "bin/",
     "plugin/",
+    "opencode/",
     "ml/worker.py",
     "ml/requirements.txt",
     "stt/worker.py",

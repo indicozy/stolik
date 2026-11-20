@@ -146,13 +146,13 @@ Each decision is audited with decision, source (rule, match, model or buttons), 
 
 ### 3.3 Agent backend
 
-Claude Code is the only backend in v3. The adapter covers:
+Claude Code and opencode are the backends in v3. Each has its own adapter. The opencode adapter is `src/adapters/agent/opencode.ts`. Each adapter covers:
 send to a live session; events for turn ended, user prompted, needs approval; list and resume sessions; one-off headless
 runs. Claude specifics (channel MCP, hooks, `--resume` with `~/.claude/projects`, `claude -p`) live only inside it.
 
 - **Stateless where possible.** Sessions, threads and ledgers live in the core store, keyed by backend and backend
   session id. In-process connections and caches are allowed case by case.
-- **Later:** opencode, Codex CLI, Gemini CLI and chat APIs (backlog). A chat API fits as a headless-only backend.
+- **Later:** Codex CLI, Gemini CLI and chat APIs (backlog). A chat API fits as a headless-only backend.
 - **Names.** Core and chat log say "agent session", not "Claude session". Done during the split.
 
 ### 3.4 Storage

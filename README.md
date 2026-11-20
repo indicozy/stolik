@@ -19,6 +19,12 @@ stolik runs as a router on your machine, next to your sessions. It does not run 
 
 See the [install guide](https://indicozy.github.io/stolik/docs/install/).
 
+## opencode
+
+stolik can also run opencode sessions. To start one, send `oc <project>: <message>` in the chat. `oc`, `opencode` and `new oc` work the same way. The new-session buttons then include `opencode` (full access) and `opencode plan` (read-only), next to the Claude Code buttons. Each opencode session runs its own `opencode serve` in tmux. The owner's chat messages go to that server as prompts.
+
+Set the model with `opencodeModel` in the config, as `provider/model`, for example `openrouter/qwen/qwen3-coder`. When it is null, opencode uses its own default. To make opencode the agent of the sessions the bot starts, set `defaultAgent` to `opencode`.
+
 ## License
 
 Apache-2.0, see [LICENSE](LICENSE).
