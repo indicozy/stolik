@@ -31,6 +31,12 @@ test('parsePrefix: oc takes a name; new oc and new opencode are oc; new with ano
   assert.deepEqual(parsePrefix('new ocean: hi'), { kind: 'new', name: 'ocean', body: 'hi' }, 'a word that starts with oc is a name')
 })
 
+test('parsePrefix: oc with no project is not a prefix, so the message routes as plain text', () => {
+  assert.equal(parsePrefix('oc: hi'), null)
+  assert.equal(parsePrefix('oc, hi'), null)
+  assert.equal(parsePrefix('new oc: hi'), null)
+})
+
 test('parseRouteCallback: the harness is in the callback data (ofull and oro are opencode)', () => {
   assert.deepEqual(parseRouteCallback('rt:l:0123abcd:ofull'), { kind: 'l', pendingId: '0123abcd', readOnly: false, agent: 'opencode' })
   assert.deepEqual(parseRouteCallback('rt:l:0123abcd:oro'), { kind: 'l', pendingId: '0123abcd', readOnly: true, agent: 'opencode' })

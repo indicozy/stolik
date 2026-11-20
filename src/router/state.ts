@@ -556,6 +556,7 @@ export function helpText(w: Words): string {
     `Words that start a message in ${w.lobby}, followed by a colon, comma or dash:`,
     'to <name>: send to a session (also: send to, отправь в)',
     'new <project>: start a session in a folder (also: new, новая, новый)',
+    'oc <project>: start an opencode session in a folder (also: oc, opencode, new oc)',
     'note: save to the notes inbox on the PC, not sent to the agent (also: note, заметка, запиши)',
     'quick: a question, answered with no tools (also: quick, question, вопрос, быстро)',
     'read: a read-only check of the PC and projects (also: read, check, почитай, проверь)',

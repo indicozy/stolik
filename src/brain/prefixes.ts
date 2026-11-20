@@ -86,6 +86,8 @@ export function parsePrefix(text: string): Prefix | null {
   if (NAME_KINDS.has(kind)) {
     const parts = splitName(rest)
     if (!parts) return null
+    // oc needs a project: "oc: hi" is an ordinary message, so it is not a prefix at all.
+    if (kind === 'oc' && parts.name === undefined) return null
     return parts.name === undefined ? { kind, body: parts.body } : { kind, name: parts.name, body: parts.body }
   }
   const parts = splitBody(rest)
