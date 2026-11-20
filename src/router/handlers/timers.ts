@@ -99,7 +99,7 @@ const KEYBOARD_STRIP_MAX = 100
 
 export function sweep(router: Router): void {
   const now = router.clock.now()
-  router.agent.sweep()
+  for (const backend of router.allAgents()) backend.sweep()
   if (router.traces && now - router.lastTracePrune >= TRACE_PRUNE_MS) {
     router.lastTracePrune = now
     try {
@@ -110,9 +110,11 @@ export function sweep(router: Router): void {
   }
   // Sessions of non-interactive claude runs are dropped (they exit on their own anyway).
   for (const s of router.registry.list()) {
-    if (s.pid === null || router.agent.isInteractive(s.pid)) continue
+    // The backend is read before the session leaves the registry (agentFor falls back to Claude for a missing key).
+    const backend = router.agentFor(s.key)
+    if (s.pid === null || backend.isInteractive(s.pid)) continue
     router.registry.remove(s.key)
-    router.agent.dropSession(s.key)
+    backend.dropSession(s.key)
     for (const [conn, owner] of router.connSession) if (owner === s) router.connSession.delete(conn)
   }
   // A session lives while its pid runs with the same start time (a reused pid is a different process).

@@ -11,7 +11,7 @@ import { ANSWERED_AT_DESK_TEXT, answeredAtDesk, callKey, previewMatches, type Ca
 import { syncPendingMarker, logSessionOut, pruneRecentPerms } from '../approvals.ts'
 import { PENDING_CAP, str, type PendingPerm } from '../shared.ts'
 import { claimSpawn, flushSpawn } from '../spawn.ts'
-import { procRef } from '../../brain/sessions.ts'
+import { procRef, type SessionKey } from '../../brain/sessions.ts'
 import { onE2e } from './e2e.ts'
 import { closeSession } from '../close.ts'
 import { announceTerminated, inTopic, onSessionRegistered, sendTarget } from '../topics.ts'
@@ -68,24 +68,33 @@ export function onSocket(router: Router, conn: SocketConn, msg: any): void {
 // router restart) registers again within this time, so only a session whose process is really gone is announced.
 export const TERMINATED_CHECK_MS = 5_000
 
+// The key of the session whose connection this was, asked of every backend (the first one that had it).
+function detachAny(router: Router, conn: SocketConn): SessionKey | null {
+  for (const backend of router.allAgents()) {
+    const key = backend.detachSession(conn)
+    if (key !== null) return key
+  }
+  return null
+}
+
 export function onSocketClose(router: Router, conn: SocketConn): void {
   // The hook went away (the user answered in the terminal, Esc, or the session died): the ask is over.
   for (const a of [...router.asks.values()]) if (a.conn === conn) dropAsk(router, a)
   const s = router.connSession.get(conn)
   router.connSession.delete(conn)
-  const key = router.agent.detachSession(conn)
+  const key = detachAny(router, conn)
   if (s && key !== null) s.connected = false
   // The sweep would find a dead session later; this check is for speed, and it only acts on a process that is gone.
   if (s?.pendingTg) {
     router.clock.setTimer(() => {
-      if (s.pid === null || router.platform.pidAlive(s.pid) || router.agent.isConnected(s.key)) return
+      if (s.pid === null || router.platform.pidAlive(s.pid) || router.agentFor(s.key).isConnected(s.key)) return
       announceTerminated(router, s)
     }, TERMINATED_CHECK_MS)
   }
 }
 
 export function bind(router: Router, conn: SocketConn, s: Session): void {
-  router.agent.attachSession(s.key, conn)
+  router.agentFor(s.key).attachSession(s.key, conn)
   router.connSession.set(conn, s)
 }
 

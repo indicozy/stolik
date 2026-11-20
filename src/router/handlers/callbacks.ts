@@ -87,7 +87,7 @@ export async function resolvePermission(router: Router, requestId: string, behav
   router.pending.delete(requestId)
   syncPendingMarker(router, p.session.pid)
   const alive = router.registry.list().includes(p.session)
-  const connected = router.agent.isConnected(p.session.key)
+  const connected = router.agentFor(p.session.key).isConnected(p.session.key)
   // A prompt still in flight has no message to edit yet.
   if (permissionExpired(p, router.clock.now())) {
     answer('Expired.')
@@ -102,7 +102,7 @@ export async function resolvePermission(router: Router, requestId: string, behav
     if (p.messageId !== null) await router.chat.editText(p.messageId, `${p.text}\n\n⌛ session is gone`, null, 'urgent').catch(() => {})
     return
   }
-  router.agent.answerPermission(p.session.key, requestId, behavior)
+  router.agentFor(p.session.key).answerPermission(p.session.key, requestId, behavior)
   router.audit.event({ event: 'permission_decision', session: p.session.name, behavior })
   const label = verdictLabel(behavior)
   answer(label)

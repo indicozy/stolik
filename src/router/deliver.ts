@@ -32,7 +32,7 @@ export function startableDirs(router: Router): string[] {
 }
 
 export function deliverable(router: Router): Session[] {
-  return router.registry.list().filter((s) => s.hasChannel && router.agent.isConnected(s.key))
+  return router.registry.list().filter((s) => s.hasChannel && router.agentFor(s.key).isConnected(s.key))
 }
 
 // Body and meta for the session. Media is downloaded here. Null means the user was already told why not.
@@ -208,7 +208,7 @@ const busyNoticedAt = new WeakMap<Session, number>()
 // is mid-turn still gets the message at once (Claude Code queues it): the message gets a 'queued' reaction, and the first
 // time in each turn a silent "queued, session is busy" reply.
 export async function send(router: Router, s: Session, m: Inbound, p: Prepared, opts: { bypassGate?: boolean } = {}): Promise<boolean> {
-  if (!router.agent.isConnected(s.key)) {
+  if (!router.agentFor(s.key).isConnected(s.key)) {
     await say(router, notConnected(s), m.messageId, inboundTarget(router, m))
     return false
   }
@@ -218,7 +218,7 @@ export async function send(router: Router, s: Session, m: Inbound, p: Prepared, 
   const busy = turnBusy(s, now)
   const meta = { ...p.meta, ts: new Date(now).toISOString() }
   const content = (m.forwarded ? FORWARD_PREFIX : '') + p.body
-  router.agent.sendToSession(s.key, content, meta)
+  router.agentFor(s.key).sendToSession(s.key, content, meta)
   // The newest delivered message is the one the session's answers address (see pendingTg in brain/sessions.ts).
   s.pendingTg = { messageId: m.messageId, thread: m.chat.kind === 'home' ? m.chat.thread : null, replied: false }
   traceInbound(router, m.messageId, {
@@ -278,7 +278,7 @@ async function noticeBusy(router: Router, s: Session, m: Inbound): Promise<void>
 }
 
 export async function deliver(router: Router, s: Session, m: Inbound, routed: string, prepared?: Prepared): Promise<void> {
-  if (!router.agent.isConnected(s.key)) return say(router, notConnected(s), m.messageId, inboundTarget(router, m))
+  if (!router.agentFor(s.key).isConnected(s.key)) return say(router, notConnected(s), m.messageId, inboundTarget(router, m))
   const p = prepared ?? (await prepare(router, m, routed))
   if (p) await send(router, s, m, p)
 }

@@ -124,13 +124,13 @@ export async function spawnFor(
   options.onQueued?.(q)
   let tmuxName: string
   try {
-    tmuxName = await router.agent.startSession(project, real, args, q.token)
+    tmuxName = await router.agentOf(q.agent).startSession(project, real, args, q.token)
   } catch (e) {
     await failSpawn(router, real, q, errMsg(e), [])
     return null
   }
   q.tmuxName = tmuxName
-  q.panePid = await router.agent.panePid(tmuxName).catch(() => null)
+  q.panePid = await router.agentOf(q.agent).panePid(tmuxName).catch(() => null)
   // The session may have registered during the start, which flushes and removes the queue: then there is no timeout.
   if (router.spawns.get(real) === q) {
     q.timer = router.clock.setTimer(() => void spawnTimeout(router, real, q), SPAWN_TIMEOUT_MS)
@@ -145,7 +145,7 @@ export async function spawnFor(
 
 // Watches a router-started session until it registers. If its tmux session disappears first, the start has failed.
 function watchStart(router: Router, real: string, q: SpawnQueue): void {
-  router.agent
+  router.agentOf(q.agent)
     .watchStartup(q.tmuxName, SPAWN_TIMEOUT_MS, () => router.spawns.get(real) !== q, (pane) => { router.logger.log(`start dialog not recognised in ${q.tmuxName}; pane: ${pane.join(' | ')}`); void say(router, `${q.tmuxName} is showing a dialog the bridge does not recognise. Answer it at the desk.`) })
     .then((o) => {
       if (o.kind === 'gone') return failSpawn(router, real, q, `the tmux session ${q.tmuxName} ended before it connected`, o.pane)
@@ -172,7 +172,7 @@ async function failSpawn(
   if (q.resumeOf !== undefined) router.resumingIds.delete(q.resumeOf)
   if (q.tmuxName !== '') {
     retire(router, q.token, real)
-    await router.agent.killSession(q.tmuxName).catch(() => {})
+    await router.agentOf(q.agent).killSession(q.tmuxName).catch(() => {})
   }
   // The forensics file (argv, environment names, pane, claude version) is written first; the message and the log name it.
   const forensicsPath = router.forensics
@@ -190,7 +190,7 @@ async function failSpawn(
 
 // The command line a start of this queue used (the backend builds it; empty when it has none to show).
 function startArgv(router: Router, q: SpawnQueue, real: string): string[] {
-  return router.agent.startCommand?.(q.project, real, q.extraArgs ?? []) ?? []
+  return router.agentOf(q.agent).startCommand?.(q.project, real, q.extraArgs ?? []) ?? []
 }
 
 // Router-started sessions: starting ones plus registered ones that the router spawned.
@@ -201,7 +201,7 @@ export function runningSpawns(router: Router): number {
 // Runs SPAWN_FLUSH_DELAY_MS after the claimed register. If the session has gone away by then, the queue is kept: its next
 // registration flushes it, or the spawn timeout reports it.
 export async function flushSpawn(router: Router, s: Session, q: SpawnQueue): Promise<void> {
-  if (!router.agent.isConnected(s.key)) return
+  if (!router.agentFor(s.key).isConnected(s.key)) return
   if (router.spawns.get(q.real) !== q) return
   if (q.timer !== null) router.clock.clearTimer(q.timer)
   router.spawns.delete(q.real)
@@ -220,7 +220,7 @@ export async function flushSpawn(router: Router, s: Session, q: SpawnQueue): Pro
 export async function spawnTimeout(router: Router, real: string, armed: SpawnQueue): Promise<void> {
   const q = router.spawns.get(real)
   if (!q || q !== armed) return
-  const pane = await router.agent.paneTail(q.tmuxName).catch(() => [] as string[])
+  const pane = await router.agentOf(q.agent).paneTail(q.tmuxName).catch(() => [] as string[])
   await failSpawn(router, real, q, `it didn't connect within ${SPAWN_TIMEOUT_MS / 1000} s`, pane, q.project, ' Its tmux session was stopped.')
 }
 
@@ -248,12 +248,12 @@ export async function resumeEnded(router: Router, it: ResumeItem): Promise<void>
   router.spawns.set(real, q)
   let tmuxName: string
   try {
-    tmuxName = await router.agent.startSession(folder, real, ['--resume', it.id], q.token)
+    tmuxName = await router.agentOf('claude').startSession(folder, real, ['--resume', it.id], q.token)
   } catch (e) {
     return failSpawn(router, real, q, errMsg(e), [], title)
   }
   q.tmuxName = tmuxName
-  q.panePid = await router.agent.panePid(tmuxName).catch(() => null)
+  q.panePid = await router.agentOf('claude').panePid(tmuxName).catch(() => null)
   if (router.spawns.get(real) === q) {
     q.timer = router.clock.setTimer(() => void spawnTimeout(router, real, q), SPAWN_TIMEOUT_MS)
   }

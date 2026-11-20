@@ -3,7 +3,7 @@
 // constants). The decisions live in those modules. The adapters are built by src/app.ts and arrive through
 // RouterDeps; this file imports no adapter module at run time.
 import type { PairingControl } from './pairing-control.ts'
-import type { AddonsPort, AgentBackend, Audit, ChatLogPort, Clock, Logger, MlPort, PlatformPort, SocketConn, SocketHandler, StorePort } from '../ports.ts'
+import type { AddonsPort, AgentBackend, AgentKind, Audit, ChatLogPort, Clock, Logger, MlPort, PlatformPort, SocketConn, SocketHandler, StorePort } from '../ports.ts'
 import type { ChatId, ChatPort, MessageId, ThreadId, UserId } from '../brain/chat-types.ts'
 import { BOT_COMMANDS } from '../brain/commands.ts'
 import type { ChatTrace } from '../brain/chatlog.ts'
@@ -59,7 +59,11 @@ export type RouterDeps = {
   chat: ChatPort
   store: StorePort
   platform: PlatformPort
+  // The Claude Code backend. Also the one used for calls that are not keyed by a session (trust, pids, transcripts).
   agent: AgentBackend
+  // The other agent backends by kind (the opencode backend). Each session-keyed call goes to the backend of the session's
+  // kind (Router.agentFor). Absent: only the Claude backend runs.
+  agents?: Partial<Record<AgentKind, AgentBackend>>
   ml: Pick<MlPort, 'transcribe' | 'close'>
   clock: Clock
   audit: Audit
@@ -112,6 +116,8 @@ export class Router {
   readonly store: StorePort
   readonly platform: PlatformPort
   readonly agent: AgentBackend
+  // Every backend by kind; the Claude one is `agent`. See agentOf / agentFor.
+  private readonly backends: Partial<Record<AgentKind, AgentBackend>>
   readonly ml: Pick<MlPort, 'transcribe' | 'close'>
   readonly clock: Clock
   readonly audit: Audit
@@ -232,6 +238,7 @@ export class Router {
     this.store = deps.store
     this.platform = deps.platform
     this.agent = deps.agent
+    this.backends = { ...deps.agents, claude: deps.agent }
     this.ml = deps.ml
     this.clock = deps.clock
     this.audit = deps.audit
@@ -255,6 +262,24 @@ export class Router {
     this.idleCloseMinutes = deps.idleCloseMinutes ?? 60
   }
 
+  // The backend of an agent kind. Throws when the kind has no backend in this router.
+  agentOf(kind: AgentKind): AgentBackend {
+    const backend = this.backends[kind]
+    if (!backend) throw new Error(`no backend for ${kind}`)
+    return backend
+  }
+
+  // The backend of a session: the one of its kind. A key with no registered session gets the Claude backend.
+  agentFor(key: SessionKey): AgentBackend {
+    const s = this.registry.get(key)
+    return s ? this.agentOf(s.agent) : this.agent
+  }
+
+  // Every backend, the Claude one first.
+  allAgents(): AgentBackend[] {
+    const others = Object.entries(this.backends).filter(([kind, b]) => kind !== 'claude' && b !== undefined)
+    return [this.agent, ...others.map(([, b]) => b as AgentBackend)]
+  }
 
   async start(): Promise<void> {
     // Outbound ledger rows older than two days go at start, then every six hours (unref'd timer).
@@ -291,7 +316,7 @@ export class Router {
       message: (conn, msg) => runTraced(traceFromPayload(msg?.trace) ?? newTraceId(), () => onSocket(this, conn, msg)),
       close: (conn) => onSocketClose(this, conn),
     }
-    await this.agent.start(socket)
+    for (const backend of this.allAgents()) await backend.start(socket)
     await this.addons?.start()
     this.chat.start()
     // Folder topics an older build left closed are reopened once (group mode only; see reopenClosedTopics).
@@ -389,10 +414,12 @@ export class Router {
     if (this.tidyTimer) this.clock.clearTimer(this.tidyTimer)
     if (this.bootTimer) this.clock.clearTimer(this.bootTimer)
     for (const q of this.spawns.values()) this.clock.clearTimer(q.timer)
-    try {
-      await this.agent.stop()
-    } catch (e) {
-      this.logger.log(`agent stop: ${errMsg(e)}`)
+    for (const backend of this.allAgents()) {
+      try {
+        await backend.stop()
+      } catch (e) {
+        this.logger.log(`agent stop: ${errMsg(e)}`)
+      }
     }
     // Telegram adapters that queue sends (QueuedChat) drain their urgent sends for the time left; the others have
     // nothing to drain.

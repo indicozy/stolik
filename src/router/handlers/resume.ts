@@ -13,7 +13,7 @@ import type { Router } from '../core.ts'
 // The sessions whose channel is connected now. A registry entry whose channel has gone (its session ended) is not live,
 // so its transcript is listed as ended and /resume can start it again.
 function channelSessions(router: Router) {
-  return router.registry.list().filter((s) => s.hasChannel && router.agent.isConnected(s.key))
+  return router.registry.list().filter((s) => s.hasChannel && router.agentFor(s.key).isConnected(s.key))
 }
 
 // /resume: the ended and live agent sessions as buttons, newest first. Reads at most TRANSCRIPT_SCAN_MAX files.

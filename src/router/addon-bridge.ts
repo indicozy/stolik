@@ -273,7 +273,7 @@ export class AddonBridge implements UsagePort {
     const own = this.ownHold(addon, payload)
     if ('error' in own) return { ok: false, error: own.error }
     const s = this.r.registry.get(own.hold.sessionKey)
-    if (!s || !this.r.agent.isConnected(own.hold.sessionKey)) return { ok: false, error: 'the session is gone or not connected' }
+    if (!s || !this.r.agentFor(own.hold.sessionKey).isConnected(own.hold.sessionKey)) return { ok: false, error: 'the session is gone or not connected' }
     this.r.holds.take(own.id)
     if (await send(this.r, s, own.hold.m, own.hold.p, { bypassGate: true })) return { ok: true }
     this.r.holds.put(own.hold)

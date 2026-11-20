@@ -615,8 +615,11 @@ export class FakeAgent implements AgentBackend {
     this.handler = null
   }
 
-  isInteractive(_pid: number | null): boolean {
-    return true
+  // Pids this fake reports as non-interactive (print-mode claude). Every other pid is interactive.
+  readonly nonInteractive = new Set<number>()
+
+  isInteractive(pid: number | null): boolean {
+    return pid === null || !this.nonInteractive.has(pid)
   }
 
   sweep(): void {}
@@ -797,6 +800,8 @@ export function harness(opts: {
   groupId?: ChatId | null; ownerUserId?: string; chatLog?: ChatLogPort; addons?: AddonsPort; e2e?: E2e
   startWhenNoSession?: boolean; quotaRefusal?: () => Promise<string | null>; claudeModel?: string | null
   idleCloseMinutes?: number; home?: string
+  // A second agent backend, registered as the 'opencode' kind (the Claude backend is always FakeAgent `agent`).
+  opencodeAgent?: FakeAgent
   // The Discord-shaped id profile (DISCORD_FAKE_CAPABILITIES, DISCORD_GUILD, DISCORD_OWNER).
   discord?: boolean
 } = {}): {
@@ -838,6 +843,7 @@ export function harness(opts: {
     startWhenNoSession: opts.startWhenNoSession,
     quotaRefusal: opts.quotaRefusal,
     claudeModel: opts.claudeModel,
+    agents: opts.opencodeAgent ? { opencode: opts.opencodeAgent } : undefined,
   })
   return { router, chat, store, platform, agent, clock, audit, logger }
 }
