@@ -203,7 +203,7 @@ const CUDA_LIST_RE = /^(\d+(,\d+)*)?$/
 // dash, so it can never be read as another flag.
 export const MODEL_RE = /^[A-Za-z0-9][A-Za-z0-9._:\[\]-]*$/
 // An opencode model as provider/model (the provider part and the model part, which may hold further slashes).
-export const OPENCODE_MODEL_RE = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._:/-]+$/
+export const OPENCODE_MODEL_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9._:/-]+$/
 
 // The chat section (plan 5.1, inventory A). `app` picks the chat app; only telegram runs today. chat.telegram.homeId is the
 // group id as "tg:<n>" (the store's home id still wins at run time, as groupId does).

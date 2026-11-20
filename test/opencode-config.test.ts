@@ -25,6 +25,10 @@ test('config: an opencodeModel without a provider prefix is rejected', () => {
   assert.throws(() => parseTgConfig({ opencodeModel: 'noslash' }), /opencodeModel/)
 })
 
+test('config: an opencodeModel whose provider starts with a dash is rejected', () => {
+  assert.throws(() => parseTgConfig({ opencodeModel: '--x/y' }), /opencodeModel/)
+})
+
 test('newSession: a new session is a claude session', () => {
   const s = newSession(1, 'proj', '/home/u/proj', 4242, 0)
   assert.equal(s.agent, 'claude')
