@@ -179,6 +179,9 @@ export const REPO_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
 //                                  against the terminal) is sent to Telegram: desk 60 (only if still unanswered), away 0 (at once).
 //   claudeModel    string | null  model new sessions started by the bot get, as `--model <name>` (default null = Claude
 //                                  Code's own default). `/model` in the bot overrides it. Running sessions keep theirs.
+//   defaultAgent   "claude"|"opencode"  agent a new session the bot starts runs (default "claude"). Running sessions keep theirs.
+//   opencodeModel  string | null   model for opencode sessions, as provider/model (for example "openrouter/qwen/qwen3-coder").
+//                                  Default null: opencode's own default.
 //   idleCloseMinutes integer 0-1440 minutes a session may sit idle before the router closes it (default 60; 0 = never).
 //                                  Five minutes before, the topic gets a warning with a [Keep open] button. A session is closed only
 //                                  when no busy check fails (a running command, a turn in progress, a scheduled wake-up, an unreadable
@@ -199,6 +202,8 @@ const CUDA_LIST_RE = /^(\d+(,\d+)*)?$/
 // A model name as Claude Code takes it after --model (an alias such as "sonnet" or a full id). It may not start with a
 // dash, so it can never be read as another flag.
 export const MODEL_RE = /^[A-Za-z0-9][A-Za-z0-9._:\[\]-]*$/
+// An opencode model as provider/model (the provider part and the model part, which may hold further slashes).
+export const OPENCODE_MODEL_RE = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._:/-]+$/
 
 // The chat section (plan 5.1, inventory A). `app` picks the chat app; only telegram runs today. chat.telegram.homeId is the
 // group id as "tg:<n>" (the store's home id still wins at run time, as groupId does).
@@ -308,6 +313,14 @@ export const TgConfigSchema = z
     claudeModel: z
       .string()
       .regex(MODEL_RE, 'must be a model name such as "sonnet" or "claude-opus-4-1" (letters, digits, . _ : [ ] -; not starting with -)')
+      .nullable()
+      .default(null),
+    // The agent a new session the bot starts runs: Claude Code or opencode. Running sessions keep theirs.
+    defaultAgent: z.enum(['claude', 'opencode']).default('claude'),
+    // The model for opencode sessions, as provider/model. Null: opencode's own default.
+    opencodeModel: z
+      .string()
+      .regex(OPENCODE_MODEL_RE, 'must be provider/model, such as "openrouter/qwen/qwen3-coder" (letters, digits, . _ - and / : after the first /)')
       .nullable()
       .default(null),
     // The chat section (see ChatSchema). Absent in every config written before v3 chat support.

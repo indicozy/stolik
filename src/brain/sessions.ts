@@ -8,6 +8,7 @@ import { basename } from 'node:path'
 import { OutboundLedger } from '../router/outbound.ts'
 import { MINUTE, cutAt, redact } from './common.ts'
 import type { MessageId, ThreadId } from './chat-types.ts'
+import type { AgentKind } from '../ports.ts'
 
 export const NULL_PID_TTL_MS = 2 * 60 * MINUTE
 export const HISTORY_LEN = 6
@@ -36,6 +37,8 @@ export type Session = {
   name: string
   project: string
   cwd: string
+  // The kind of agent this session runs. A new session is 'claude' (newSession).
+  agent: AgentKind
   pid: number | null
   // The process start time that goes with pid ('' when unknown or no pid).
   start: string
@@ -88,6 +91,7 @@ export function newSession(key: SessionKey, name: string, cwd: string, pid: numb
     name,
     project: basename(cwd) || cwd,
     cwd,
+    agent: 'claude',
     pid,
     start: pid === null ? '' : start,
     hasChannel: false,

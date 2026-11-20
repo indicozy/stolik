@@ -2,7 +2,7 @@
 import { randomBytes } from 'node:crypto'
 import type { Inbound } from '../brain/chat-types.ts'
 import type { ResumeItem } from '../brain/resume.ts'
-import type { SocketConn } from '../ports.ts'
+import type { AgentKind, SocketConn } from '../ports.ts'
 import type { CallKey } from '../brain/posttool.ts'
 import type { AskInput } from './ask.ts'
 import type { PermissionDetails, Session } from './state.ts'
@@ -80,6 +80,8 @@ export type PendingResume = { items: ResumeItem[]; createdAt: number }
 
 export type SpawnQueue = {
   project: string
+  // The kind of agent the queued session runs (see AgentKind in ports.ts).
+  agent: AgentKind
   // The folder the session starts in (a realpath): the key of the queue in Router.spawns.
   real: string
   tmuxName: string

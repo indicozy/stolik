@@ -29,6 +29,8 @@ const DEFAULTS = {
   shutdownTimeoutMs: 10000,
   askDelay: { desk: 60, away: 0 },
   claudeModel: null,
+  defaultAgent: 'claude',
+  opencodeModel: null,
 }
 const OWNER = {
   groupId: -1001234567890,
@@ -51,6 +53,8 @@ const OWNER = {
   shutdownTimeoutMs: 10000,
   askDelay: { desk: 60, away: 0 },
   claudeModel: null,
+  defaultAgent: 'claude',
+  opencodeModel: null,
 }
 
 test('parseTgConfig: an empty object gives the defaults (logind, no pinning, no gpu config)', () => {

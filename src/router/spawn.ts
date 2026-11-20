@@ -119,7 +119,7 @@ export async function spawnFor(
   const args = model !== null && !hasModel ? ['--model', model, ...extraArgs] : [...extraArgs]
   // The queue entry is set before the start (no await in between), so a second message for this folder joins it
   // instead of starting a second session, and the entry counts toward the cap while the start is pending.
-  const q: SpawnQueue = { project, real, tmuxName: '', items: [{ m, content, prepared }], timer: null, token: newSpawnToken(), panePid: null, extraArgs: args }
+  const q: SpawnQueue = { project, real, agent: 'claude', tmuxName: '', items: [{ m, content, prepared }], timer: null, token: newSpawnToken(), panePid: null, extraArgs: args }
   router.spawns.set(real, q)
   options.onQueued?.(q)
   let tmuxName: string
@@ -244,7 +244,7 @@ export async function resumeEnded(router: Router, it: ResumeItem): Promise<void>
   // The transcript id and the queue entry are reserved before the start (no await in between), as spawnFor does. Both
   // are released when the session registers or the start fails (failSpawn, flushSpawn).
   router.resumingIds.add(it.id)
-  const q: SpawnQueue = { project: folder, real, tmuxName: '', items: [], timer: null, resumeOf: it.id, token: newSpawnToken(), panePid: null, extraArgs: ['--resume', it.id] }
+  const q: SpawnQueue = { project: folder, real, agent: 'claude', tmuxName: '', items: [], timer: null, resumeOf: it.id, token: newSpawnToken(), panePid: null, extraArgs: ['--resume', it.id] }
   router.spawns.set(real, q)
   let tmuxName: string
   try {

@@ -17,6 +17,9 @@ import type { StartupOutcome } from './adapters/tmux.ts'
 
 // ---------- Agent backend ----------
 
+// The kind of agent a session runs: Claude Code, or opencode. Routing by kind is in the later opencode tasks.
+export type AgentKind = 'claude' | 'opencode'
+
 // A connection to a local client (channel server, hook, tg-notify, ctl). The framing and the socket stay in the
 // adapter; the brain only sends objects and ends the connection.
 export interface SocketConn {
