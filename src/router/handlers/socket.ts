@@ -115,9 +115,8 @@ export function onRegister(router: Router, conn: SocketConn, msg: ChRegister): v
     router.audit.event({ event: 'register_ignored', reason: 'non-interactive' })
     return
   }
-  const s = router.registry.registerChannel(procRef(pid, (p) => router.platform.processStart(p)), str(msg.cwd) ?? '', router.clock.now())
-  // The kind is set before bind, so the connection is attached to the backend of that kind.
-  if (opencode) s.agent = 'opencode'
+  const s = router.registry.registerChannel(procRef(pid, (p) => router.platform.processStart(p)), str(msg.cwd) ?? '', router.clock.now(), opencode ? 'opencode' : 'claude')
+  // The kind is set by the registry before bind, so the connection is attached to the backend of that kind.
   bind(router, conn, s)
   const spawnToken = str(msg.spawnToken) ?? null
   if (opencode && spawnToken !== null) router.agentOf('opencode').bindToken?.(s.key, spawnToken)

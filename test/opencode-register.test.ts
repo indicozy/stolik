@@ -105,6 +105,65 @@ test('an opencode register is refused when the router has no opencode backend', 
   assert.deepEqual(h.router.registry.list(), [])
 })
 
+// A pid-less, unconnected claude session in PROJ (what a hook without a pid leaves behind).
+function pidlessClaude(h: { router: { registry: { upsertFromHook(p: null, cwd: string, now: number): { agent: string } } }; clock: { now(): number } }) {
+  return h.router.registry.upsertFromHook(null, PROJ, h.clock.now())
+}
+
+test('an opencode register does not adopt a pid-less claude session in the same folder', async () => {
+  const h = await started()
+  const claude = pidlessClaude(h)
+  assert.equal(claude.agent, 'claude')
+
+  h.opencode.receive(new FakeConn(), { t: 'register', claudePid: null, agent: 'opencode', agentPid: OPENCODE_PID, cwd: PROJ })
+  await flush()
+
+  const sessions = h.router.registry.list()
+  assert.equal(sessions.length, 2)
+  const [s] = sessions.filter((x) => x.agent === 'opencode')
+  assert.ok(s, 'a new opencode session exists')
+  assert.equal(s.pid, OPENCODE_PID)
+  assert.equal(h.opencode.isConnected(s.key), true)
+  // The claude session is untouched: still pid-less, still claude, not connected.
+  const after = h.router.registry.list().find((x) => x.key === claude.key)
+  assert.ok(after)
+  assert.equal(after.agent, 'claude')
+  assert.equal(after.pid, null)
+  assert.equal(after.connected, false)
+})
+
+test('a claude register does not adopt a pid-less opencode session in the same folder', async () => {
+  const h = await started()
+  const op = h.router.registry.registerChannel(null, PROJ, h.clock.now(), 'opencode')
+  op.connected = false
+
+  const conn = new FakeConn()
+  h.agent.receive(conn, { t: 'register', claudePid: 5151, cwd: PROJ })
+  await flush()
+
+  const [claudeSession] = h.router.registry.list().filter((x) => x.pid === 5151)
+  assert.ok(claudeSession, 'a new claude session exists')
+  assert.equal(claudeSession.agent, 'claude')
+  assert.equal(h.agent.isConnected(claudeSession.key), true)
+  const after = h.router.registry.list().find((x) => x.key === op.key)
+  assert.ok(after)
+  assert.equal(after.agent, 'opencode')
+  assert.equal(after.pid, null)
+  assert.equal(after.connected, false)
+})
+
+test('a claude register still adopts a pid-less claude session in the same folder', async () => {
+  const h = await started()
+  const claude = pidlessClaude(h)
+
+  h.agent.receive(new FakeConn(), { t: 'register', claudePid: 5151, cwd: PROJ })
+  await flush()
+
+  assert.equal(h.router.registry.list().length, 1)
+  assert.equal(claude.pid, 5151)
+  assert.equal(claude.agent, 'claude')
+})
+
 test('channelCapabilities: opencode advertises tools only, claude keeps the channel keys', () => {
   assert.deepEqual(channelCapabilities('opencode'), { tools: {} })
   for (const agent of [undefined, 'claude']) {

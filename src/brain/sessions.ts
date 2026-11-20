@@ -157,9 +157,10 @@ export class Registry {
     return s
   }
 
-  // A channel registration. Without a pid, the channel is its own session (one per connection).
-  registerChannel(proc: ProcRef | null, cwd: string, now: number): Session {
-    const s = this.claim(proc, cwd, now, true)
+  // A channel registration. Without a pid, the channel is its own session (one per connection). `agent` is the kind of
+  // the registering session: only a pid-less session of that kind is adopted, and a new session gets that kind.
+  registerChannel(proc: ProcRef | null, cwd: string, now: number, agent: AgentKind = 'claude'): Session {
+    const s = this.claim(proc, cwd, now, true, agent)
     s.hasChannel = true
     s.connected = true
     return s
@@ -181,13 +182,14 @@ export class Registry {
     return removed
   }
 
-  private claim(proc: ProcRef | null, cwd: string, now: number, channel: boolean): Session {
+  private claim(proc: ProcRef | null, cwd: string, now: number, channel: boolean, agent: AgentKind = 'claude'): Session {
     let s: Session | undefined
     if (proc) {
       s = this.list().find((x) => x.pid === proc.pid && x.start === proc.start)
       if (!s) {
         // A hook session first seen without a pid is adopted once its pid is known. A connected channel is never adopted.
-        s = mostRecent(this.list(), (x) => x.pid === null && !x.connected && x.cwd === cwd)
+        // Only a session of the same kind is adopted (a claude hook never takes an opencode session, and the reverse).
+        s = mostRecent(this.list(), (x) => x.pid === null && !x.connected && x.cwd === cwd && x.agent === agent)
         if (s) {
           s.pid = proc.pid
           s.start = proc.start
@@ -195,13 +197,14 @@ export class Registry {
       }
     } else if (!channel) {
       // A hook without a pid can only be attributed to a session without a pid in its folder.
-      s = mostRecent(this.list(), (x) => x.pid === null && x.cwd === cwd)
+      s = mostRecent(this.list(), (x) => x.pid === null && x.cwd === cwd && x.agent === agent)
     }
     if (!s) {
       const project = basename(cwd) || cwd
       const name = assignName(project, new Set(this.list().map((x) => x.name)))
       const key = proc ? procKey(proc) : this.pidlessKey(cwd)
       s = newSession(key, name, cwd, proc?.pid ?? null, now, proc?.start ?? '')
+      s.agent = agent
       this.byKey.set(key, s)
     }
     s.lastActive = now
