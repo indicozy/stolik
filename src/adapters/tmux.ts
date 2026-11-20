@@ -58,8 +58,8 @@ export function paneTailLines(pane: string, n: number = PANE_TAIL_LINES): string
     .slice(-n)
 }
 
-export function tmuxNameFor(project: string): string {
-  return 'tg-' + project.replace(/[^A-Za-z0-9_-]/g, '_')
+export function tmuxNameFor(project: string, prefix: string = 'tg-'): string {
+  return prefix + project.replace(/[^A-Za-z0-9_-]/g, '_')
 }
 
 // The router socket when none is configured: $XDG_RUNTIME_DIR/stolik.sock (the same rule as src/config.ts).
@@ -68,8 +68,9 @@ export function defaultSocketPath(env: NodeJS.ProcessEnv = process.env): string 
   return join(env.XDG_RUNTIME_DIR ?? `/run/user/${uid}`, 'stolik.sock')
 }
 
-// argv for `tmux new-session`: the tg-claude launcher, then any extra arguments (e.g. --resume <id>). Passed as
-// separate argv, no shell, so the extra arguments are never interpreted.
+// argv for `tmux new-session`: the launcher (default: the tg-claude script), then any extra arguments (e.g. --resume <id>).
+// Passed as separate argv, no shell, so the extra arguments are never interpreted. `env` is extra NAME=VALUE pairs for the
+// session (each becomes `-e`).
 // The session gets the router's socket as its environment: the tmux server's environment would otherwise win over the
 // router's own, and a session would register with the wrong router. When the router uses a non-default socket (from
 // config or STOLIK_SOCKET), the session also gets STOLIK_CHANNEL=self, which makes bin/tg-claude load this
@@ -82,14 +83,17 @@ export function tmuxNewSessionArgs(
   extra: readonly string[] = [],
   socket: string = SOCKET_PATH,
   spawnToken: string | null = null,
+  launcher: readonly string[] = [join(REPO_DIR, 'bin', 'tg-claude')],
+  env: readonly string[] = [],
 ): string[] {
-  const env = ['-e', `STOLIK_SOCKET=${socket}`]
+  const vars = ['-e', `STOLIK_SOCKET=${socket}`]
   if (socket !== defaultSocketPath()) {
-    env.push('-e', 'STOLIK_CHANNEL=self')
-    if (process.env.STOLIK_ENV_FILE) env.push('-e', `STOLIK_ENV_FILE=${process.env.STOLIK_ENV_FILE}`)
+    vars.push('-e', 'STOLIK_CHANNEL=self')
+    if (process.env.STOLIK_ENV_FILE) vars.push('-e', `STOLIK_ENV_FILE=${process.env.STOLIK_ENV_FILE}`)
   }
-  if (spawnToken !== null) env.push('-e', `STOLIK_SPAWN_TOKEN=${spawnToken}`)
-  return ['new-session', '-d', '-s', name, '-c', dir, ...env, join(REPO_DIR, 'bin', 'tg-claude'), ...extra]
+  if (spawnToken !== null) vars.push('-e', `STOLIK_SPAWN_TOKEN=${spawnToken}`)
+  for (const pair of env) vars.push('-e', pair)
+  return ['new-session', '-d', '-s', name, '-c', dir, ...vars, ...launcher, ...extra]
 }
 
 // How the tmux server is started. The server inherits the environment and cgroup of the process that starts it, so the
@@ -183,7 +187,11 @@ export const defaultLaunchDeps: LaunchDeps = {
 
 const launchServer = createServerLauncher(defaultLaunchDeps)
 
-// Starts `bin/tg-claude` detached in a new tmux session. Returns the session name.
+// What a start runs, and how its session is named: `command` replaces the tg-claude launcher (the extra arguments follow it),
+// `prefix` replaces `tg-` in the session name, `env` adds NAME=VALUE pairs, `socket` is the router socket.
+export type StartOptions = { prefix?: string; command?: readonly string[]; env?: readonly string[]; socket?: string }
+
+// Starts `bin/tg-claude` detached in a new tmux session (or the command in `options`). Returns the session name.
 export async function startTmux(
   project: string,
   dir: string,
@@ -191,13 +199,14 @@ export async function startTmux(
   run: TmuxRun = runTmux,
   spawnToken: string | null = null,
   launcher: ServerLauncher = launchServer,
+  options: StartOptions = {},
 ): Promise<string> {
-  const base = tmuxNameFor(project)
+  const base = tmuxNameFor(project, options.prefix)
   let name = base
   for (let n = 2; (await run('tmux', ['has-session', '-t', `=${name}`])).code === 0; n++) {
     name = `${base}-${n}`
   }
-  const argv = tmuxNewSessionArgs(name, dir, extra, SOCKET_PATH, spawnToken)
+  const argv = tmuxNewSessionArgs(name, dir, extra, options.socket ?? SOCKET_PATH, spawnToken, options.command, options.env)
   let launch = await launcher(argv)
   let r = await run(launch.file, launch.args)
   // A refused scoped start is tried again under a new unit name (the first may have failed for a reason that does not last).

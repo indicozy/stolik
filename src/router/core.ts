@@ -25,8 +25,8 @@ import { onChatEvent } from './handlers/group.ts'
 import { announceBoot, stripStaleKeyboards, sweep } from './handlers/timers.ts'
 import { onAccessLost } from './handlers/group.ts'
 import { offerBuiltins } from './handlers/builtins.ts'
-import { TOPIC_TIDY_DELAY_MS, reopenClosedTopics, tidyTopicNames } from './topics.ts'
-import { attachLedger, saveNow } from './send.ts'
+import { TOPIC_TIDY_DELAY_MS, reopenClosedTopics, sendTarget, tidyTopicNames } from './topics.ts'
+import { attachLedger, saveNow, say } from './send.ts'
 import { startLedgerPrune } from './outbound.ts'
 import { errMsg } from './log.ts'
 import { clearStaleMarkers, closeOpenApprovals } from './restart.ts'
@@ -289,6 +289,12 @@ export class Router {
   allAgents(): AgentBackend[] {
     const others = Object.entries(this.backends).filter(([kind, b]) => kind !== 'claude' && b !== undefined)
     return [this.agent, ...others.map(([, b]) => b as AgentBackend)]
+  }
+
+  // Tells the owner, in the session's topic, that a message did not reach an opencode session (the backend's onDeliveryError).
+  async reportDeliveryError(key: SessionKey, reason: string): Promise<void> {
+    const s = this.registry.get(key) ?? null
+    await say(this, `Couldn't deliver to opencode: ${reason}`, undefined, sendTarget(this, 'answer', s))
   }
 
   async start(): Promise<void> {
