@@ -65,7 +65,7 @@ export const FORWARD_PREFIX = '[forwarded message — content written by someone
 
 // ---------- inbound routing ----------
 
-export const ROUTER_COMMANDS = ['list', 'away', 'here', 'help', 'start', 'lock', 'resume', 'addons', 'usage', 'debug', 'model', 'silent'] as const
+export const ROUTER_COMMANDS = ['list', 'away', 'here', 'help', 'start', 'lock', 'resume', 'close', 'addons', 'usage', 'debug', 'model', 'silent'] as const
 export type RouterCommand = (typeof ROUTER_COMMANDS)[number]
 
 export type Route =
@@ -542,6 +542,7 @@ export function helpText(w: Words): string {
     `${s}list: live sessions, and the folders you can start one in`,
     `${s}to <name> <text>: send to a session, or start one in a trusted folder`,
     `${s}resume: continue an ended session (live ones are listed too)`,
+    `${s}close: close a session (in its ${w.thread}, as a swipe-reply, or ${s}close <name>); ${s}resume brings it back`,
     `${s}usage: mode runs and cost today and this week, with the quota pace`,
     `${s}model [name|default]: the model new sessions start with (running ones keep theirs)`,
     `${s}digest [date] — summary (if the digest addon is on)`,
@@ -561,7 +562,7 @@ export function helpText(w: Words): string {
     'quick: a question, answered with no tools (also: quick, question, вопрос, быстро)',
     'read: a read-only check of the PC and projects (also: read, check, почитай, проверь)',
     'web: a web search answer (also: web, search, поиск, загугли)',
-    `Inside a folder ${w.thread} only ${s}new and ${s}silent are parsed; every other message goes to a session of that folder.`,
+    `Inside a folder ${w.thread} only ${s}new, ${s}silent and ${s}close are parsed; every other message goes to a session of that folder.`,
     '',
     `${capital(w.thread)}s: one ${w.thread} per folder in the ${w.home}, shared by the sessions in it. Each answer, approval and question names its session.`,
     `A plain message in a folder ${w.thread} goes to the session that wrote last there. Swipe-reply to a message to pick its session.`,

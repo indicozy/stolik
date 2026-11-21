@@ -4,6 +4,7 @@ export const BOT_COMMANDS: ReadonlyArray<{ command: string; description: string 
   { command: 'list', description: 'Live sessions and folders to start one in' },
   { command: 'to', description: 'Send to a session: /to <name> <text>' },
   { command: 'resume', description: 'Continue an ended session' },
+  { command: 'close', description: 'Close a session: in its topic, as a reply, or /close <name>' },
   { command: 'usage', description: 'Mode runs, cost and quota pace' },
   { command: 'model', description: 'Model new sessions start with: /model [name|default]' },
   { command: 'addons', description: 'List, enable or disable addons' },

@@ -8,6 +8,9 @@ import { startableDirs, deliver, prepare } from '../deliver.ts'
 import { decideInbound } from '../../brain/inbound.ts'
 import { bindGroup } from './group.ts'
 import { inboundTarget, topicForThread, topicSessionFor } from '../topics.ts'
+import { closeSession } from '../close.ts'
+import { parseCommandWord } from '../../brain/commands.ts'
+import { mostRecentInProject, type Session } from '../../brain/sessions.ts'
 import { words } from '../../brain/words.ts'
 import { parseNewCommand } from '../../brain/topics.ts'
 import { muteAckText, muteStatusText, parseSilentCommand, UNMUTED_TEXT, type SilentCommand } from '../../brain/mute.ts'
@@ -28,7 +31,7 @@ import { voiceRawTranscript } from '../voice.ts'
 import { LOCK_TEXT, type Prepared, type SpawnQueue } from '../shared.ts'
 import { effectiveModel, spawnFor, type SpawnOptions } from '../spawn.ts'
 import { MODEL_RE } from '../../config.ts'
-import { helpText, INBOUND_RATE_LIMIT, formatList, permissionRefusal, permissionVerdict, resolveMsgRef, resolveProject, chunkText, textLimit, routeInbound, isCommandText, isOwnerUser, type ReplyRef } from '../state.ts'
+import { helpText, INBOUND_RATE_LIMIT, formatList, permissionRefusal, permissionVerdict, resolveMsgRef, resolveProject, chunkText, textLimit, routeInbound, isCommandText, isOwnerUser, liveSummary, type ReplyRef } from '../state.ts'
 import { currentTrace, isTraceCommand } from '../../brain/observe.ts'
 import { log } from '../log.ts'
 import type { Router } from '../core.ts'
@@ -155,6 +158,8 @@ async function handleInbound(router: Router, m: Inbound): Promise<void> {
       if (start !== null) return startInTopic(router, m, topicThread, start.body)
       const silentCmd = parseSilentCommand(m.text)
       if (silentCmd !== null) return silentInTopic(router, m, topicThread, silentCmd)
+      const closeArg = parseCloseArg(m.text)
+      if (closeArg !== null) return closeInTopic(router, m, topicThread, closeArg)
     }
     if (m.kind === 'text' && m.text.trim() !== '' && !isCommandText(m.text)) {
       // Group mode: a plain General message is not an answer to a pending ask; only a reply to the ask or a message in
@@ -334,7 +339,49 @@ export async function runCommand(router: Router, cmd: string, m: Inbound, now: n
       return modelCommand(router, arg, m)
     case 'silent':
       return say(router, SILENT_IN_GENERAL_TEXT, m.messageId)
+    case 'close':
+      return closeInGeneral(router, m, arg)
   }
+}
+
+// `/close [name]` in a folder topic: the arg is the name of a live session of that folder. Null for any other text.
+function parseCloseArg(text: string): string | null {
+  const c = parseCommandWord(text)
+  return c && c.word.toLowerCase() === 'close' ? c.arg : null
+}
+
+// `/close` in a folder topic (no reply needed): the topic's session, or the one named. Live sessions of this folder only.
+async function closeInTopic(router: Router, m: Inbound, threadId: ThreadId, arg: string): Promise<void> {
+  const to = inboundTarget(router, m)
+  const rec = topicForThread(router, threadId)
+  const live = rec?.cwd == null ? [] : router.registry.list().filter((s) => s.cwd === rec.cwd)
+  if (!rec || live.length === 0) return say(router, 'No live session in this topic to close.', m.messageId, to)
+  const target = arg === '' ? topicSessionFor(router, rec, m, live) : (live.find((s) => s.name === arg) ?? null)
+  if (target === null) return say(router, `No live session named "${arg}" in this topic.`, m.messageId, to)
+  return closeRequested(router, target, m)
+}
+
+// `/close` in General or a DM. Target order: the session of the message it replies to, then the name given, else none
+// (a bare /close closes nothing and lists the live sessions).
+async function closeInGeneral(router: Router, m: Inbound, arg: string): Promise<void> {
+  const live = router.registry.list()
+  const reply = (text: string) => say(router, text, m.messageId, inboundTarget(router, m))
+  const ref = m.replyToId !== null ? resolveMsgRef(router.msgMap.get(m.replyToId), live) : null
+  if (ref?.status === 'dead') return reply(`${ref.name} is no longer running.`)
+  let target: Session | undefined = ref?.status === 'live' ? ref.session : undefined
+  if (!target && arg !== '') {
+    target = live.find((s) => s.name === arg) ?? mostRecentInProject(live, arg)
+    if (!target) return reply(`No session named "${arg}". ${liveSummary(live)}`)
+  }
+  if (!target) return reply(`Which session? Reply /close to one of its messages, send it in the session's topic, or /close <name>. ${liveSummary(live)}`)
+  return closeRequested(router, target, m)
+}
+
+// Closes a session on request. closeSession posts the session's own notice; this answers only when nothing could be closed.
+async function closeRequested(router: Router, s: Session, m: Inbound): Promise<void> {
+  router.audit.event({ event: 'close_command', session: s.name })
+  const ok = await closeSession(router, s, 'request')
+  if (!ok) return say(router, `Couldn't close ${s.name}: it is already closing, or the router doesn't know its process.`, m.messageId, inboundTarget(router, m))
 }
 
 const SILENT_IN_GENERAL_TEXT = '/silent works inside a folder topic: it mutes that folder\'s topic. Send it in the topic.'

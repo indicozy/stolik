@@ -2,6 +2,7 @@ stolik commands (send them in General):
 /list: live sessions, and the folders you can start one in
 /to <name> <text>: send to a session, or start one in a trusted folder
 /resume: continue an ended session (live ones are listed too)
+/close: close a session (in its topic, as a swipe-reply, or /close <name>); /resume brings it back
 /usage: mode runs and cost today and this week, with the quota pace
 /model [name|default]: the model new sessions start with (running ones keep theirs)
 /digest [date] — summary (if the digest addon is on)
@@ -21,7 +22,7 @@ note: save to the notes inbox on the PC, not sent to the agent (also: note, за
 quick: a question, answered with no tools (also: quick, question, вопрос, быстро)
 read: a read-only check of the PC and projects (also: read, check, почитай, проверь)
 web: a web search answer (also: web, search, поиск, загугли)
-Inside a folder topic only /new and /silent are parsed; every other message goes to a session of that folder.
+Inside a folder topic only /new, /silent and /close are parsed; every other message goes to a session of that folder.
 
 Topics: one topic per folder in the group, shared by the sessions in it. Each answer, approval and question names its session.
 A plain message in a folder topic goes to the session that wrote last there. Swipe-reply to a message to pick its session.
